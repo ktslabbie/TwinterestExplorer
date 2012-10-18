@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Tweets WHERE user_id = 813286

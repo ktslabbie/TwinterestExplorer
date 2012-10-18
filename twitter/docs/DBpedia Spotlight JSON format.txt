@@ -1,0 +1,282 @@
+  "@text": "RT @Lis_Smith: Not what she told @KatrinaTrinko: \"Romney spox Andrea Saul did not back away from the Des Moines Register comments\" http: ...",
+  "surfaceForm": [
+    {
+      "@name": "Andrea",
+      "@offset": "62",
+      "resource": [
+        {
+          "@contextualScore": "0.07483997195959091",
+          "@finalScore": "0.07483997195959091",
+          "@label": "SS Andrea Doria",
+          "@percentageOfSecondRank": "0.6021562191415283",
+          "@priorScore": "1.203916926521625E-6",
+          "@support": "84",
+          "@types": "DBpedia:Ship, DBpedia:MeanOfTransportation, Schema:Product, Freebase:/boats/ship, Freebase:/boats",
+          "@uri": "SS_Andrea_Doria"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.07483997195959091",
+          "@label": "SS Andrea Doria",
+          "@percentageOfSecondRank": "0.6021562191415283",
+          "@priorScore": "1.203916926521625E-6",
+          "@support": "84",
+          "@types": "DBpedia:Ship, DBpedia:MeanOfTransportation, Schema:Product, Freebase:/boats/ship, Freebase:/boats",
+          "@uri": "SS_Andrea_Doria"
+        }
+      ]
+    },
+    {
+      "@name": "Smith",
+      "@offset": "8",
+      "resource": [
+        {
+          "@contextualScore": "0.05164291337132454",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05164291337132454",
+          "@label": "Adam Smith",
+          "@percentageOfSecondRank": "0.7033968417177813",
+          "@priorScore": "1.1623531278679021E-5",
+          "@support": "811",
+          "@types": "DBpedia:Philosopher, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/book/author, Freebase:/people/deceased_person",
+          "@uri": "Adam_Smith"
+        }
+      ]
+    },
+    {
+      "@name": "Des Moines Register",
+      "@offset": "101",
+      "resource": {
+        "@contextualScore": "0.10671598464250565",
+        "@finalScore": "0.10671598464250565",
+        "@label": "The Des Moines Register",
+        "@percentageOfSecondRank": "-1.0",
+        "@priorScore": "9.316023836179241E-7",
+        "@support": "65",
+        "@types": "DBpedia:Newspaper, DBpedia:PeriodicalLiterature, DBpedia:WrittenWork, DBpedia:Work, Schema:CreativeWork, Freebase:/award/award_winner, Freebase:/award, Freebase:/book/newspaper, Freebase:/book, Freebase:/book/periodical, Freebase:/business/employer, Freebase:/business",
+        "@uri": "The_Des_Moines_Register"
+      }
+    },
+    {
+      "@name": "Romney",
+      "@offset": "50",
+      "resource": [
+        {
+          "@contextualScore": "0.04421897605061531",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.04421897605061531",
+          "@label": "Mitt Romney",
+          "@percentageOfSecondRank": "0.6000557627034541",
+          "@priorScore": "7.983115810387442E-6",
+          "@support": "557",
+          "@types": "DBpedia:Politician, DBpedia:Person, Schema:Person, Freebase:/book/book_subject, Freebase:/book, Freebase:/people/person, Freebase:/people, Freebase:/organization/organization_founder, Freebase:/organization, Freebase:/government/politician, Freebase:/government, Freebase:/book/author, Freebase:/tv/tv_actor, Freebase:/tv, DBpedia:TopicalConcept",
+          "@uri": "Mitt_Romney"
+        }
+      ]
+    },
+    {
+      "@name": "Saul",
+      "@offset": "69",
+      "resource": [
+        {
+          "@contextualScore": "0.05637214705348015",
+          "@finalScore": "0.05637214705348015",
+          "@label": "John Ralston Saul",
+          "@percentageOfSecondRank": "0.94207906368127",
+          "@priorScore": "1.289910992701741E-6",
+          "@support": "90",
+          "@types": "DBpedia:Person, Schema:Person, Freebase:/award/award_winner, Freebase:/award, Freebase:/people/person, Freebase:/people, Freebase:/award/award_nominee, Freebase:/book/author, Freebase:/book",
+          "@uri": "John_Ralston_Saul"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05637214705348015",
+          "@label": "John Ralston Saul",
+          "@percentageOfSecondRank": "0.94207906368127",
+          "@priorScore": "1.289910992701741E-6",
+          "@support": "90",
+          "@types": "DBpedia:Person, Schema:Person, Freebase:/award/award_winner, Freebase:/award, Freebase:/people/person, Freebase:/people, Freebase:/award/award_nominee, Freebase:/book/author, Freebase:/book",
+          "@uri": "John_Ralston_Saul"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05637214705348015",
+          "@label": "John Ralston Saul",
+          "@percentageOfSecondRank": "0.94207906368127",
+          "@priorScore": "1.289910992701741E-6",
+          "@support": "90",
+          "@types": "DBpedia:Person, Schema:Person, Freebase:/award/award_winner, Freebase:/award, Freebase:/people/person, Freebase:/people, Freebase:/award/award_nominee, Freebase:/book/author, Freebase:/book",
+          "@uri": "John_Ralston_Saul"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05637214705348015",
+          "@label": "John Ralston Saul",
+          "@percentageOfSecondRank": "0.94207906368127",
+          "@priorScore": "1.289910992701741E-6",
+          "@support": "90",
+          "@types": "DBpedia:Person, Schema:Person, Freebase:/award/award_winner, Freebase:/award, Freebase:/people/person, Freebase:/people, Freebase:/award/award_nominee, Freebase:/book/author, Freebase:/book",
+          "@uri": "John_Ralston_Saul"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.05637214705348015",
+          "@label": "John Ralston Saul",
+          "@percentageOfSecondRank": "0.94207906368127",
+          "@priorScore": "1.289910992701741E-6",
+          "@support": "90",
+          "@types": "DBpedia:Person, Schema:Person, Freebase:/award/award_winner, Freebase:/award, Freebase:/people/person, Freebase:/people, Freebase:/award/award_nominee, Freebase:/book/author, Freebase:/book",
+          "@uri": "John_Ralston_Saul"
+        }
+      ]
+    },
+    {
+      "@name": "Lis",
+      "@offset": "4",
+      "resource": [
+        {
+          "@contextualScore": "0.031372904777526855",
+          "@finalScore": "0.031372904777526855",
+          "@label": "Long Island Sound",
+          "@percentageOfSecondRank": "0.7847654246223995",
+          "@priorScore": "1.3085430403740994E-5",
+          "@support": "913",
+          "@types": "Freebase:/geography/geographical_feature, Freebase:/geography, Freebase:/geography/body_of_water, Freebase:/location/location, Freebase:/location",
+          "@uri": "Long_Island_Sound"
+        },
+        {
+          "@contextualScore": "-1.0",
+          "@finalScore": "0.031372904777526855",
+          "@label": "Long Island Sound",
+          "@percentageOfSecondRank": "0.7847654246223995",
+          "@priorScore": "1.3085430403740994E-5",
+          "@support": "913",
+          "@types": "Freebase:/geography/geographical_feature, Freebase:/geography, Freebase:/geography/body_of_water, Freebase:/location/location, Freebase:/location",
+          "@uri": "Long_Island_Sound"
+        }
+      ]
+    },
+    {
+      "@name": "http",
+      "@offset": "131",
+      "resource": {
+        "@contextualScore": "0.0546012818813324",
+        "@finalScore": "0.0546012818813324",
+        "@label": "Hypertext Transfer Protocol",
+        "@percentageOfSecondRank": "-1.0",
+        "@priorScore": "3.5544214021114637E-6",
+        "@support": "248",
+        "@types": "Freebase:/internet/protocol, Freebase:/internet, Freebase:/computer/internet_protocol, Freebase:/computer, Freebase:/internet/api",
+        "@uri": "Hypertext_Transfer_Protocol"
+      }
+    }
+  ]
+}}
