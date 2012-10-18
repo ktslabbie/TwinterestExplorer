@@ -30,7 +30,7 @@ public class App {
 		/*for (Tweet tweet : tb.getTweets(813286)) {
 			Log.getLogger().info(tweet.toString());
 		}*/
-		
+		//test
 		Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
 		control.createOntology(813286);
     }
