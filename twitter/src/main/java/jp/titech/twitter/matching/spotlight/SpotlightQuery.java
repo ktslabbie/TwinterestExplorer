@@ -107,7 +107,7 @@ public class SpotlightQuery {
 
 					json = new JSONObject(jsonString);
 
-					Log.getLogger().info(json.toString(2));
+					//Log.getLogger().info(json.toString(2));
 					queried = true;
 				} catch (Exception e) {
 					Log.getLogger().error(e.getMessage());

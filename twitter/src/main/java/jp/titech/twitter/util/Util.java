@@ -12,8 +12,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+
+import org.dbpedia.spotlight.model.OntologyType;
 
 public class Util {
 
@@ -206,5 +210,21 @@ public class Util {
 		if(count % seg == 0){
 			Log.getLogger().info(110 - (count / seg)*10 + "% done.");
 		}
+	}
+
+	/**
+	 * Converts an immutable Scala List to a mutable Java list.
+	 * 
+	 * @param types
+	 * @return returnTypes The Java list.
+	 */
+	public static List<OntologyType> convertScalaList(scala.collection.immutable.List<OntologyType> types) {
+		List<OntologyType> returnTypes = new ArrayList<OntologyType>();
+		scala.collection.Iterator<OntologyType> it = types.iterator();
+		while(it.hasNext()) {
+			OntologyType type = it.next();
+			returnTypes.add(type);
+		}
+		return returnTypes;
 	}
 }

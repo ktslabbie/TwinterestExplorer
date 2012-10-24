@@ -33,7 +33,6 @@ public class SpotlightUtil {
 
 	public static Map<String, List<DBpediaResourceOccurrence>> jsonToResourceOccurrences(JSONObject json){
 
-		List<DBpediaResourceOccurrence> resourceOccurrences = new ArrayList<DBpediaResourceOccurrence>();
 		Map<String, List<DBpediaResourceOccurrence>> resourceOccurrenceMap = new LinkedHashMap<String, List<DBpediaResourceOccurrence>>();
 
 		try {
@@ -44,6 +43,8 @@ public class SpotlightUtil {
 			Text context = new Text(jsonMain.getString("@text"));
 			JSONArray surfaceForms = jsonMain.getJSONArray("surfaceForm");
 			for (int i = 0; i < surfaceForms.length(); i++) {
+				List<DBpediaResourceOccurrence> resourceOccurrences = new ArrayList<DBpediaResourceOccurrence>();
+				
 				JSONObject jsonSurfaceForm = surfaceForms.getJSONObject(i);
 				SurfaceForm surfaceForm = new SurfaceForm(jsonSurfaceForm.getString("@name"));
 				int textOffset = jsonSurfaceForm.getInt("@offset");
@@ -58,32 +59,47 @@ public class SpotlightUtil {
 					jsonResources.put(jsonResourceTemp);
 				}
 
-				for (int j = 0; j < jsonResources.length(); j++) {
-					JSONObject jsonResource = jsonResources.getJSONObject(j);
-					DBpediaResource dbpediaResource = new DBpediaResource(jsonResource.getString("@uri"));
-					dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
-					dbpediaResource.setSupport(jsonResource.getInt("@support"));
-					String[] types = jsonResource.getString("@types").split(", ");
-
-					List<OntologyType> typeList = new ArrayList<OntologyType>();
-					for (int k = 0; k < types.length; k++) {
-						OntologyType type = SpotlightUtil.determineOntologyType(types[k]);
-						typeList.add(type);
+				if(jsonResources != null) {
+					for (int j = 0; j < jsonResources.length(); j++) {
+						JSONObject jsonResource = jsonResources.getJSONObject(j);
+						DBpediaResource dbpediaResource = jsonToDBpediaResource(jsonResource);
+						occurrence = new DBpediaResourceOccurrence(dbpediaResource, surfaceForm, context, textOffset);
+						occurrence.setPercentageOfSecondRank(jsonResource.getDouble("@percentageOfSecondRank"));
+						occurrence.setSimilarityScore(jsonResource.getDouble("@finalScore"));
+						resourceOccurrences.add(occurrence);
 					}
-					dbpediaResource.setTypes(typeList);
-					occurrence = new DBpediaResourceOccurrence(dbpediaResource, surfaceForm, context, textOffset);
-					occurrence.setPercentageOfSecondRank(jsonResource.getDouble("@percentageOfSecondRank"));
-					occurrence.setSimilarityScore(jsonResource.getDouble("@finalScore"));
-					resourceOccurrences.add(occurrence);
 				}
 				resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
 			}
+			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
+		
 		return resourceOccurrenceMap;
+	}
 
+	/**
+	 * @param jsonObject
+	 * @return
+	 */
+	private static DBpediaResource jsonToDBpediaResource(JSONObject jsonResource) {		
+		try {
+			DBpediaResource dbpediaResource = new DBpediaResource(jsonResource.getString("@uri"));
+			dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
+			dbpediaResource.setSupport(jsonResource.getInt("@support"));
+			String[] types = jsonResource.getString("@types").split(", ");
+			List<OntologyType> typeList = new ArrayList<OntologyType>();
+			for (int k = 0; k < types.length; k++) {
+				OntologyType type = SpotlightUtil.determineOntologyType(types[k]);
+				typeList.add(type);
+			}
+			dbpediaResource.setTypes(typeList);
+			return dbpediaResource;
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
@@ -96,6 +112,7 @@ public class SpotlightUtil {
 
 		OntologyType returnType = null;
 		String type = split[0];
+		Log.getLogger().info("Current type: " + type);
 		if(type.equals("DBpedia")){
 			returnType = new DBpediaType(split[1]);
 		} else if(type.equals("Schema")){

@@ -5,12 +5,21 @@
  */
 package jp.titech.twitter.data;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
+import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
+import org.dbpedia.spotlight.model.OntologyType;
 
 /**
  * @author Kristian Slabbekoorn
@@ -89,5 +98,46 @@ public class AnnotatedTweet extends Tweet {
 	public String toString() {
 		return "AnnotatedTweet [confidence=" + confidence + ", support="
 				+ support + ", occurrences=" + occurrences + "]";
+	}
+	
+	/**
+	 * 
+	 * @return A list of the 1st ranked candidate DBpedia resource occurrences
+	 */
+	public List<DBpediaResourceOccurrence> getBestCandidates() {
+		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
+		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
+		
+		for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
+			List<DBpediaResourceOccurrence> candidates = iterator.next();
+			bestCandidates.add(candidates.get(0));
+		}
+		
+		return bestCandidates;
+	}
+	
+	public Map<OntologyType, Integer> getTypes() {
+		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
+		
+		Map<OntologyType, Integer> types = new HashMap<OntologyType, Integer>();
+		
+		for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
+			
+			List<DBpediaResourceOccurrence> candidates = iterator.next();
+			DBpediaResourceOccurrence bestCandidate = candidates.get(0);
+			
+			List<OntologyType> ontoTypes = Util.convertScalaList(bestCandidate.resource().types());
+			
+			for(Iterator<OntologyType> typeIt = ontoTypes.iterator(); typeIt.hasNext();) {
+				OntologyType currentType = typeIt.next();
+				if(types.get(currentType) != null) {
+					types.put(currentType, types.get(currentType) + 1);
+				} else {
+					types.put(currentType, 1);
+				}
+			}
+		}
+		
+		return types;
 	}
 }

@@ -1,3 +1,4 @@
+{"annotation": {
   "@text": "RT @Lis_Smith: Not what she told @KatrinaTrinko: \"Romney spox Andrea Saul did not back away from the Des Moines Register comments\" http: ...",
   "surfaceForm": [
     {

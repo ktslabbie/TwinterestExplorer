@@ -26,7 +26,10 @@ public class OntologyBuilder {
 		for (Tweet tweet : tweets) {
 			Annotator annotator = new Annotator();
 			AnnotatedTweet annotatedTweet = annotator.annotate(tweet);
-			Log.getLogger().info(annotatedTweet.toString());
+			
+			//Log.getLogger().info("BEST CANDIDATES: " + annotatedTweet.getBestCandidates());
+			
+			//Log.getLogger().info("TYPES: " + annotatedTweet.getTypes());
 		}
 	}
 }
