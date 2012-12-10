@@ -23,7 +23,7 @@ public class App {
     	PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
 		Controller control = Controller.getInstance();
-		//control.startSearchMining(813286, 100);
+		//control.startSearchMining(813286, 1000);
 		
 		TweetBase tb = TweetBase.getInstance();
 		

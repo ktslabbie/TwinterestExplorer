@@ -20,10 +20,9 @@ import org.dbpedia.spotlight.model.OntologyType;
 import org.dbpedia.spotlight.model.SchemaOrgType;
 import org.dbpedia.spotlight.model.SurfaceForm;
 import org.dbpedia.spotlight.model.Text;
-
-import twitter4j.internal.org.json.JSONException;
-import twitter4j.internal.org.json.JSONObject;
-import twitter4j.internal.org.json.JSONArray;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * @author Kristian Slabbekoorn
@@ -41,7 +40,18 @@ public class SpotlightUtil {
 			JSONObject jsonMain = json.getJSONObject("annotation");
 
 			Text context = new Text(jsonMain.getString("@text"));
-			JSONArray surfaceForms = jsonMain.getJSONArray("surfaceForm");
+			
+			Object object = jsonMain.opt("surfaceForm");
+			JSONArray surfaceForms = new JSONArray();
+			
+			if(object == null) {
+				return resourceOccurrenceMap;
+			} else if(object instanceof JSONArray){
+				surfaceForms = (JSONArray) object;
+			} else if(object instanceof JSONObject){
+				((JSONObject) object).toJSONArray(surfaceForms);
+			}
+			
 			for (int i = 0; i < surfaceForms.length(); i++) {
 				List<DBpediaResourceOccurrence> resourceOccurrences = new ArrayList<DBpediaResourceOccurrence>();
 				
@@ -50,7 +60,7 @@ public class SpotlightUtil {
 				int textOffset = jsonSurfaceForm.getInt("@offset");
 
 				JSONObject jsonResourceTemp = jsonSurfaceForm.optJSONObject("resource");
-
+				
 				JSONArray jsonResources;
 				if(jsonResourceTemp == null) {
 					jsonResources = jsonSurfaceForm.optJSONArray("resource");

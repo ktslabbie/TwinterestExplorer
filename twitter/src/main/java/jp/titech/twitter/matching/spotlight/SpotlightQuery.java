@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
+import org.json.JSONObject;
 
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
-import twitter4j.internal.org.json.JSONObject;
 
 
 

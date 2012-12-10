@@ -6,7 +6,7 @@
 package jp.titech.twitter.control;
 
 import jp.titech.twitter.mining.Miner;
-import jp.titech.twitter.mining.SearchMiner;
+import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.ontology.OntologyBuilder;
 
 public class Controller {
@@ -29,7 +29,7 @@ public class Controller {
 	 * @param count Number of tweets to collect.
 	 */
 	public void startSearchMining(int userID, int count) {
-		miner = new SearchMiner();
+		miner = new UserMiner();
 		miner.mineUser(userID, count);
 	}
 	

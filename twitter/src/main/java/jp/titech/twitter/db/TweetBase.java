@@ -16,7 +16,10 @@ import java.util.Date;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
+import twitter4j.MediaEntity;
 import twitter4j.Place;
+import twitter4j.URLEntity;
+import twitter4j.UserMentionEntity;
 
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.util.Log;
@@ -28,8 +31,10 @@ public class TweetBase {
 	private static TweetBase tweetBase;
 	private Connection dbConnection;
 
-	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddLocationStatement,
-	preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement;
+	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddURLStatement, preparedAddUserMentionStatement, 
+	preparedAddMediaStatement, preparedAddLocationStatement;
+	private PreparedStatement preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement, preparedGetURLStatement,
+	preparedGetUsermentionStatement, preparedGetMediaStatement;
 
 	private TweetBase(){
 		initDB();
@@ -48,8 +53,21 @@ public class TweetBase {
 
 			preparedAddLocationStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Locations (tweet_id, full_name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			preparedAddURLStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.URLs (tweet_id, url) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			preparedAddUserMentionStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.Usermentions (tweet_id, user_mention) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			preparedAddMediaStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.Media (tweet_id, media_url) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
 			preparedGetTweetsStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIR + "select_user_tweets.sql"));
+			preparedGetUsermentionStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?");
 			preparedGetHashtagsStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Hashtags WHERE tweet_id = ?");
+			preparedGetURLStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.URLs WHERE tweet_id = ?");
+			preparedGetMediaStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Media WHERE tweet_id = ?");
 			preparedGetLocationStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Locations WHERE tweet_id = ?");
 
 			preparedGetSingleTweetStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIR + "select_single_tweet.sql"));
@@ -71,7 +89,8 @@ public class TweetBase {
 		}
 	}
 
-	public void addTweet(long tweetID, long userID, String screenName, Date createdAt, String content, boolean isRetweet, Place place, GeoLocation geoLocation, HashtagEntity[] hashtagEntities) {
+	public void addTweet(long tweetID, long userID, String screenName, Date createdAt, String content, boolean isRetweet, Place place, GeoLocation geoLocation, 
+			UserMentionEntity[] userMentionEntities, HashtagEntity[] hashtagEntities, URLEntity[] urlEntities, MediaEntity[] mediaEntities) {
 
 		if(this.isContained(tweetID)) {
 			Log.getLogger().warn("Tweet from user " + screenName + " with ID " + tweetID + " already contained in DB! Skipping.");
@@ -94,7 +113,7 @@ public class TweetBase {
 				preparedAddLocationStatement.setLong(1, tweetID);
 				preparedAddLocationStatement.setString(2, place.getFullName());
 				preparedAddLocationStatement.executeUpdate();
-				Log.getLogger().info("Successfully added location to DB!");
+				Log.getLogger().info("Successfully added location " + place.getFullName() + " to DB!");
 			}
 
 			/*if(geoLocation != null) {
@@ -102,6 +121,19 @@ public class TweetBase {
 				preparedAddTweetStatement.setDouble(8, geoLocation.getLongitude());
 			}*/
 
+			if(userMentionEntities != null) {
+
+				for (int i = 0; i < userMentionEntities.length; i++) {
+					twitter4j.
+					UserMentionEntity userMentionEntity = userMentionEntities[i];
+					preparedAddUserMentionStatement.clearParameters();
+					preparedAddUserMentionStatement.setLong(1, tweetID);
+					preparedAddUserMentionStatement.setString(2, userMentionEntity.getScreenName());
+					preparedAddUserMentionStatement.executeUpdate();
+					Log.getLogger().info("Successfully added user mention " + userMentionEntity.getScreenName() + " to DB!");
+				}
+			}
+			
 			if(hashtagEntities != null) {
 
 				for (int i = 0; i < hashtagEntities.length; i++) {
@@ -110,9 +142,34 @@ public class TweetBase {
 					preparedAddHashtagStatement.setLong(1, tweetID);
 					preparedAddHashtagStatement.setString(2, hashtagEntity.getText());
 					preparedAddHashtagStatement.executeUpdate();
-					Log.getLogger().info("Successfully added hashtag entity to DB!");
+					Log.getLogger().info("Successfully added hashtag " + hashtagEntity.getText() + " to DB!");
 				}	
 			}
+			
+			if(urlEntities != null) {
+
+				for (int i = 0; i < urlEntities.length; i++) {
+					URLEntity urlEntity = urlEntities[i];
+					preparedAddURLStatement.clearParameters();
+					preparedAddURLStatement.setLong(1, tweetID);
+					preparedAddURLStatement.setString(2, urlEntity.getURL());
+					preparedAddURLStatement.executeUpdate();
+					Log.getLogger().info("Successfully added URL " + urlEntity.getURL() + " to DB!");
+				}	
+			}
+			
+			if(mediaEntities != null) {
+
+				for (int i = 0; i < mediaEntities.length; i++) {
+					MediaEntity mediaEntity = mediaEntities[i];
+					preparedAddMediaStatement.clearParameters();
+					preparedAddMediaStatement.setLong(1, tweetID);
+					preparedAddMediaStatement.setString(2, mediaEntity.getURL());
+					preparedAddMediaStatement.executeUpdate();
+					Log.getLogger().info("Successfully added media " + mediaEntity.getURL() + " to DB!");
+				}	
+			}
+			
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		}
@@ -143,7 +200,7 @@ public class TweetBase {
 			while(resultSet.next()) {
 				long tweetID = resultSet.getLong(1);
 				Tweet tweet = new Tweet(tweetID, resultSet.getLong(2), resultSet.getString(3), resultSet.getDate(4), resultSet.getString(5), 
-										resultSet.getBoolean(6), getHashtags(tweetID), getLocation(tweetID));
+										resultSet.getBoolean(6), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID), getLocation(tweetID));
 				tweets.add(tweet);
 			}
 
@@ -173,6 +230,67 @@ public class TweetBase {
 
 		return hashtags;
 	}
+	
+	public ArrayList<String> getURLs(long tweetID) {
+
+		ArrayList<String> URLs = new ArrayList<String>();
+
+		try {
+			preparedGetURLStatement.clearParameters();
+			preparedGetURLStatement.setLong(1, tweetID);
+			ResultSet resultSet = preparedGetURLStatement.executeQuery();
+
+			while(resultSet.next()) {
+				URLs.add(resultSet.getString(2));
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return URLs;
+	}
+	
+	public ArrayList<String> getUserMentions(long tweetID) {
+
+		ArrayList<String> userMentions = new ArrayList<String>();
+
+		try {
+			preparedGetUsermentionStatement.clearParameters();
+			preparedGetUsermentionStatement.setLong(1, tweetID);
+			ResultSet resultSet = preparedGetUsermentionStatement.executeQuery();
+
+			while(resultSet.next()) {
+				userMentions.add(resultSet.getString(2));
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return userMentions;
+	}
+	
+	public ArrayList<String> getMedia(long tweetID) {
+
+		ArrayList<String> media = new ArrayList<String>();
+
+		try {
+			preparedGetMediaStatement.clearParameters();
+			preparedGetMediaStatement.setLong(1, tweetID);
+			ResultSet resultSet = preparedGetMediaStatement.executeQuery();
+
+			while(resultSet.next()) {
+				media.add(resultSet.getString(2));
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return media;
+	}
+
 
 	public String getLocation(long tweetID) {
 

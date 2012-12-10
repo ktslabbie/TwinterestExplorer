@@ -38,14 +38,17 @@ public class OntologyBuilder {
 		int count = 0;
 		for (Tweet tweet : tweets) {
 			
-			tweet.stripURLs();
-			tweet.stripMentions();
+			//tweet.stripURLs();
+			//tweet.stripMentions();
+			
+			tweet.stripEverything();
+			
 			Log.getLogger().info("Stripped tweet content: " + tweet.getContent());
 			
-			/*Annotator annotator = new Annotator();
+			Annotator annotator = new Annotator();
 			AnnotatedTweet aTweet = annotator.annotate(tweet);
 			
-			annotatedTweets.add(aTweet);*/
+			annotatedTweets.add(aTweet);
 			count++;
 
 			if(count == 1000) break;

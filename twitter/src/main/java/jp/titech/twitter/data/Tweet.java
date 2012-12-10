@@ -14,9 +14,10 @@ public class Tweet {
 	private String screenName, content, locationName;
 	private boolean isRetweet;
 	private Date createdAt;
-	private ArrayList<String> hashtags;
+	private ArrayList<String> userMentions, hashtags, URLs, media;
 	
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> hashtags, String locationName) {
+	
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> userMentions, ArrayList<String> hashtags, ArrayList<String> URLs, ArrayList<String> media, String locationName) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
@@ -24,7 +25,10 @@ public class Tweet {
 		this.createdAt = createdAt;
 		this.content = content;
 		this.isRetweet = isRetweet;
+		this.userMentions = userMentions;
 		this.hashtags = hashtags;
+		this.URLs = URLs;
+		this.media = media;
 		this.locationName = locationName;
 	}
 
@@ -98,6 +102,48 @@ public class Tweet {
 		this.locationName = locationName;
 	}
 
+	/**
+	 * @return the userMentions
+	 */
+	public ArrayList<String> getUserMentions() {
+		return userMentions;
+	}
+
+	/**
+	 * @param userMentions the userMentions to set
+	 */
+	public void setUserMentions(ArrayList<String> userMentions) {
+		this.userMentions = userMentions;
+	}
+
+	/**
+	 * @return the uRLs
+	 */
+	public ArrayList<String> getURLs() {
+		return URLs;
+	}
+
+	/**
+	 * @param uRLs the uRLs to set
+	 */
+	public void setURLs(ArrayList<String> uRLs) {
+		URLs = uRLs;
+	}
+
+	/**
+	 * @return the media
+	 */
+	public ArrayList<String> getMedia() {
+		return media;
+	}
+
+	/**
+	 * @param media the media to set
+	 */
+	public void setMedia(ArrayList<String> media) {
+		this.media = media;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -108,18 +154,60 @@ public class Tweet {
 				+ ", locationName=" + locationName + ", isRetweet=" + isRetweet
 				+ ", createdAt=" + createdAt + ", hashtags=" + hashtags + "]";
 	}
+	
+	/**
+	 * Strips the username mentions from tweet text.
+	 */
+	public void stripUserMentions() {
+		//setContent(getContent().replaceAll("@([A-Za-z0-9_]+)", ""));
+		if(!getUserMentions().isEmpty()) {
+			for (String userMention : getUserMentions()) {
+				setContent(getContent().replaceAll("@"+userMention, ""));
+			}
+		}
+	}
+	
+	/**
+	 * Strips the hashtags from tweet text.
+	 */
+	public void stripHashtags() {
+		if(!getHashtags().isEmpty()) {
+			for (String hashtag : getHashtags()) {
+				setContent(getContent().replaceAll("#"+hashtag, ""));
+			}
+		}
+	}
 
 	/**
 	 * Strips the URLs from tweet text.
 	 */
 	public void stripURLs() {
-		setContent(getContent().replaceAll("http://.+?(com|net|org)/{0,1}", ""));
+		//setContent(getContent().replaceAll("http://.+?(com|net|org)/{0,1}", ""));
+		if(!getURLs().isEmpty()) {
+			for (String url : getURLs()) {
+				setContent(getContent().replaceAll(url, ""));
+			}
+		}
 	}
 	
 	/**
-	 * Strips the username mentions from tweet text.
+	 * Strips the media mentions from tweet text.
 	 */
-	public void stripMentions() {
-		setContent(getContent().replaceAll("@([A-Za-z0-9_]+)", ""));
+	public void stripMedia() {
+		if(!getMedia().isEmpty()) {
+			for (String media : getMedia()) {
+				setContent(getContent().replaceAll(media, ""));
+			}
+		}
+	}
+
+	/**
+	 *  Strips user mentions, hashtags, URLs and media from tweet text.
+	 */
+	public void stripEverything() {
+		this.stripUserMentions();
+		this.stripHashtags();
+		this.stripURLs();
+		this.stripMedia();
 	}
 }

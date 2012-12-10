@@ -1,13 +1,31 @@
 CREATE TABLE TWEETBASE.HASHTAGS (
 		tweet_id BIGINT NOT NULL,
 		hashtag VARCHAR(150) NOT NULL,
-			PRIMARY KEY (tweet_id)
+			PRIMARY KEY (tweet_id, hashtag)
 );
 
 CREATE TABLE TWEETBASE.LOCATIONS (
 		tweet_id BIGINT NOT NULL,
 		full_name VARCHAR(100) NOT NULL,
-			PRIMARY KEY (tweet_id)
+			PRIMARY KEY (tweet_id, full_name)
+);
+
+CREATE TABLE TWEETBASE.USERMENTIONS (
+		tweet_id BIGINT NOT NULL,
+		user_mention VARCHAR(20) NOT NULL,
+			PRIMARY KEY (tweet_id, user_mention)
+);
+
+CREATE TABLE TWEETBASE.URLS (
+		tweet_id BIGINT NOT NULL,
+		url VARCHAR(150) NOT NULL,
+			PRIMARY KEY (tweet_id, url)
+);
+
+CREATE TABLE TWEETBASE.MEDIA (
+		tweet_id BIGINT NOT NULL,
+		media_url VARCHAR(150) NOT NULL,
+			PRIMARY KEY (tweet_id, media_url)
 );
 
 
