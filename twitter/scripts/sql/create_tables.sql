@@ -17,6 +17,6 @@ CREATE TABLE TWEETBASE.TWEETS (
 		screen_name VARCHAR(30) NOT NULL,
 		created_at DATE NOT NULL,
 		content VARCHAR(150) NOT NULL, 
+		isretweet SMALLINT NOT NULL,
 			PRIMARY KEY (tweet_id)
 )
-

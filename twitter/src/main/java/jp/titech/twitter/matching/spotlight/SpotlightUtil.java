@@ -112,7 +112,6 @@ public class SpotlightUtil {
 
 		OntologyType returnType = null;
 		String type = split[0];
-		Log.getLogger().info("Current type: " + type);
 		if(type.equals("DBpedia")){
 			returnType = new DBpediaType(split[1]);
 		} else if(type.equals("Schema")){

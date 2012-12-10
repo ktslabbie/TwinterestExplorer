@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Tweets WHERE tweet_id = ?

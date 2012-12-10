@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import jp.titech.twitter.ontology.DBpediaOntology;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -26,16 +27,18 @@ import org.dbpedia.spotlight.model.OntologyType;
  *
  */
 public class AnnotatedTweet extends Tweet {
-	
+
 	private double confidence;
 	private int support;
 	private Map<String, List<DBpediaResourceOccurrence>> occurrences;
-	
+
+	private Map<OntologyType, Integer> types, transitiveTypes;
+
 	/**
 	 * 
 	 */
 	public AnnotatedTweet(Tweet tweet) {
-		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.getHashtags(), tweet.getLocationName());
+		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getHashtags(), tweet.getLocationName());
 	}
 
 	/**
@@ -43,7 +46,7 @@ public class AnnotatedTweet extends Tweet {
 	 * @param occs
 	 */
 	public AnnotatedTweet(Tweet tweet, Map<String, List<DBpediaResourceOccurrence>> occs) {
-		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.getHashtags(), tweet.getLocationName());
+		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getHashtags(), tweet.getLocationName());
 		confidence = Vars.SPOTLIGHT_CONFIDENCE;
 		support = Vars.SPOTLIGHT_SUPPORT;
 		occurrences = occs;
@@ -99,7 +102,7 @@ public class AnnotatedTweet extends Tweet {
 		return "AnnotatedTweet [confidence=" + confidence + ", support="
 				+ support + ", occurrences=" + occurrences + "]";
 	}
-	
+
 	/**
 	 * 
 	 * @return A list of the 1st ranked candidate DBpedia resource occurrences
@@ -107,37 +110,59 @@ public class AnnotatedTweet extends Tweet {
 	public List<DBpediaResourceOccurrence> getBestCandidates() {
 		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
 		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
-		
+
 		for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
 			List<DBpediaResourceOccurrence> candidates = iterator.next();
 			bestCandidates.add(candidates.get(0));
 		}
-		
+
 		return bestCandidates;
 	}
-	
+
+	/**
+	 * 
+	 * @return A map of each OntologyType and their number of occurrence, in no determined order. 
+	 */
 	public Map<OntologyType, Integer> getTypes() {
-		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
-		
-		Map<OntologyType, Integer> types = new HashMap<OntologyType, Integer>();
-		
-		for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
-			
-			List<DBpediaResourceOccurrence> candidates = iterator.next();
-			DBpediaResourceOccurrence bestCandidate = candidates.get(0);
-			
-			List<OntologyType> ontoTypes = Util.convertScalaList(bestCandidate.resource().types());
-			
-			for(Iterator<OntologyType> typeIt = ontoTypes.iterator(); typeIt.hasNext();) {
-				OntologyType currentType = typeIt.next();
-				if(types.get(currentType) != null) {
-					types.put(currentType, types.get(currentType) + 1);
-				} else {
-					types.put(currentType, 1);
+		if(types == null) {
+			Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
+
+			types = new HashMap<OntologyType, Integer>();
+
+			for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
+
+				List<DBpediaResourceOccurrence> candidates = iterator.next();
+				
+				if(!candidates.isEmpty()) {
+					DBpediaResourceOccurrence bestCandidate = candidates.get(0);
+	
+					List<OntologyType> ontoTypes = Util.convertScalaList(bestCandidate.resource().types());
+	
+					for(Iterator<OntologyType> typeIt = ontoTypes.iterator(); typeIt.hasNext();) {
+						OntologyType currentType = typeIt.next();
+						if(currentType != null) {
+							if(types.get(currentType) != null) {
+								types.put(currentType, types.get(currentType) + 1);
+							} else {
+								types.put(currentType, 1);
+							}
+						}
+					}
 				}
 			}
 		}
-		
 		return types;
+	}
+
+	/**
+	 * 
+	 * @return A map of each OntologyType and their number of occurrence, collected up to the root of the hierarchy, in no determined order. 
+	 */
+	public Map<OntologyType, Integer> getTransitiveTypes() {
+		if(transitiveTypes == null) {
+			Map<OntologyType, Integer> types = this.getTypes();
+			transitiveTypes = DBpediaOntology.getInstance().getAncestors(types);
+		}
+		return transitiveTypes;
 	}
 }

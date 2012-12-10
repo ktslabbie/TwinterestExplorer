@@ -35,16 +35,33 @@ public class SearchMiner extends Miner {
 		Twitter twitter = new TwitterFactory().getInstance();
 	    List<Status> statuses;
 	    
+	    
 		try {
 			
 			Log.getLogger().info("MyID: " + twitter.getId());
-			statuses = twitter.getUserTimeline(userID, new Paging(1, count));
+			Log.getLogger().info("UserID to mine: " + userID);
 			
-			for(Status status : statuses){
-				Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + " Content: " + status.getText());
-				User user = status.getUser();
-				tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), status.getText(), status.getPlace(), status.getGeoLocation(), status.getHashtagEntities());
-				Log.getLogger().info("Successfully added to DB!");
+			int pages = count / 200 + 1;
+			Log.getLogger().info("Mining " + count + " tweets, over " + pages +" pages.");
+			
+			for (int page = 1; page <= pages; page++) {
+				statuses = twitter.getUserTimeline(userID, new Paging(page, 200));
+				
+				for(Status status : statuses){
+					
+					String tweetText;
+					
+					if(status.isRetweet()){
+						tweetText = status.getRetweetedStatus().getText();
+					} else {
+						tweetText = status.getText();
+					}
+					
+					Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + " Content: " + tweetText);
+					User user = status.getUser();
+					
+					tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), status.getGeoLocation(), status.getHashtagEntities());
+				}
 			}
 			
 			/*Query query = new Query("obama");

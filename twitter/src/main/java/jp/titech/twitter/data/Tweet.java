@@ -12,16 +12,18 @@ public class Tweet {
 
 	private long tweetID, userID;
 	private String screenName, content, locationName;
+	private boolean isRetweet;
 	private Date createdAt;
 	private ArrayList<String> hashtags;
 	
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, ArrayList<String> hashtags, String locationName) {
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> hashtags, String locationName) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
 		this.screenName = screenName;
-		this.content = content;
 		this.createdAt = createdAt;
+		this.content = content;
+		this.isRetweet = isRetweet;
 		this.hashtags = hashtags;
 		this.locationName = locationName;
 	}
@@ -58,6 +60,20 @@ public class Tweet {
 		this.content = content;
 	}
 
+	/**
+	 * @return the isRetweet
+	 */
+	public boolean isRetweet() {
+		return isRetweet;
+	}
+
+	/**
+	 * @param isRetweet the isRetweet to set
+	 */
+	public void setRetweet(boolean isRetweet) {
+		this.isRetweet = isRetweet;
+	}
+
 	public Date getCreatedAt() {
 		return createdAt;
 	}
@@ -82,11 +98,28 @@ public class Tweet {
 		this.locationName = locationName;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "Tweet [tweetID=" + tweetID + ", userID=" + userID
 				+ ", screenName=" + screenName + ", content=" + content
-				+ ", locationName=" + locationName + ", createdAt=" + createdAt
-				+ ", hashtags=" + hashtags + "]";
+				+ ", locationName=" + locationName + ", isRetweet=" + isRetweet
+				+ ", createdAt=" + createdAt + ", hashtags=" + hashtags + "]";
+	}
+
+	/**
+	 * Strips the URLs from tweet text.
+	 */
+	public void stripURLs() {
+		setContent(getContent().replaceAll("http://.+?(com|net|org)/{0,1}", ""));
+	}
+	
+	/**
+	 * Strips the username mentions from tweet text.
+	 */
+	public void stripMentions() {
+		setContent(getContent().replaceAll("@([A-Za-z0-9_]+)", ""));
 	}
 }

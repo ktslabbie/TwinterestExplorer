@@ -11,11 +11,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+
+import jp.titech.twitter.data.AnnotatedTweet;
 
 import org.dbpedia.spotlight.model.OntologyType;
 
@@ -226,5 +230,27 @@ public class Util {
 			returnTypes.add(type);
 		}
 		return returnTypes;
+	}
+
+	/**
+	 * @param annotatedTweets
+	 * @return 
+	 */
+	public static Map<OntologyType, Integer> mergeOntologyTypeMaps(List<AnnotatedTweet> annotatedTweets){
+		Map<OntologyType, Integer> fullMap = new HashMap<OntologyType, Integer>();
+
+		for (AnnotatedTweet tempTweet : annotatedTweets) {
+			Map<OntologyType, Integer> map = tempTweet.getTransitiveTypes();
+			for(Iterator<OntologyType> it = map.keySet().iterator(); it.hasNext();){
+				OntologyType currentType = it.next();
+				if(fullMap.get(currentType) != null) {
+					fullMap.put(currentType, fullMap.get(currentType) + map.get(currentType));
+				} else {
+					fullMap.put(currentType, map.get(currentType));
+				}
+			}
+
+		}
+		return fullMap;
 	}
 }

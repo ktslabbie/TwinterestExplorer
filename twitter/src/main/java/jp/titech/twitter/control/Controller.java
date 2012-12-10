@@ -23,6 +23,11 @@ public class Controller {
 		return controller;
 	}
 
+	/**
+	 * 
+	 * @param userID
+	 * @param count Number of tweets to collect.
+	 */
 	public void startSearchMining(int userID, int count) {
 		miner = new SearchMiner();
 		miner.mineUser(userID, count);
