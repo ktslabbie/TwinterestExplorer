@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.titech.twitter.ontology.DBpediaOntology;
+import jp.titech.twitter.ontology.DBpediaQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
@@ -64,9 +64,20 @@ public class DBpediaOntologyRepository {
 	 * 
 	 */
 	private void initialize() {
+		Log.getLogger().info("Initializing the DBpedia Ontology repository...");
+		
 		File file = new File(Vars.DBPEDIA_ONTOLOGY_FILE);
 		String baseURI = "http://dbpedia.org/";
+		
+		// Add DBpedia Ontology to repository
+		this.addOntology(file, baseURI);
+	}
 
+	/**
+	 * @param file
+	 * @param baseURI
+	 */
+	private void addOntology(File file, String baseURI) {
 		try {
 			RepositoryConnection con = dbpediaOntologyRepository.getConnection();
 			

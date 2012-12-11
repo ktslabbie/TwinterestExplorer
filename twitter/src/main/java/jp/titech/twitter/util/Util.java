@@ -240,7 +240,8 @@ public class Util {
 		Map<OntologyType, Integer> fullMap = new HashMap<OntologyType, Integer>();
 
 		for (AnnotatedTweet tempTweet : annotatedTweets) {
-			Map<OntologyType, Integer> map = tempTweet.getTransitiveTypes();
+			
+			Map<OntologyType, Integer> map = tempTweet.getNativeTypes();
 			for(Iterator<OntologyType> it = map.keySet().iterator(); it.hasNext();){
 				OntologyType currentType = it.next();
 				if(fullMap.get(currentType) != null) {

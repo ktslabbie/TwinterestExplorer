@@ -32,6 +32,6 @@ public class App {
 		}*/
 		
 		Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
-		control.createOntology(813286);
+		control.createOntology(813286, 10);
     }
 }

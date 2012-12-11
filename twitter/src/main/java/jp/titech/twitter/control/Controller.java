@@ -37,4 +37,9 @@ public class Controller {
 		OntologyBuilder ob = new OntologyBuilder(userID);
 		ob.build();
 	}
+	
+	public void createOntology(int userID, int count) {
+		OntologyBuilder ob = new OntologyBuilder(userID, count);
+		ob.build();
+	}
 }

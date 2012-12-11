@@ -10,9 +10,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
+
+import org.dbpedia.spotlight.model.OntologyType;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
@@ -32,7 +36,7 @@ public class TweetBase {
 	private Connection dbConnection;
 
 	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddURLStatement, preparedAddUserMentionStatement, 
-	preparedAddMediaStatement, preparedAddLocationStatement;
+	preparedAddMediaStatement, preparedAddLocationStatement, preparedAddOntologyStatement;
 	private PreparedStatement preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement, preparedGetURLStatement,
 	preparedGetUsermentionStatement, preparedGetMediaStatement;
 
@@ -62,6 +66,9 @@ public class TweetBase {
 			
 			preparedAddMediaStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Media (tweet_id, media_url) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			preparedAddOntologyStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.Ontology (user_id, ontology_type, cardinality, confidence, support) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			
 			preparedGetTweetsStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIR + "select_user_tweets.sql"));
 			preparedGetUsermentionStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?");
@@ -186,6 +193,60 @@ public class TweetBase {
 		}
 		return false;
 	}
+	
+/*	*//**
+	 * Check containment on Ontology DB.
+	 * 
+	 * @param userID
+	 * @param fullUri
+	 * @param confidence
+	 * @param support
+	 * @return
+	 *//*
+	private boolean isContained(int userID, String fullUri,	double confidence, int support) {
+		try {
+			preparedGetSingleTweetStatement.clearParameters();
+			preparedGetSingleTweetStatement.setLong(1, tweetID);
+			ResultSet resultSet = preparedGetSingleTweetStatement.executeQuery();
+			if(resultSet.next()) return true;
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+		return false;
+	}*/
+	
+	/**
+	 * @param userID
+	 * @param fullMap
+	 */
+	public void addOntology(int userID, Map<OntologyType, Integer> fullMap) {
+		
+		for (OntologyType type : fullMap.keySet()) {
+			
+			/*if(this.isContained(userID, type.getFullUri(), Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT)) {
+				Log.getLogger().warn("Tweet from user " + screenName + " with ID " + tweetID + " already contained in DB! Skipping.");
+				return;
+			}*/
+			
+			try {
+				preparedAddOntologyStatement.clearParameters();
+				preparedAddOntologyStatement.setLong(1, userID);
+				preparedAddOntologyStatement.setString(2, type.getFullUri());
+				preparedAddOntologyStatement.setInt(3, fullMap.get(type));
+				preparedAddOntologyStatement.setDouble(4, Vars.SPOTLIGHT_CONFIDENCE);
+				preparedAddOntologyStatement.setInt(5, Vars.SPOTLIGHT_SUPPORT);
+				preparedAddOntologyStatement.executeUpdate();
+			} catch (SQLIntegrityConstraintViolationException sqlicve) {
+				Log.getLogger().info("Row already exists in ONTOLOGY database! Delete ontology of user " + userID + " first. Aborting entire procedure.");
+				break;
+			} catch (SQLException sqle) {
+				sqle.printStackTrace();
+			}
+		}
+		Log.getLogger().info("Finished adding ontology to DB!");
+	}
+
+
 
 	public ArrayList<Tweet> getTweets(long userID) {
 

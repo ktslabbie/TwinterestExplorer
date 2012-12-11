@@ -10,12 +10,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Vars;
 
 import org.dbpedia.spotlight.model.DBpediaResource;
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
 import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.FreebaseType;
 import org.dbpedia.spotlight.model.OntologyType;
 import org.dbpedia.spotlight.model.SchemaOrgType;
 import org.dbpedia.spotlight.model.SurfaceForm;
@@ -78,8 +79,11 @@ public class SpotlightUtil {
 						occurrence.setSimilarityScore(jsonResource.getDouble("@finalScore"));
 						resourceOccurrences.add(occurrence);
 					}
+					if(!Vars.INCLUDE_EMPTY_SURFACE_FORMS)
+						resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
 				}
-				resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
+				if(Vars.INCLUDE_EMPTY_SURFACE_FORMS)
+					resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
 			}
 			
 		} catch (JSONException e) {
@@ -99,10 +103,12 @@ public class SpotlightUtil {
 			dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
 			dbpediaResource.setSupport(jsonResource.getInt("@support"));
 			String[] types = jsonResource.getString("@types").split(", ");
+			
 			List<OntologyType> typeList = new ArrayList<OntologyType>();
 			for (int k = 0; k < types.length; k++) {
 				OntologyType type = SpotlightUtil.determineOntologyType(types[k]);
-				typeList.add(type);
+				if(type != null)
+					typeList.add(type);
 			}
 			dbpediaResource.setTypes(typeList);
 			return dbpediaResource;
@@ -128,11 +134,7 @@ public class SpotlightUtil {
 			returnType = new SchemaOrgType(split[1]);
 		} else if(type.equals("Freebase")){
 			String[] domainSplit = split[1].split("/");
-			if(domainSplit.length == 2){
-				returnType = new FreebaseType(domainSplit[1], null);
-			} else {
-				returnType = new FreebaseType(domainSplit[1], domainSplit[2]);
-			}
+			returnType = (domainSplit.length == 2) ? new FreebaseType(domainSplit[1]) : new FreebaseType(domainSplit[1], domainSplit[2]);
 		}
 		return returnType;
 	}

@@ -18,21 +18,30 @@ import org.dbpedia.spotlight.model.OntologyType;
 import jp.titech.twitter.data.AnnotatedTweet;
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.db.TweetBase;
-import jp.titech.twitter.matching.Annotator;
+import jp.titech.twitter.matching.spotlight.SpotlightQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 
 public class OntologyBuilder {
 	
 	private int userID;
-	private DBpediaOntology dbpediaOntology;
+	private int totalCount;
+	private DBpediaQuery dbpediaOntology;
 
 	public OntologyBuilder(int tUserID) {
 		userID = tUserID;
-		dbpediaOntology = DBpediaOntology.getInstance();
+		totalCount = 3200;
+		dbpediaOntology = DBpediaQuery.getInstance();
+	}
+	
+	public OntologyBuilder(int tUserID, int tCount) {
+		userID = tUserID;
+		totalCount = (tCount <= 3200) ? tCount : 3200;
+		dbpediaOntology = DBpediaQuery.getInstance();
 	}
 
 	public void build() {
+		Log.getLogger().info("Building ontology for user " + userID + " based on the " + totalCount + " most recent tweets.");
 		List<Tweet> tweets = TweetBase.getInstance().getTweets(userID);
 		List<AnnotatedTweet> annotatedTweets = new ArrayList<AnnotatedTweet>();
 		int count = 0;
@@ -45,18 +54,32 @@ public class OntologyBuilder {
 			
 			Log.getLogger().info("Stripped tweet content: " + tweet.getContent());
 			
-			Annotator annotator = new Annotator();
-			AnnotatedTweet aTweet = annotator.annotate(tweet);
+			SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
+			Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(tweet.getContent());
+			
+			if(!occurrences.isEmpty()) {
+				Log.getLogger().info("Found matches!");
+				for (String key : occurrences.keySet()) {
+					Log.getLogger().info(key + ": " + occurrences.get(key));
+				}
+			}
+			
+			AnnotatedTweet aTweet = new AnnotatedTweet(tweet, occurrences);
+			
+			DBpediaQuery dbpQuery = DBpediaQuery.getInstance();
+			
+			//dbpQuery.collectYAGOClasses(aTweet);
+			//dbpQuery.collectCategories(aTweet);
 			
 			annotatedTweets.add(aTweet);
 			count++;
 
-			if(count == 1000) break;
-			//Log.getLogger().info("BEST CANDIDATES: " + annotatedTweet.getBestCandidates());
-			//Log.getLogger().info("TYPES: " + annotatedTweet.getTypes());
+			if(count == totalCount) break;
 		}
 		
 		Map<OntologyType, Integer> fullMap = Util.mergeOntologyTypeMaps(annotatedTweets);
+		
+		TweetBase.getInstance().addOntology(userID, fullMap);
 		
 		Log.getLogger().info("Transitive types: " + fullMap.toString());
 	}
