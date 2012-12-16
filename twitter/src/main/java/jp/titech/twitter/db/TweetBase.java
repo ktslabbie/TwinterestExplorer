@@ -14,6 +14,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.OntologyType;
@@ -26,6 +27,7 @@ import twitter4j.URLEntity;
 import twitter4j.UserMentionEntity;
 
 import jp.titech.twitter.data.Tweet;
+import jp.titech.twitter.ner.spotlight.SpotlightUtil;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -38,7 +40,7 @@ public class TweetBase {
 	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddURLStatement, preparedAddUserMentionStatement, 
 	preparedAddMediaStatement, preparedAddLocationStatement, preparedAddOntologyStatement;
 	private PreparedStatement preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement, preparedGetURLStatement,
-	preparedGetUsermentionStatement, preparedGetMediaStatement;
+	preparedGetUsermentionStatement, preparedGetMediaStatement, preparedGetUserOntologyStatement;
 
 	private TweetBase(){
 		initDB();
@@ -70,14 +72,15 @@ public class TweetBase {
 			preparedAddOntologyStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Ontology (user_id, ontology_type, cardinality, confidence, support) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			
-			preparedGetTweetsStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIR + "select_user_tweets.sql"));
+			preparedGetTweetsStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_user_tweets.sql"));
 			preparedGetUsermentionStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?");
 			preparedGetHashtagsStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Hashtags WHERE tweet_id = ?");
 			preparedGetURLStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.URLs WHERE tweet_id = ?");
 			preparedGetMediaStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Media WHERE tweet_id = ?");
 			preparedGetLocationStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Locations WHERE tweet_id = ?");
+			preparedGetUserOntologyStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_user_ontology.sql"));
 
-			preparedGetSingleTweetStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIR + "select_single_tweet.sql"));
+			preparedGetSingleTweetStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_single_tweet.sql"));
 
 			Log.getLogger().info("SQL statements prepared.");
 
@@ -194,7 +197,7 @@ public class TweetBase {
 		return false;
 	}
 	
-/*	*//**
+	/**
 	 * Check containment on Ontology DB.
 	 * 
 	 * @param userID
@@ -202,18 +205,20 @@ public class TweetBase {
 	 * @param confidence
 	 * @param support
 	 * @return
-	 *//*
-	private boolean isContained(int userID, String fullUri,	double confidence, int support) {
+	 */
+	public boolean isContained(int userID, double confidence, int support) {
 		try {
-			preparedGetSingleTweetStatement.clearParameters();
-			preparedGetSingleTweetStatement.setLong(1, tweetID);
-			ResultSet resultSet = preparedGetSingleTweetStatement.executeQuery();
+			preparedGetUserOntologyStatement.clearParameters();
+			preparedGetUserOntologyStatement.setLong(1, userID);
+			preparedGetUserOntologyStatement.setDouble(2, Vars.SPOTLIGHT_CONFIDENCE);
+			preparedGetUserOntologyStatement.setInt(3, Vars.SPOTLIGHT_SUPPORT);
+			ResultSet resultSet = preparedGetUserOntologyStatement.executeQuery();
 			if(resultSet.next()) return true;
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		}
 		return false;
-	}*/
+	}
 	
 	/**
 	 * @param userID
@@ -270,6 +275,31 @@ public class TweetBase {
 		}
 
 		return tweets;
+	}
+	
+	public Map<OntologyType, Integer> getOntology(long userID) {
+
+		Map<OntologyType, Integer> ontology = new HashMap<OntologyType, Integer>();
+
+		try {
+			preparedGetUserOntologyStatement.clearParameters();
+			preparedGetUserOntologyStatement.setLong(1, userID);
+			preparedGetUserOntologyStatement.setDouble(2, Vars.SPOTLIGHT_CONFIDENCE);
+			preparedGetUserOntologyStatement.setInt(3, Vars.SPOTLIGHT_SUPPORT);
+			ResultSet resultSet = preparedGetUserOntologyStatement.executeQuery();
+
+			while(resultSet.next()) {
+				String uri = resultSet.getString(2);
+				int cardinality = resultSet.getInt(3);
+				OntologyType ontologyType = Util.determineOntologyType(uri);
+				ontology.put(ontologyType, cardinality);
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return ontology;
 	}
 
 	public ArrayList<String> getHashtags(long tweetID) {

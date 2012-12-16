@@ -5,9 +5,14 @@
  */
 package jp.titech.twitter.control;
 
+import java.util.Map;
+
+import org.dbpedia.spotlight.model.OntologyType;
+
 import jp.titech.twitter.mining.Miner;
 import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.ontology.OntologyBuilder;
+import jp.titech.twitter.util.Log;
 
 public class Controller {
 
@@ -41,5 +46,7 @@ public class Controller {
 	public void createOntology(int userID, int count) {
 		OntologyBuilder ob = new OntologyBuilder(userID, count);
 		ob.build();
+		Map<OntologyType, Integer> ontology = ob.getOntology();
+		
 	}
 }

@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import jp.titech.twitter.ontology.types.Category;
+import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -29,10 +31,14 @@ public class AnnotatedTweet extends Tweet {
 	private int support;
 	private Map<String, List<DBpediaResourceOccurrence>> occurrences;
 	private List<DBpediaResourceOccurrence> bestCandidates;
-	private Map<OntologyType, Integer> nativeTypes;
+	private Map<OntologyType, Integer> nativeTypes, allTypes;
+	private Map<YAGOType, Integer> yagoTypes;
+	private Map<Category, Integer> categories;
 
 	/**
 	 * 
+	 * 
+	 * @param tweet
 	 */
 	public AnnotatedTweet(Tweet tweet) {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getUserMentions(), 
@@ -50,6 +56,10 @@ public class AnnotatedTweet extends Tweet {
 		confidence = Vars.SPOTLIGHT_CONFIDENCE;
 		support = Vars.SPOTLIGHT_SUPPORT;
 		occurrences = occs;
+		allTypes = new HashMap<OntologyType, Integer>();
+		yagoTypes = new HashMap<YAGOType, Integer>();
+		categories = new HashMap<Category, Integer>();
+		
 		this.initBestCandidates();
 		this.initNativeTypes();
 	}
@@ -94,6 +104,78 @@ public class AnnotatedTweet extends Tweet {
 	 */
 	public void setOccurrences(Map<String, List<DBpediaResourceOccurrence>> occurrences) {
 		this.occurrences = occurrences;
+	}
+
+	/**
+	 * @return the yAGOTypes
+	 */
+	public Map<YAGOType, Integer> getYAGOTypes() {
+		return yagoTypes;
+	}
+
+	/**
+	 * @param yAGOTypes the yAGOTypes to set
+	 */
+	public void setYAGOTypes(Map<YAGOType, Integer> tYAGOTypes) {
+		yagoTypes = tYAGOTypes;
+		allTypes.putAll(tYAGOTypes);
+	}
+
+	/**
+	 * @return the categories
+	 */
+	public Map<Category, Integer> getCategories() {
+		return categories;
+	}
+
+	/**
+	 * @param categories the categories to set
+	 */
+	public void setCategories(Map<Category, Integer> tCategories) {
+		this.categories = tCategories;
+		allTypes.putAll(tCategories);
+	}
+
+	/**
+	 * @param bestCandidates the bestCandidates to set
+	 */
+	public void setBestCandidates(List<DBpediaResourceOccurrence> bestCandidates) {
+		this.bestCandidates = bestCandidates;
+	}
+
+	/**
+	 * @param nativeTypes the nativeTypes to set
+	 */
+	public void setNativeTypes(Map<OntologyType, Integer> nativeTypes) {
+		this.nativeTypes = nativeTypes;
+	}
+	
+	/**
+	 * @return the allTypes
+	 */
+	public Map<OntologyType, Integer> getAllTypes() {
+		return allTypes;
+	}
+
+	/**
+	 * @param allTypes the allTypes to set
+	 */
+	public void setAllTypes(Map<OntologyType, Integer> allTypes) {
+		this.allTypes = allTypes;
+	}
+
+	/**
+	 * @return the yagoTypes
+	 */
+	public Map<YAGOType, Integer> getYagoTypes() {
+		return yagoTypes;
+	}
+
+	/**
+	 * @param yagoTypes the yagoTypes to set
+	 */
+	public void setYagoTypes(Map<YAGOType, Integer> yagoTypes) {
+		this.yagoTypes = yagoTypes;
 	}
 
 	/* (non-Javadoc)
@@ -144,7 +226,8 @@ public class AnnotatedTweet extends Tweet {
 	}
 
 	/**
-	 * @return
+	 * Initialize the types native to DBpedia Spotlight (DBpedia, Freebase, Schema).
+	 * Each unique OntologyType and its cardinality is stored in the map nativeTypes. 
 	 */
 	private void initNativeTypes() {
 
@@ -162,7 +245,6 @@ public class AnnotatedTweet extends Tweet {
 					Log.getLogger().info("Type: " + typeID);
 	
 					if(typeID.contains("DBpedia:") || typeID.contains("Freebase:") || typeID.contains("Schema:")){
-	
 						if(nativeTypes.get(currentType) != null) {
 							nativeTypes.put(currentType, nativeTypes.get(currentType) + 1);
 						} else {
@@ -172,8 +254,8 @@ public class AnnotatedTweet extends Tweet {
 				}
 			}
 		}
+		allTypes.putAll(nativeTypes);
 	}
-
 
 	/*	*//**
 	 * 

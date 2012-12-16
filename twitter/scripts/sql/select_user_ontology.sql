@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Ontology WHERE user_id = ? AND confidence = ? AND support = ?

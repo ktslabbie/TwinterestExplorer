@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,8 +21,13 @@ import java.util.Scanner;
 import java.util.Set;
 
 import jp.titech.twitter.data.AnnotatedTweet;
+import jp.titech.twitter.ontology.types.Category;
+import jp.titech.twitter.ontology.types.FreebaseType;
+import jp.titech.twitter.ontology.types.YAGOType;
 
+import org.dbpedia.spotlight.model.DBpediaType;
 import org.dbpedia.spotlight.model.OntologyType;
+import org.dbpedia.spotlight.model.SchemaOrgType;
 
 public class Util {
 
@@ -85,16 +91,7 @@ public class Util {
 	 * @return The (text) file contents
 	 */
 	public static String readFile(String path) {
-		String out = "";
-		try {
-			Scanner sc = new Scanner(new FileReader(new File(path)));
-			while(sc.hasNextLine()){
-				out += sc.nextLine() + "\n";
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		return out;
+		return readFile(new File(path));
 	}
 
 	/**
@@ -240,8 +237,7 @@ public class Util {
 		Map<OntologyType, Integer> fullMap = new HashMap<OntologyType, Integer>();
 
 		for (AnnotatedTweet tempTweet : annotatedTweets) {
-			
-			Map<OntologyType, Integer> map = tempTweet.getNativeTypes();
+			Map<OntologyType, Integer> map = tempTweet.getAllTypes();
 			for(Iterator<OntologyType> it = map.keySet().iterator(); it.hasNext();){
 				OntologyType currentType = it.next();
 				if(fullMap.get(currentType) != null) {
@@ -250,8 +246,54 @@ public class Util {
 					fullMap.put(currentType, map.get(currentType));
 				}
 			}
-
 		}
 		return fullMap;
+	}
+	
+	/**
+	 * Create OntologyType object from type URI
+	 * 
+	 * @param string A type URI
+	 * @return
+	 */
+	public static OntologyType determineOntologyType(String uri) {
+		OntologyType returnType = null;
+		
+		if(uri.contains("dbpedia.org/ontology/")){
+			returnType = new DBpediaType(uri.split("dbpedia.org/ontology/")[1]);
+		} else if(uri.contains("schema.org/")){
+			returnType = new SchemaOrgType(uri.split("schema.org/")[1]);
+		} else if(uri.contains("rdf.freebase.com/ns/")){
+			String[] pathSplit = uri.split("rdf.freebase.com/ns/");
+			String[] domainSplit = pathSplit[1].split("/");
+			returnType = (domainSplit.length == 1) ? new FreebaseType(domainSplit[0]) : new FreebaseType(domainSplit[0], domainSplit[1]);
+		} else if(uri.contains("dbpedia.org/class/yago/")){
+			returnType = new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
+		} else if(uri.contains("dbpedia.org/resource/Category:")){
+			returnType = new Category(uri.split("dbpedia.org/resource/Category:")[1]);
+		}
+		return returnType;
+	}
+
+	/**
+	 * Returns the file name without extension.
+	 * 
+	 * @param file
+	 * @return The extension string
+	 */
+	public static String getName(File file) {
+		String[] name = file.getName().split("\\.");
+		return name[0];
+	}
+	
+	/**
+	 * Returns the file extension.
+	 * 
+	 * @param file
+	 * @return The extension string
+	 */
+	public static String getExtension(File file) {
+		String[] name = file.getName().split("\\.");
+		return (name.length <= 1) ? "" : name[name.length-1];
 	}
 }

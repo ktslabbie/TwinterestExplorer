@@ -37,7 +37,6 @@ CREATE TABLE TWEETBASE.ONTOLOGY (
 			PRIMARY KEY (user_id, ontology_type, confidence, support)
 );
 
-
 CREATE TABLE TWEETBASE.TWEETS (
 		tweet_id BIGINT NOT NULL,
 		user_id BIGINT NOT NULL,

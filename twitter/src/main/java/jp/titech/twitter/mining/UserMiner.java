@@ -76,8 +76,8 @@ public class UserMiner extends Miner {
 					
 					User user = status.getUser();
 					
-					Log.getLogger().info("URL entities found: " + urlEntities.length);
-					Log.getLogger().info("Media entities found: " + mediaEntities.length);
+					//Log.getLogger().info("URL entities found: " + urlEntities.length);
+					//Log.getLogger().info("Media entities found: " + mediaEntities.length);
 					
 					tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
 							status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities);

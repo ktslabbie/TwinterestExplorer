@@ -1,0 +1,13 @@
+select distinct ?yago where { 
+ { <%URI%> rdf:type ?yago } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf ?yago ] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]] } UNION
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]]]]] } UNION
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]]]]]] } UNION
+ { <%URI%> rdf:type [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf [rdfs:suBClassOf ?yago ]]]]]]]]]] }
+}

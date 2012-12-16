@@ -3,7 +3,7 @@
  * @version		1.0
  * @since		16 okt. 2012
  */
-package jp.titech.twitter.matching.spotlight;
+package jp.titech.twitter.ner.spotlight;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -12,6 +12,7 @@ import java.util.Map;
 
 import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
 import org.dbpedia.spotlight.model.DBpediaResource;
@@ -97,7 +98,7 @@ public class SpotlightUtil {
 	 * @param jsonObject
 	 * @return
 	 */
-	private static DBpediaResource jsonToDBpediaResource(JSONObject jsonResource) {		
+	private static DBpediaResource jsonToDBpediaResource(JSONObject jsonResource) {
 		try {
 			DBpediaResource dbpediaResource = new DBpediaResource(jsonResource.getString("@uri"));
 			dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
@@ -106,7 +107,7 @@ public class SpotlightUtil {
 			
 			List<OntologyType> typeList = new ArrayList<OntologyType>();
 			for (int k = 0; k < types.length; k++) {
-				OntologyType type = SpotlightUtil.determineOntologyType(types[k]);
+				OntologyType type = determineNativeOntologyType(types[k]);
 				if(type != null)
 					typeList.add(type);
 			}
@@ -117,12 +118,12 @@ public class SpotlightUtil {
 			return null;
 		}
 	}
-
+	
 	/**
 	 * @param string
 	 * @return
 	 */
-	private static OntologyType determineOntologyType(String string) {
+	private static OntologyType determineNativeOntologyType(String string) {
 		String[] split = string.split(":");
 		if(split.length != 2) return null;
 

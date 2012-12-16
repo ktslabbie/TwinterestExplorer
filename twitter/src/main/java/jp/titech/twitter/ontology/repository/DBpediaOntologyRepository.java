@@ -12,6 +12,7 @@ import java.util.List;
 
 import jp.titech.twitter.ontology.DBpediaQuery;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
 import org.openrdf.OpenRDFException;
@@ -29,6 +30,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.sail.inferencer.fc.ForwardChainingRDFSInferencer;
 import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 
 /**
  * @author Kristian Slabbekoorn
@@ -41,13 +43,26 @@ public class DBpediaOntologyRepository {
 	private Repository dbpediaOntologyRepository;
 	
 	/**
-	 * 
+	 * Constructor with default directory.
 	 */
 	public DBpediaOntologyRepository() {
-		dbpediaOntologyRepository = new SailRepository(new ForwardChainingRDFSInferencer(new MemoryStore()));
+		File directory = new File(Vars.DBPEDIA_REPOSITORY_DIRECTORY);
+		dbpediaOntologyRepository = new SailRepository(new NativeStore(directory));
 		try {
 			dbpediaOntologyRepository.initialize();
-			this.initialize();
+		} catch (RepositoryException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Construct repository with set directory.
+	 * @param directory the directory
+	 */
+	public DBpediaOntologyRepository(String directory) {
+		dbpediaOntologyRepository = new SailRepository(new NativeStore(new File(directory)));
+		try {
+			dbpediaOntologyRepository.initialize();
 		} catch (RepositoryException e) {
 			e.printStackTrace();
 		}
@@ -59,40 +74,12 @@ public class DBpediaOntologyRepository {
 		}
 		return instance;
 	}
-
-	/**
-	 * 
-	 */
-	private void initialize() {
-		Log.getLogger().info("Initializing the DBpedia Ontology repository...");
-		
-		File file = new File(Vars.DBPEDIA_ONTOLOGY_FILE);
-		String baseURI = "http://dbpedia.org/";
-		
-		// Add DBpedia Ontology to repository
-		this.addOntology(file, baseURI);
-	}
-
-	/**
-	 * @param file
-	 * @param baseURI
-	 */
-	private void addOntology(File file, String baseURI) {
-		try {
-			RepositoryConnection con = dbpediaOntologyRepository.getConnection();
-			
-			try {
-				con.add(file, baseURI, RDFFormat.RDFXML);
-			}
-			finally {
-				con.close();
-			}
+	
+	public static DBpediaOntologyRepository getInstance(String directory){
+		if(instance == null){
+			instance = new DBpediaOntologyRepository(directory);
 		}
-		catch (OpenRDFException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		return instance;
 	}
 
 	/**
@@ -124,5 +111,18 @@ public class DBpediaOntologyRepository {
 			e.printStackTrace();
 		}
 		return bindingList;
+	}
+
+	/**
+	 * @return
+	 */
+	public RepositoryConnection getConnection() {
+		RepositoryConnection conn = null;
+		try {
+			conn = dbpediaOntologyRepository.getConnection();
+		} catch (RepositoryException e) {
+			e.printStackTrace();
+		}
+		return conn;
 	}
 }

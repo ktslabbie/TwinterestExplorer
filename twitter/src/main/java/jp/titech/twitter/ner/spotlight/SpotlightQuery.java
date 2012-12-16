@@ -3,7 +3,7 @@
  * @version		1.0
  * @since		17 okt. 2012
  */
-package jp.titech.twitter.matching.spotlight;
+package jp.titech.twitter.ner.spotlight;
 
 import java.io.BufferedReader;
 import java.io.IOException;

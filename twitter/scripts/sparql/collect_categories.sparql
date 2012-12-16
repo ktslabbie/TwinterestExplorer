@@ -1,0 +1,7 @@
+select distinct ?category where { 
+ { <%URI%> dcterms:subject ?category } UNION
+ { <%URI%> dcterms:subject [ skos:broader ?category ] } UNION
+ { <%URI%> dcterms:subject [ skos:broader [ skos:broader ?category ]] } UNION
+ { <%URI%> dcterms:subject [ skos:broader [ skos:broader [ skos:broader ?category ]]] } UNION
+ { <%URI%> dcterms:subject [ skos:broader [ skos:broader [ skos:broader [ skos:broader ?category ]]]] }
+}
