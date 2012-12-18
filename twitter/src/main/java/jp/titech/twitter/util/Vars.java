@@ -21,6 +21,8 @@ public class Vars {
 	public static final String 	DBPEDIA_REPOSITORY_DIRECTORY 	= c.getProperty("dbpedia.repositoryDirectory");
 	public static final boolean	DBPEDIA_REMOTE					= Boolean.valueOf(c.getProperty("dbpedia.remote"));				// Remote DBpedia querying yes/no
 	
+	public static final String	DATA_DIRECTORY					= c.getProperty("data.dataDirectory");
+	
 	public static final String	SQL_SCRIPT_DIRECTORY			= c.getProperty("sql.scriptDirectory");
 	
 	public static final String	SPARQL_PREFIXES					= Util.readFile(c.getProperty("sparql.prefixFile"));
@@ -30,4 +32,17 @@ public class Vars {
 	public static double 		SPOTLIGHT_CONFIDENCE			= Double.parseDouble(c.getProperty("spotlight.confidence"));
 	public static int 			SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
 	public static final boolean INCLUDE_EMPTY_SURFACE_FORMS 	= Boolean.valueOf(c.getProperty("spotlight.includeEmptySurfaceForms"));
+
+	public static double		DBPEDIA_LOW_OCCURRENCE_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.dbpediaLowOccurrencePruningRate"));
+	public static double		SCHEMA_LOW_OCCURRENCE_PRUNING_RATE 		= Double.parseDouble(c.getProperty("pruning.schemaLowOccurrencePruningRate"));
+	public static double		YAGO_LOW_OCCURRENCE_PRUNING_RATE 		= Double.parseDouble(c.getProperty("pruning.yagoLowOccurrencePruningRate"));
+	public static double		FREEBASE_LOW_OCCURRENCE_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.freebaseLowOccurrencePruningRate"));
+	public static double		CATEGORY_LOW_OCCURRENCE_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.categoryLowOccurrencePruningRate"));
+	
+	public static int 			DBPEDIA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.dbpediaHighGeneralityPruningRate"));
+	public static int 			SCHEMA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.schemaHighGeneralityPruningRate"));
+	public static int 			YAGO_HIGH_GENERALITY_PRUNING_RATE 		= Integer.parseInt(c.getProperty("pruning.yagoHighGeneralityPruningRate"));
+	public static double		CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
+	
+	public static int 			CATEGORY_TOP_K				 	= Integer.parseInt(c.getProperty("pruning.categoryTopK"));
 }

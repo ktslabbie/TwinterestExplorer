@@ -251,8 +251,6 @@ public class TweetBase {
 		Log.getLogger().info("Finished adding ontology to DB!");
 	}
 
-
-
 	public ArrayList<Tweet> getTweets(long userID) {
 
 		ArrayList<Tweet> tweets = new ArrayList<Tweet>();

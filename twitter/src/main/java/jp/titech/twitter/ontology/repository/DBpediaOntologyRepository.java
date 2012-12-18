@@ -44,10 +44,13 @@ public class DBpediaOntologyRepository {
 	
 	/**
 	 * Constructor with default directory.
+	 * 
+	 * TODO: something about the inferencing thing.
 	 */
 	public DBpediaOntologyRepository() {
 		File directory = new File(Vars.DBPEDIA_REPOSITORY_DIRECTORY);
-		dbpediaOntologyRepository = new SailRepository(new NativeStore(directory));
+		dbpediaOntologyRepository = new SailRepository(new ForwardChainingRDFSInferencer(new NativeStore(directory)));
+		//dbpediaOntologyRepository = new SailRepository(new NativeStore(directory));
 		try {
 			dbpediaOntologyRepository.initialize();
 		} catch (RepositoryException e) {
@@ -60,7 +63,8 @@ public class DBpediaOntologyRepository {
 	 * @param directory the directory
 	 */
 	public DBpediaOntologyRepository(String directory) {
-		dbpediaOntologyRepository = new SailRepository(new NativeStore(new File(directory)));
+		dbpediaOntologyRepository = new SailRepository(new ForwardChainingRDFSInferencer(new NativeStore(new File(directory))));
+		//dbpediaOntologyRepository = new SailRepository(new NativeStore(new File(directory)));
 		try {
 			dbpediaOntologyRepository.initialize();
 		} catch (RepositoryException e) {

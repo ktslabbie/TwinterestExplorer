@@ -1,0 +1,1 @@
+DELETE FROM TweetBase.Ontology WHERE user_id = 199545800 AND confidence = 0.3 AND support = 20

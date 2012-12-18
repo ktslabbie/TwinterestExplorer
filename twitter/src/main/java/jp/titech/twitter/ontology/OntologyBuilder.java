@@ -58,6 +58,8 @@ public class OntologyBuilder {
 				tweet.stripEverything();
 
 				Log.getLogger().info("Stripped tweet content: " + tweet.getContent());
+				
+				if(tweet.getContent().isEmpty() || tweet.getContent().equals(" ")) continue;
 
 				SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
 				Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(tweet.getContent());
@@ -89,7 +91,7 @@ public class OntologyBuilder {
 			TweetBase.getInstance().addOntology(userID, ontology);
 		}
 
-		Log.getLogger().info("Transitive types: " + ontology.toString());
+		//Log.getLogger().info("Transitive types: " + ontology.toString());
 
 	}
 

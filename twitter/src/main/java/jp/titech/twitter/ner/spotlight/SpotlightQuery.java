@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +90,8 @@ public class SpotlightQuery {
 			urlc.setRequestProperty("accept", "application/json");
 
 			if (urlc.getResponseCode() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : " + urlc.getResponseCode());
+				Log.getLogger().error("Failed : HTTP error code : " + urlc.getResponseCode() + ". Returning empty occurrence map.");
+				return new HashMap<String, List<DBpediaResourceOccurrence>>();
 			}
 
 			Log.getLogger().info("Sending query to DBpedia Spotlight.");

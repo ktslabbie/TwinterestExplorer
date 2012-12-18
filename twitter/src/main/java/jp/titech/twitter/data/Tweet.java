@@ -209,5 +209,6 @@ public class Tweet {
 		this.stripHashtags();
 		this.stripURLs();
 		this.stripMedia();
+		setContent(getContent().trim());
 	}
 }

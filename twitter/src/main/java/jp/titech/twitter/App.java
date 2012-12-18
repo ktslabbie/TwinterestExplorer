@@ -28,7 +28,12 @@ public class App {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
 		Controller control = Controller.getInstance();
-		//control.startSearchMining(813286, 3000);
+		
+		//Obama: 813286
+		//G4L_007: 199545800
+		//robert_a_walker: 70674405
+		
+		//control.startSearchMining(70674405, 3000);
 
 		TweetBase tb = TweetBase.getInstance();
 
@@ -37,6 +42,6 @@ public class App {
 		}*/
 
 		Log.getLogger().info("Creating ontology...");
-		control.createOntology(813286, 3000);
+		control.createOntology(70674405, 3000);
 	}
 }

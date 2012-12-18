@@ -34,8 +34,8 @@ public class RDFLoader {
 	static final String RDF_DIRECTORY = Vars.DBPEDIA_RDF_DIRECTORY;					// Directory with RDF files
 	static final String REPOSITORY_DIRECTORY = Vars.DBPEDIA_REPOSITORY_DIRECTORY;	// Directory to put the repository
 	static final String BASE_URI = "http://dbpedia.org/";							// Base URI for repository graph
-	static final RDFFormat RDF_FORMAT = RDFFormat.NTRIPLES;							// Format of RDF files
-	static final String EXTENSION = "nt";											// Extension of RDF files
+	static final RDFFormat RDF_FORMAT = RDFFormat.RDFXML;							// Format of RDF files
+	static final String EXTENSION = "owl";											// Extension of RDF files
 	
 	static DBpediaOntologyRepository dbpr;
 
