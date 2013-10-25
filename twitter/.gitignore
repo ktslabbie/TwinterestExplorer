@@ -1,6 +1,8 @@
 /bin
+/data
 /target
+/server
 /TweetBase
 /TwitterMiner.log
+/TwitterMiner.log.1
 /derby.log
-/lib

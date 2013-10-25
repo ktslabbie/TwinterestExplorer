@@ -1,0 +1,1 @@
+DELETE FROM TweetBase.Tweets WHERE screen_name = 'techl0g'
