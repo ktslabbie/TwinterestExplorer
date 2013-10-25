@@ -23,7 +23,7 @@ public class App {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
 		Controller control = Controller.getInstance();
-		
+		// A CHANGE FROM MASTER TO TWITCOM
 		//Obama: 813286
 		//G4L_007: 199545800
 		//robert_a_walker: 70674405
