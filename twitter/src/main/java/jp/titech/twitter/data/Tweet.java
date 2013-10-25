@@ -8,6 +8,8 @@ package jp.titech.twitter.data;
 import java.util.ArrayList;
 import java.util.Date;
 
+import jp.titech.twitter.util.Util;
+
 public class Tweet {
 
 	private long tweetID, userID;
@@ -200,6 +202,14 @@ public class Tweet {
 			}
 		}
 	}
+	
+	
+	/**
+	 * Strips the stopwords and netslang from tweet text.
+	 */
+	public void stripStopwords() {
+		setContent(Util.removeStopwords(getContent()));
+	}
 
 	/**
 	 *  Strips user mentions, hashtags, URLs and media from tweet text.
@@ -209,6 +219,7 @@ public class Tweet {
 		this.stripHashtags();
 		this.stripURLs();
 		this.stripMedia();
+		this.stripStopwords();
 		setContent(getContent().trim());
 	}
 }

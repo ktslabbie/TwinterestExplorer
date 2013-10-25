@@ -12,9 +12,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -123,7 +127,7 @@ public class Util {
 		String next = "";
 		while(scanner.hasNext()){
 			if(!(next = scanner.nextLine()).isEmpty()){
-				String[] strs = next.split(" ");
+				String[] strs = next.split("[., ]");
 				for (int i = 0; i < strs.length; i++) {
 					if(!stopWords.contains(strs[i].toLowerCase())){
 						builder.append(strs[i] + " ");
@@ -249,7 +253,7 @@ public class Util {
 		}
 		return fullMap;
 	}
-	
+
 	/**
 	 * Create OntologyType object from type URI
 	 * 
@@ -258,7 +262,7 @@ public class Util {
 	 */
 	public static OntologyType determineOntologyType(String uri) {
 		OntologyType returnType = null;
-		
+
 		if(uri.contains("dbpedia.org/ontology/")){
 			returnType = new DBpediaType(uri.split("dbpedia.org/ontology/")[1]);
 		} else if(uri.contains("schema.org/")){
@@ -285,7 +289,7 @@ public class Util {
 		String[] name = file.getName().split("\\.");
 		return name[0];
 	}
-	
+
 	/**
 	 * Returns the file extension.
 	 * 
@@ -295,5 +299,111 @@ public class Util {
 	public static String getExtension(File file) {
 		String[] name = file.getName().split("\\.");
 		return (name.length <= 1) ? "" : name[name.length-1];
+	}
+
+	/**
+	 * Sorts a map by its values (descending order).
+	 * 
+	 * @param map
+	 * @return
+	 */
+	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
+		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
+			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
+				return (o2.getValue()).compareTo(o1.getValue());
+			}
+		});
+		Map<K, V> result = new LinkedHashMap<K, V>();
+		for (Map.Entry<K, V> entry : list) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
+	public static double calculateYAGOOntologySimilarity(File fileOne, File fileTwo, File output, double threshold) {
+
+		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
+		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
+				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
+		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
+
+		String log = "";
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileOne));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					//if(number != 1 && !split[0].contains("LivingPeople")){
+					if(!split[0].contains("LivingPeople")){
+						mapOne.put(split[0], number);
+						totalOne += number;
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileTwo));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					//if(number != 1 && !split[0].contains("LivingPeople")){
+					if(!split[0].contains("LivingPeople")){
+						mapTwo.put(split[0], number);
+						totalTwo += number;
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		if(totalOne > totalTwo) {
+			biggestMap = mapOne;
+			smallestMap = mapTwo;
+			totalBiggest = totalOne;
+			totalSmallest = totalTwo;
+		} else {
+			biggestMap = mapTwo;
+			smallestMap = mapOne;
+			totalBiggest = totalTwo;
+			totalSmallest = totalOne;
+		}
+
+		double similarity = 0.0;
+		int included = totalSmallest;
+
+		for (String type : smallestMap.keySet()) {
+
+			Integer numberBig = biggestMap.get(type);
+			int remaining = smallestMap.get(type);
+			//log += type + " - " + remaining + " vs. " + numberBig + " occurrences.\n";
+
+			if(numberBig != null){
+				remaining -= numberBig;
+				if(remaining < 0) remaining = 0;
+			}
+			included -= remaining;
+		}
+
+		similarity = ((double)included/(double)totalSmallest);
+
+
+
+		if(similarity >= threshold || Double.isNaN(similarity)) {
+			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
+		} else {
+			Log.getLogger().info(log += "Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
+		}
+
+		return similarity;
 	}
 }

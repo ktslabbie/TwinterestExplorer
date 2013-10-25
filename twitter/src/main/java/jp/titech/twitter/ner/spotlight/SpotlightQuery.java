@@ -26,7 +26,6 @@ import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
 
-
 /**
  * @author Kristian Slabbekoorn
  *

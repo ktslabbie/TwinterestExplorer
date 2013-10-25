@@ -28,6 +28,9 @@ public abstract class AbstractPruner {
 	protected Map<YAGOType, Integer> yagoTypes, prunedYAGOTypes;
 	protected Map<Category, Integer> categories, prunedCategories;
 	
+	protected int dbpediaTotal = 0, schemaOrgTotal = 0, freebaseTotal = 0, yagoTotal = 0, categoryTotal = 0;
+	protected int dbpediaThreshold, schemaOrgThreshold, freebaseThreshold, yagoThreshold, categoryThreshold;
+	
 	protected void initMaps(Map<OntologyType, Integer> tOntology){
 		fullOntology = tOntology;
 		prunedFullOntology = new HashMap<OntologyType, Integer>();
@@ -51,14 +54,19 @@ public abstract class AbstractPruner {
 			int cardinality = fullOntology.get(type);
 			if(type instanceof Category){
 				categories.put((Category) type, cardinality);
+				categoryTotal += cardinality;
 			} else if(type instanceof YAGOType){
 				yagoTypes.put((YAGOType) type, cardinality);
+				yagoTotal += cardinality;
 			} else if(type instanceof FreebaseType){
 				freebaseTypes.put((FreebaseType) type, cardinality);
+				freebaseTotal += cardinality;
 			} else if(type instanceof DBpediaType){
 				dbpediaTypes.put((DBpediaType) type, cardinality);
+				dbpediaTotal += cardinality;
 			} else if(type instanceof SchemaOrgType){
 				schemaOrgTypes.put((SchemaOrgType) type, cardinality);
+				schemaOrgTotal += cardinality;
 			} 
 		}
 	}

@@ -7,6 +7,7 @@ package jp.titech.twitter.ontology;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,18 +26,21 @@ import jp.titech.twitter.util.Vars;
 
 public class OntologyBuilder {
 
-	private int userID;
+	private long userID;
+	private String userName;
 	private int totalCount;
 	private boolean ontologyExists;
 	private Map<OntologyType, Integer> ontology;
+	private Date startDate, endDate;
 
-	public OntologyBuilder(int tUserID) {
+
+	public OntologyBuilder(long tUserID) {
 		userID = tUserID;
 		totalCount = 3200;
 		ontologyExists = TweetBase.getInstance().isContained(tUserID, Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
 	}
 
-	public OntologyBuilder(int tUserID, int tCount) {
+	public OntologyBuilder(long tUserID, int tCount) {
 		userID = tUserID;
 		totalCount = (tCount <= 3200) ? tCount : 3200;
 		ontologyExists = TweetBase.getInstance().isContained(tUserID, Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
@@ -45,7 +49,7 @@ public class OntologyBuilder {
 	public void build() {
 		Log.getLogger().info("Building ontology for user " + userID + " based on the " + totalCount + " most recent tweets.");
 		
-		if(ontologyExists){
+		if(ontologyExists && startDate == null){
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
 			ontology = TweetBase.getInstance().getOntology(userID);
 		} else {
@@ -53,8 +57,22 @@ public class OntologyBuilder {
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(userID);
 			List<AnnotatedTweet> annotatedTweets = new ArrayList<AnnotatedTweet>();
 			int count = 0;
+			Util.loadStopwords(Vars.STOPWORDS_FILE);
+			
+			if(startDate != null && endDate != null){
+				Log.getLogger().info("Getting tweets between " + startDate + " and " + endDate);
+			}
+			
+			
 			for (Tweet tweet : tweets) {
-
+				
+				if(startDate != null && endDate != null){
+					if(tweet.getCreatedAt().before(startDate) || tweet.getCreatedAt().after(endDate)) {
+						Log.getLogger().info("Skipping tweet created at " + tweet.getCreatedAt() + ": outside chosen time interval.");
+						continue;
+					}
+				}
+				
 				tweet.stripEverything();
 
 				Log.getLogger().info("Stripped tweet content: " + tweet.getContent());
@@ -65,9 +83,8 @@ public class OntologyBuilder {
 				Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(tweet.getContent());
 
 				if(!occurrences.isEmpty()) {
-					Log.getLogger().info("Found matches!");
 					for (String key : occurrences.keySet()) {
-						Log.getLogger().info(key + ": " + occurrences.get(key));
+						Log.getLogger().info("Match: " + key + ": " + occurrences.get(key));
 					}
 				}
 
@@ -90,9 +107,6 @@ public class OntologyBuilder {
 
 			TweetBase.getInstance().addOntology(userID, ontology);
 		}
-
-		//Log.getLogger().info("Transitive types: " + ontology.toString());
-
 	}
 
 	/**
@@ -109,5 +123,31 @@ public class OntologyBuilder {
 		this.ontology = ontology;
 	}
 	
-	
+	/**
+	 * @return the startDate
+	 */
+	public Date getStartDate() {
+		return startDate;
+	}
+
+	/**
+	 * @param startDate the startDate to set
+	 */
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+	/**
+	 * @return the endDate
+	 */
+	public Date getEndDate() {
+		return endDate;
+	}
+
+	/**
+	 * @param endDate the endDate to set
+	 */
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
 }

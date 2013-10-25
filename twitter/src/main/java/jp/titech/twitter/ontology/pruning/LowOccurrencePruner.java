@@ -24,10 +24,6 @@ import org.dbpedia.spotlight.model.SchemaOrgType;
  */
 public class LowOccurrencePruner extends AbstractPruner {
 	
-
-	private int dbpediaTotal = 0, schemaOrgTotal = 0, freebaseTotal = 0, yagoTotal = 0, categoryTotal = 0;
-	private int dbpediaThreshold, schemaOrgThreshold, freebaseThreshold, yagoThreshold, categoryThreshold;
-	
 	private double dbpediaPercentage = Vars.DBPEDIA_LOW_OCCURRENCE_PRUNING_RATE;
 	private double schemaPercentage = Vars.SCHEMA_LOW_OCCURRENCE_PRUNING_RATE;
 	private double freebasePercentage = Vars.FREEBASE_LOW_OCCURRENCE_PRUNING_RATE;
@@ -36,7 +32,6 @@ public class LowOccurrencePruner extends AbstractPruner {
 
 	public LowOccurrencePruner(Map<OntologyType, Integer> tOntology){
 		initMaps(tOntology);
-		
 	}
 
 	public void prune() {

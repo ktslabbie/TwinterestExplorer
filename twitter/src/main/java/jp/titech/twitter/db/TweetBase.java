@@ -40,7 +40,7 @@ public class TweetBase {
 	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddURLStatement, preparedAddUserMentionStatement, 
 	preparedAddMediaStatement, preparedAddLocationStatement, preparedAddOntologyStatement;
 	private PreparedStatement preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement, preparedGetURLStatement,
-	preparedGetUsermentionStatement, preparedGetMediaStatement, preparedGetUserOntologyStatement;
+	preparedGetUsermentionStatement, preparedGetMediaStatement, preparedGetUserOntologyStatement, preparedGetUserIDStatement;
 
 	private TweetBase(){
 		initDB();
@@ -79,6 +79,7 @@ public class TweetBase {
 			preparedGetMediaStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Media WHERE tweet_id = ?");
 			preparedGetLocationStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Locations WHERE tweet_id = ?");
 			preparedGetUserOntologyStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_user_ontology.sql"));
+			preparedGetUserIDStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Tweets WHERE screen_name = ?");
 
 			preparedGetSingleTweetStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_single_tweet.sql"));
 
@@ -206,7 +207,7 @@ public class TweetBase {
 	 * @param support
 	 * @return
 	 */
-	public boolean isContained(int userID, double confidence, int support) {
+	public boolean isContained(long userID, double confidence, int support) {
 		try {
 			preparedGetUserOntologyStatement.clearParameters();
 			preparedGetUserOntologyStatement.setLong(1, userID);
@@ -224,7 +225,7 @@ public class TweetBase {
 	 * @param userID
 	 * @param fullMap
 	 */
-	public void addOntology(int userID, Map<OntologyType, Integer> fullMap) {
+	public void addOntology(long userID, Map<OntologyType, Integer> fullMap) {
 		
 		for (OntologyType type : fullMap.keySet()) {
 			
@@ -273,6 +274,28 @@ public class TweetBase {
 		}
 
 		return tweets;
+	}
+	
+	/**
+	 * @param string
+	 * @return
+	 */
+	public long getUserID(String screenName) {
+		
+		long userID = -1;
+
+		try {
+			preparedGetUserIDStatement.clearParameters();
+			preparedGetUserIDStatement.setString(1, screenName);
+			ResultSet resultSet = preparedGetUserIDStatement.executeQuery();
+			resultSet.next();
+			userID = resultSet.getLong(2);
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return userID;
 	}
 	
 	public Map<OntologyType, Integer> getOntology(long userID) {

@@ -15,6 +15,8 @@ public class Vars {
 	 * Twitter variables
 	 */
 	public static final String 	TWITTER_SEARCH_API	 			= c.getProperty("twitter.searchAPI");
+	public static final int		TIMELINE_TWEET_COUNT			= Integer.valueOf(c.getProperty("twitter.timelineTweetCount"));
+	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	
 	public static final String 	DBPEDIA_RDF_DIRECTORY 			= c.getProperty("dbpedia.rdfDirectory");
@@ -22,6 +24,9 @@ public class Vars {
 	public static final boolean	DBPEDIA_REMOTE					= Boolean.valueOf(c.getProperty("dbpedia.remote"));				// Remote DBpedia querying yes/no
 	
 	public static final String	DATA_DIRECTORY					= c.getProperty("data.dataDirectory");
+	public static final String	OUTPUT_DIRECTORY				= c.getProperty("data.outputDirectory");
+	
+	public static final String	STOPWORDS_FILE					= c.getProperty("data.stopwordsFile");
 	
 	public static final String	SQL_SCRIPT_DIRECTORY			= c.getProperty("sql.scriptDirectory");
 	
@@ -42,7 +47,7 @@ public class Vars {
 	public static int 			DBPEDIA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.dbpediaHighGeneralityPruningRate"));
 	public static int 			SCHEMA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.schemaHighGeneralityPruningRate"));
 	public static int 			YAGO_HIGH_GENERALITY_PRUNING_RATE 		= Integer.parseInt(c.getProperty("pruning.yagoHighGeneralityPruningRate"));
-	public static double		CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
+	public static int		CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
 	
 	public static int 			CATEGORY_TOP_K				 	= Integer.parseInt(c.getProperty("pruning.categoryTopK"));
 }

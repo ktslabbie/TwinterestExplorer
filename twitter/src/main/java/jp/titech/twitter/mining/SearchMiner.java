@@ -1,7 +1,7 @@
 /**
  * @author		Kristian Slabbekoorn
  * @version		1.0
- * @since		16 okt. 2012
+ * @since		16 may. 2013
  */
 package jp.titech.twitter.mining;
 
@@ -21,24 +21,21 @@ import twitter4j.URLEntity;
 import twitter4j.User;
 import twitter4j.UserMentionEntity;
 
-public class UserMiner {
-
+public class SearchMiner {
+	
 	private TweetBase tweetBase;
 
-	public UserMiner(){
+	public SearchMiner(){
 		tweetBase = TweetBase.getInstance();
 	}
 	
-	public void mineUser(long userID, int count){
-		
+	public void mine() {
 		Twitter twitter = new TwitterFactory().getInstance();
 	    List<Status> statuses;
 	    
-		try {
-			Log.getLogger().info("UserID to mine: " + userID);
+		/*try {
 			
-			int pages = count / 200 + 1;
-			Log.getLogger().info("Mining " + count + " tweets, over " + pages +" pages.");
+			
 			
 			for (int page = 1; page <= pages; page++) {
 				statuses = twitter.getUserTimeline(userID, new Paging(page, 200));
@@ -48,29 +45,7 @@ public class UserMiner {
 			
 		} catch (TwitterException e) {
 			Log.getLogger().error(e.getMessage());
-		}
-	}
-	
-	public void mineUser(String screenName, int count){
-		
-		Twitter twitter = new TwitterFactory().getInstance();
-	    List<Status> statuses;
-	    
-		try {
-			Log.getLogger().info("Screenname to mine: " + screenName);
-			
-			int pages = count / 200 + 1;
-			Log.getLogger().info("Mining " + count + " tweets, over " + pages +" pages.");
-			
-			for (int page = 1; page <= pages; page++) {
-				statuses = twitter.getUserTimeline(screenName, new Paging(page, 200));
-				Log.getLogger().info("Mined page " + page + ". " + statuses.size() + " statuses found.");
-				processStatuses(statuses);
-			}
-			
-		} catch (TwitterException e) {
-			Log.getLogger().error(e.getMessage());
-		}
+		}*/
 	}
 	
 	private void processStatuses(List<Status> statuses){
