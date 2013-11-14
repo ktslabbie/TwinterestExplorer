@@ -151,18 +151,23 @@ public class DBpediaQuery {
 		String typeURI = type.getFullUri();
 		Set<YAGOType> subClasses = new HashSet<YAGOType>();
 		Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
-		String query = Vars.SPARQL_PREFIXES + "SELECT ?yago WHERE { ?yago rdfs:suBClassOf <" + typeURI + "> }";
+		String query = Vars.SPARQL_PREFIXES + "SELECT ?yago WHERE { ?yago rdfs:subClassOf <" + typeURI + "> }";
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
+		int count = 0;
 		
 		for (BindingSet bindingSet : bindingList) {
 			Value value = bindingSet.getValue("yago");
 			String stringValue = value.stringValue();
 			//Log.getLogger().info("Class found: " + stringValue);
-
-			if(stringValue.contains("class/yago/")){
+			
+			if(stringValue.contains("class/yago/") && !stringValue.contains(type.typeID().split(":")[1])){
 				subClasses.add(new YAGOType(stringValue.split("class/yago/")[1]));
+				//Log.getLogger().info("Class type ID: " + type.typeID());
+				count++;
 			}
 		}
+		Log.getLogger().info(count + " direct YAGO subclasses found.");
+		
 		return subClasses;
 	}
 	

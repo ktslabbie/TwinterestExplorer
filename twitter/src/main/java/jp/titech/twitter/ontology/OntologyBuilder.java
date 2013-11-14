@@ -63,7 +63,6 @@ public class OntologyBuilder {
 				Log.getLogger().info("Getting tweets between " + startDate + " and " + endDate);
 			}
 			
-			
 			for (Tweet tweet : tweets) {
 				
 				if(startDate != null && endDate != null){

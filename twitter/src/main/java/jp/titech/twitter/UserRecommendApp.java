@@ -23,11 +23,30 @@ public class UserRecommendApp {
 		Log.getLogger().info("Starting program.");
 		Controller control = Controller.getInstance();
 
-		String screenName = "Gabe138";
+		//String screenName = "richfroning";
 
-		control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
+		/*String[] screenNames = {  "richfroning", "iLikeGirlsDaily", "KaittLouii", "AncientAliens"
+								, "Hownby", "mtn_dew", "BarbellShrugged", "Tsoukalos"
+								, "RRRawlings", "artpoptart", "Every_Day_Fit", "cborders"
+								, "trainHYLETE", "williebosshog", "EastwoodWhiskey", "GoogleEarthPics"
+								, "ThorMovies", "JordanAndre625", "mental_floss", "LiamHemsworth"
+								, "TipsForYouDaily", "ZaAnderson023", "CrossFitGames", "kelbell2587"
+								, "CrossFitMayhem", "morggnichole", "AndreaDeLo1", "michaelfarragut"
+								, "AshleyTaffer", "PROGENEX", "LoganSmelcer", "cebohanan"
+								, "Rockyj05", "JaimeCheek", "B_Moore018", "PrincessBrittJ"
+								, "Rjnowack", "jtsmith3552", "TylerLepore", "FHratliff"
+								, "LexSchoenfield", "MIT", "PopMech", "PopSci"
+								, "Iron_Man", "GasMonkeyGarage", "cnnbrk", "TheScienceGuy"
+								, "NASA"};*/
 		
-		Log.getLogger().info("Creating ontology...");
-		control.createUserOntology(screenName, 3200);
+		String[] screenNames = {"MichaelAnke"}; //Adriane_Guarno
+
+		for (String screenName : screenNames) {
+
+			control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
+
+			Log.getLogger().info("Creating ontology...");
+			control.createUserOntology(screenName, 250);
+		}
 	}
 }
