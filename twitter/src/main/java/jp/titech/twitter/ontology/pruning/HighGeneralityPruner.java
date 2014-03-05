@@ -77,7 +77,7 @@ public class HighGeneralityPruner extends AbstractPruner {
 
 	public void prune() {
 
-		this.divideOntologyTypes();
+		//this.divideOntologyTypes();
 
 		DBpediaQuery dbpediaQuery = DBpediaQuery.getInstance();
 
@@ -233,52 +233,7 @@ public class HighGeneralityPruner extends AbstractPruner {
 		return out;
 	}
 	
-	/**
-	 * @param prunedFullOntology
-	 * @return
-	 */
-	public String printMapTSV(String fileName) {
-		
-		Map<DBpediaType, Integer> dbpediaSortedMap = Util.sortByValue(prunedDBpediaTypes);
-		Map<YAGOType, Integer> yagoSortedMap = Util.sortByValue(prunedYAGOTypes);
-		Map<SchemaOrgType, Integer> schemaSortedMap = Util.sortByValue(prunedSchemaOrgTypes);
-		Map<FreebaseType, Integer> freebaseSortedMap = Util.sortByValue(prunedFreebaseTypes);
-		Map<Category, Integer> categorySortedMap = Util.sortByValue(prunedCategories);
-		
-		String out = "DBpedia_type\tcount:\n";
-
-		for (DBpediaType type : dbpediaSortedMap.keySet()) {
-			out += type.typeID() + "\t" + dbpediaSortedMap.get(type) + "\n";
-		}
-
-		out += "\nYAGO_type\tcount:\n";
-
-		for (YAGOType type : yagoSortedMap.keySet()) {
-			out += type.typeID() + "\t" + yagoSortedMap.get(type) + "\n";
-		}
-
-		out += "\nSchema_type\tcount:\n";
-
-		for (SchemaOrgType type : schemaSortedMap.keySet()) {
-			out += type.typeID() + "\t" + schemaSortedMap.get(type) + "\n";
-		}
-
-		out += "\nFreebase_type\tcount:\n";
-
-		for (FreebaseType type : freebaseSortedMap.keySet()) {
-			out += type.typeID() + "\t" + freebaseSortedMap.get(type) + "\n";
-		}
-
-		out += "\nCategory\tcount:\n";
-
-		for (Category type : categorySortedMap.keySet()) {
-			out += type.typeID() + "\t" + categorySortedMap.get(type) + "\n";
-		}
-
-		Util.writeToFile(out, new File(Vars.DATA_DIRECTORY + fileName));
-
-		return out;
-	}
+	
 
 	@Override
 	public Map<OntologyType, Integer> getPrunedFullOntology(){

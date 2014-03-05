@@ -42,7 +42,7 @@ public class AnnotatedTweet extends Tweet {
 	 */
 	public AnnotatedTweet(Tweet tweet) {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getUserMentions(), 
-				tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLocationName());
+				tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLocationName(), tweet.getLanguage());
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class AnnotatedTweet extends Tweet {
 	 */
 	public AnnotatedTweet(Tweet tweet, Map<String, List<DBpediaResourceOccurrence>> occs) {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getUserMentions(), 
-				tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLocationName());
+				tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLocationName(), tweet.getLanguage());
 
 		confidence = Vars.SPOTLIGHT_CONFIDENCE;
 		support = Vars.SPOTLIGHT_SUPPORT;

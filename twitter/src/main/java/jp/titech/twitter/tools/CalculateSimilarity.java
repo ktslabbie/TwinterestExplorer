@@ -19,21 +19,22 @@ import jp.titech.twitter.util.Vars;
 public class CalculateSimilarity {
 	
 	public static final String KEYWORD = "malware";
-	public static double THRESHOLD = 0.1;
+	public static double CONFIDENCE = 0.1;
+	public static int SUPPORT = 0;
 	
 	public static final String EVALUATION_RESULT = "../twitter/data/Twitter ranking/evaluation/" + KEYWORD + "/" + KEYWORD + ".result.dup.turkeys.tweet_user.turkeys";
 	public static final String EVALUATION_OUTPUT = "../twitter/data/Twitter ranking/evaluation/" + KEYWORD + "/" + KEYWORD + ".result.dup.turkeys.tweet_user.taxonomy";
 
 	public static void main( String[] args ) {
 		
-		for(THRESHOLD = 0.1; THRESHOLD <= 0.91; THRESHOLD += 0.1) {
+		for(CONFIDENCE = 0.1; CONFIDENCE <= 0.91; CONFIDENCE += 0.1) {
 			ArrayList<File> files = new ArrayList<File>();
 			File dir = new File(Vars.OUTPUT_DIRECTORY + KEYWORD + "/");
 			for (File file : dir.listFiles()) {
 				files.add(file);
 			}
 			
-			File outputFile = new File(EVALUATION_OUTPUT + "." + THRESHOLD);
+			File outputFile = new File(EVALUATION_OUTPUT + "." + CONFIDENCE);
 			String log = "";
 			String ranking = "";
 			
@@ -45,9 +46,9 @@ public class CalculateSimilarity {
 				File second = files.get(i+1);
 				
 				//log += first.getName() + "\t\t" + Util.calculateYAGOOntologySimilarity(first, second, outputFile, THRESHOLD) + "\n";
-				double similarity = Util.calculateYAGOOntologySimilarity(first, second, outputFile, THRESHOLD);
+				double similarity = Util.calculateYAGOOntologySimilarity(first, second, CONFIDENCE, SUPPORT, -1);
 				
-				if(similarity >= THRESHOLD){
+				if(similarity >= CONFIDENCE){
 					ranking += first.getName().split("#")[1] + "\t" + similarity + "\t";
 					String relevance = rankingLines[i/2].split("\t")[2];
 					ranking += relevance + "\n";

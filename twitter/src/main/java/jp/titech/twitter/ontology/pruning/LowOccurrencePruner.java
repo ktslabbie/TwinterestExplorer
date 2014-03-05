@@ -36,8 +36,6 @@ public class LowOccurrencePruner extends AbstractPruner {
 
 	public void prune() {
 		
-		this.divideOntologyTypes();
-		
 		dbpediaThreshold = (int)Math.round((dbpediaTotal / (100/dbpediaPercentage)));
 		Log.getLogger().info("Total number of DBpedia type occurrences: " + dbpediaTotal + ". Low-occurrence pruning threshold: " + dbpediaThreshold);
 		

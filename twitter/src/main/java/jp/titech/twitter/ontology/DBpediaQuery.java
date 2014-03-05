@@ -61,9 +61,9 @@ public class DBpediaQuery {
 		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();){
 			DBpediaResourceOccurrence occ = occIt.next();
 			String resourceURI = occ.resource().getFullUri();
-			
-			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago.sparql").replaceAll("%URI%", resourceURI);
-			
+
+			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
+
 			Log.getLogger().info("Querying local repository for YAGO types...");
 			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
 			Log.getLogger().info("Done!");
@@ -97,9 +97,9 @@ public class DBpediaQuery {
 		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();){
 			DBpediaResourceOccurrence occ = occIt.next();
 			String resourceURI = occ.resource().getFullUri();
-			
+
 			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
-			
+
 			Log.getLogger().info("Querying local repository for categories...");
 			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
 			Log.getLogger().info("Done!");
@@ -122,7 +122,7 @@ public class DBpediaQuery {
 		}
 		aTweet.setCategories(categories);
 	}
-	
+
 	/**
 	 * @param type
 	 * @return
@@ -132,9 +132,9 @@ public class DBpediaQuery {
 		Set<DBpediaType> subClasses = new HashSet<DBpediaType>();
 		Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
 		String query = Vars.SPARQL_PREFIXES + "SELECT ?dbpedia WHERE { ?dbpedia rdfs:subClassOf <" + typeURI + "> }";
-		
+
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-		
+
 		for (BindingSet bindingSet : bindingList) {
 			Value value = bindingSet.getValue("dbpedia");
 			String stringValue = value.stringValue();
@@ -144,40 +144,108 @@ public class DBpediaQuery {
 				subClasses.add(new DBpediaType(stringValue.split("dbpedia.org/ontology/")[1]));
 			}
 		}
+		
 		return subClasses;
 	}
-	
+
 	public Set<YAGOType> getDirectYAGOSubclasses(YAGOType type){
 		String typeURI = type.getFullUri();
 		Set<YAGOType> subClasses = new HashSet<YAGOType>();
-		Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
+		//Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
 		String query = Vars.SPARQL_PREFIXES + "SELECT ?yago WHERE { ?yago rdfs:subClassOf <" + typeURI + "> }";
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
 		int count = 0;
-		
+
 		for (BindingSet bindingSet : bindingList) {
 			Value value = bindingSet.getValue("yago");
 			String stringValue = value.stringValue();
 			//Log.getLogger().info("Class found: " + stringValue);
-			
+
 			if(stringValue.contains("class/yago/") && !stringValue.contains(type.typeID().split(":")[1])){
 				subClasses.add(new YAGOType(stringValue.split("class/yago/")[1]));
 				//Log.getLogger().info("Class type ID: " + type.typeID());
 				count++;
 			}
 		}
-		Log.getLogger().info(count + " direct YAGO subclasses found.");
-		
+		//Log.getLogger().info(count + " direct YAGO subclasses found.");
+
 		return subClasses;
 	}
 	
+	public Set<YAGOType> getDirectYAGOSuperclasses(YAGOType type){
+		String typeURI = type.getFullUri();
+		Set<YAGOType> superClasses = new HashSet<YAGOType>();
+		//Log.getLogger().info("Getting direct superclasses for " + type.typeID() + "...");
+		String query = Vars.SPARQL_PREFIXES + "SELECT DISTINCT ?yago WHERE { <" + typeURI + "> rdfs:subClassOf ?yago }";
+		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
+		int count = 0;
+
+		for (BindingSet bindingSet : bindingList) {
+			Value value = bindingSet.getValue("yago");
+			String stringValue = value.stringValue();
+			Log.getLogger().info("Class found: " + stringValue);
+
+			if(stringValue.contains("class/yago/") && !stringValue.contains(type.typeID().split(":")[1])){
+				superClasses.add(new YAGOType(stringValue.split("class/yago/")[1]));
+				//Log.getLogger().info("Class type ID: " + type.typeID());
+				count++;
+			}
+		}
+		//Log.getLogger().info(count + " direct YAGO subclasses found.");
+
+		return superClasses;
+	}
+
+	public int getYAGODistance(YAGOType v, YAGOType w) {
+		Log.getLogger().info("Getting YAGO ontology distance (hops) between classes " + v.typeID() + " and " + w.typeID() + "...");
+		
+		Set<YAGOType> vSet = new HashSet<YAGOType>(),
+					  wSet = new HashSet<YAGOType>();
+		
+		vSet.add(v); wSet.add(w);
+		int distance = getYAGODistance(vSet, wSet, 0);
+		Log.getLogger().info("Distance: " + distance);
+		return distance;
+	}
+	
+	public int getYAGODistance(Set<YAGOType> vSet, Set<YAGOType> wSet, int distance) {
+		
+		for (YAGOType v : vSet)
+			if(wSet.contains(v))
+				return distance;
+		
+		distance++;
+		Log.getLogger().info("Current distance: " + distance);
+		
+		Set<YAGOType> vSuperSet = new HashSet<YAGOType>(vSet);
+		
+		for (YAGOType v : vSet) {
+			Log.getLogger().info("Adding direct superclasses for " + v.typeID());
+			vSuperSet.addAll(getDirectYAGOSuperclasses(v));
+		}
+			
+		
+		for(YAGOType v : vSuperSet) {
+			if(wSet.contains(v))
+				return distance;
+		}
+			
+		
+		Set<YAGOType> wSuperSet = new HashSet<YAGOType>(wSet);
+		
+		for (YAGOType w : wSet)
+			wSuperSet.addAll(getDirectYAGOSuperclasses(w));
+		
+		return getYAGODistance(vSuperSet, wSuperSet, distance);
+	}
+
 	public Set<Category> getDirectSubcategories(Category cat){
 		String catURI = cat.getFullUri();
 		Set<Category> subCategories = new HashSet<Category>();
 		Log.getLogger().info("Getting direct subclasses for " + cat.typeID() + "...");
 		String query = Vars.SPARQL_PREFIXES + "SELECT ?cat WHERE { ?cat skos:broader <" + catURI + "> }";
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-		
+
 		for (BindingSet bindingSet : bindingList) {
 			Value value = bindingSet.getValue("cat");
 			String stringValue = value.stringValue();
@@ -196,7 +264,7 @@ public class DBpediaQuery {
 	 * @param string
 	 */
 	public void testQuery(String query){
-		
+
 		Log.getLogger().info("Querying with: \n" + Vars.SPARQL_PREFIXES + query);
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(Vars.SPARQL_PREFIXES + query);
 
@@ -204,4 +272,6 @@ public class DBpediaQuery {
 			Log.getLogger().info("Result: " + bindingSet.toString());
 		}
 	}
+
+
 }

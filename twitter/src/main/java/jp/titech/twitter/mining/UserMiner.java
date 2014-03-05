@@ -9,7 +9,6 @@ import java.util.List;
 
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.util.Log;
-
 import twitter4j.HashtagEntity;
 import twitter4j.MediaEntity;
 import twitter4j.Paging;
@@ -24,6 +23,7 @@ import twitter4j.UserMentionEntity;
 public class UserMiner {
 
 	private TweetBase tweetBase;
+	private int tweetCount, englishCount;
 
 	public UserMiner(){
 		tweetBase = TweetBase.getInstance();
@@ -33,6 +33,8 @@ public class UserMiner {
 		
 		Twitter twitter = new TwitterFactory().getInstance();
 	    List<Status> statuses;
+	    tweetCount = 0;
+	    englishCount = 0;
 	    
 		try {
 			Log.getLogger().info("UserID to mine: " + userID);
@@ -55,6 +57,8 @@ public class UserMiner {
 		
 		Twitter twitter = new TwitterFactory().getInstance();
 	    List<Status> statuses;
+	    tweetCount = 0;
+	    englishCount = 0;
 	    
 		try {
 			Log.getLogger().info("Screenname to mine: " + screenName);
@@ -70,6 +74,17 @@ public class UserMiner {
 			
 		} catch (TwitterException e) {
 			Log.getLogger().error(e.getMessage());
+			
+			if(e.getErrorCode() == 88){
+				int secondsUntil =  e.getRateLimitStatus().getSecondsUntilReset();
+				Log.getLogger().error("Error getting tweets (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
+				try {
+					Thread.sleep(secondsUntil*1000);
+					mineUser(screenName, count);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+			}
 		}
 	}
 	
@@ -80,6 +95,7 @@ public class UserMiner {
 			HashtagEntity[] hashtagEntities;
 			URLEntity[] urlEntities;
 			MediaEntity[] mediaEntities;
+			tweetCount++;
 			
 			if(status.isRetweet()){
 				Status retweetedStatus = status.getRetweetedStatus();
@@ -100,9 +116,19 @@ public class UserMiner {
 			
 			User user = status.getUser();
 			
+			Log.getLogger().info("Status lang code: " + status.getIsoLanguageCode());
+			
+			if(status.getIsoLanguageCode().equals("en")) {
+				englishCount++;
+			}
+			
 			tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
-					status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities);
+					status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities, status.getIsoLanguageCode());
 		}
+	}
+	
+	public double getEnglishRate() {
+		return (double)englishCount / (double)tweetCount;
 	}
 	
 }

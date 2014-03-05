@@ -15,18 +15,21 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.OntologyType;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
+import twitter4j.IDs;
 import twitter4j.MediaEntity;
 import twitter4j.Place;
 import twitter4j.URLEntity;
+import twitter4j.User;
 import twitter4j.UserMentionEntity;
-
 import jp.titech.twitter.data.Tweet;
+import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ner.spotlight.SpotlightUtil;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
@@ -38,9 +41,11 @@ public class TweetBase {
 	private Connection dbConnection;
 
 	private PreparedStatement preparedAddTweetStatement, preparedAddHashtagStatement, preparedAddURLStatement, preparedAddUserMentionStatement, 
-	preparedAddMediaStatement, preparedAddLocationStatement, preparedAddOntologyStatement;
+	preparedAddMediaStatement, preparedAddLocationStatement, preparedAddOntologyStatement, preparedAddUserStatement, preparedAddUserFollowerStatement;
 	private PreparedStatement preparedGetSingleTweetStatement, preparedGetTweetsStatement, preparedGetHashtagsStatement, preparedGetLocationStatement, preparedGetURLStatement,
-	preparedGetUsermentionStatement, preparedGetMediaStatement, preparedGetUserOntologyStatement, preparedGetUserIDStatement;
+	preparedGetUsermentionStatement, preparedGetMediaStatement, preparedGetUserOntologyStatement, preparedGetUserIDStatement, preparedGetUserByIDStatement,
+	preparedGetUserByNameStatement, preparedGetUserFollowersStatement;
+	
 
 	private TweetBase(){
 		initDB();
@@ -51,8 +56,8 @@ public class TweetBase {
 		try {
 			preparedAddTweetStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Tweets " +
-							"(tweet_id, user_id, screen_name, created_at, content, isretweet)" +
-							" VALUES (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+							"(tweet_id, user_id, screen_name, created_at, content, isretweet, lang)" +
+							" VALUES (?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 
 			preparedAddHashtagStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Hashtags (tweet_id, hashtag) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
@@ -71,6 +76,13 @@ public class TweetBase {
 			
 			preparedAddOntologyStatement = dbConnection.prepareStatement(
 					"INSERT INTO TweetBase.Ontology (user_id, ontology_type, cardinality, confidence, support) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+
+			preparedAddUserStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.Users (user_id, screen_name, name, description, location, followers_count, friends_count, statuses_count, created_at, protected) "
+				  + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			preparedAddUserFollowerStatement = dbConnection.prepareStatement(
+					"INSERT INTO TweetBase.Followers (user_id, follower_id) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
 			
 			preparedGetTweetsStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_user_tweets.sql"));
 			preparedGetUsermentionStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?");
@@ -79,7 +91,10 @@ public class TweetBase {
 			preparedGetMediaStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Media WHERE tweet_id = ?");
 			preparedGetLocationStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Locations WHERE tweet_id = ?");
 			preparedGetUserOntologyStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_user_ontology.sql"));
-			preparedGetUserIDStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Tweets WHERE screen_name = ?");
+			preparedGetUserIDStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Users WHERE screen_name = ?");
+			preparedGetUserByIDStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Users WHERE user_id = ?");
+			preparedGetUserByNameStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Users WHERE screen_name = ?");
+			preparedGetUserFollowersStatement = dbConnection.prepareStatement("SELECT * FROM TweetBase.Followers WHERE user_id = ?");
 
 			preparedGetSingleTweetStatement = dbConnection.prepareStatement(Util.readFile(Vars.SQL_SCRIPT_DIRECTORY + "select_single_tweet.sql"));
 
@@ -101,7 +116,7 @@ public class TweetBase {
 	}
 
 	public void addTweet(long tweetID, long userID, String screenName, Date createdAt, String content, boolean isRetweet, Place place, GeoLocation geoLocation, 
-			UserMentionEntity[] userMentionEntities, HashtagEntity[] hashtagEntities, URLEntity[] urlEntities, MediaEntity[] mediaEntities) {
+			UserMentionEntity[] userMentionEntities, HashtagEntity[] hashtagEntities, URLEntity[] urlEntities, MediaEntity[] mediaEntities, String language) {
 
 		if(this.isContained(tweetID)) {
 			Log.getLogger().warn("Tweet from user " + screenName + " with ID " + tweetID + " already contained in DB! Skipping.");
@@ -116,6 +131,7 @@ public class TweetBase {
 			preparedAddTweetStatement.setDate(4, new java.sql.Date(createdAt.getTime()));
 			preparedAddTweetStatement.setString(5, content);
 			preparedAddTweetStatement.setBoolean(6, isRetweet);
+			preparedAddTweetStatement.setString(7, language);
 			preparedAddTweetStatement.executeUpdate();
 			Log.getLogger().info("Successfully added tweet to DB!");
 
@@ -184,6 +200,75 @@ public class TweetBase {
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		}
+	}
+	
+	public void addUser(User user) {
+		addUser(user.getId(), user.getScreenName(), user.getName(), user.getDescription(), user.getLocation(),
+					user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected());
+	}
+	
+	public void addUser(long userID, String screenName, String name, String description, String location, int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected) {
+
+		if(this.isContained(userID)) {
+			Log.getLogger().warn("User " + screenName + " with ID " + userID + " already contained in DB! Skipping.");
+			return;
+		}
+		
+		try {
+			preparedAddUserStatement.clearParameters();
+			preparedAddUserStatement.setLong(1, userID);
+			preparedAddUserStatement.setString(2, screenName);
+			preparedAddUserStatement.setString(3, name);
+			preparedAddUserStatement.setString(4, description);
+			preparedAddUserStatement.setString(5, location);
+			preparedAddUserStatement.setInt(6, followersCount);
+			preparedAddUserStatement.setInt(7, friendsCount);
+			preparedAddUserStatement.setInt(8, statusesCount);
+			preparedAddUserStatement.setDate(9, new java.sql.Date(createdAt.getTime()));
+			preparedAddUserStatement.setBoolean(10, isProtected);
+			preparedAddUserStatement.executeUpdate();
+			Log.getLogger().info("Successfully added user to DB!");
+			
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+	}
+	
+	public void addUserFollower(long userID, long followerID) {
+		
+		try {			
+			preparedAddUserFollowerStatement.clearParameters();
+			preparedAddUserFollowerStatement.setLong(1, userID);
+			preparedAddUserFollowerStatement.setLong(2, followerID);
+			preparedAddUserFollowerStatement.executeUpdate();
+			
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+	}
+	
+	public boolean isUserContained(long userID) {
+		try {
+			preparedGetUserByIDStatement.clearParameters();
+			preparedGetUserByIDStatement.setLong(1, userID);
+			ResultSet resultSet = preparedGetUserByIDStatement.executeQuery();
+			if(resultSet.next()) return true;
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean isUserFollowersContained(long userID) {
+		try {
+			preparedGetUserFollowersStatement.clearParameters();
+			preparedGetUserFollowersStatement.setLong(1, userID);
+			ResultSet resultSet = preparedGetUserFollowersStatement.executeQuery();
+			if(resultSet.next()) return true;
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+		return false;
 	}
 
 	public boolean isContained(long tweetID) {
@@ -265,7 +350,7 @@ public class TweetBase {
 			while(resultSet.next()) {
 				long tweetID = resultSet.getLong(1);
 				Tweet tweet = new Tweet(tweetID, resultSet.getLong(2), resultSet.getString(3), resultSet.getDate(4), resultSet.getString(5), 
-										resultSet.getBoolean(6), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID), getLocation(tweetID));
+										resultSet.getBoolean(6), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID), getLocation(tweetID), resultSet.getString(7));
 				tweets.add(tweet);
 			}
 
@@ -274,6 +359,54 @@ public class TweetBase {
 		}
 
 		return tweets;
+	}
+	
+	public TwitterUser getUser(String userName) {
+
+		TwitterUser user = null;
+
+		try {
+			preparedGetUserByNameStatement.clearParameters();
+			preparedGetUserByNameStatement.setString(1, userName);
+			
+			ResultSet resultSet = preparedGetUserByNameStatement.executeQuery();
+
+			if(resultSet.next()) {
+				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
+											resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+			} else {
+				user = new TwitterUser(userName);
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return user;
+	}
+	
+	public TwitterUser getUser(long userID) {
+
+		TwitterUser user = null;
+
+		try {
+			preparedGetUserByIDStatement.clearParameters();
+			preparedGetUserByIDStatement.setLong(1, userID);
+			
+			ResultSet resultSet = preparedGetUserByIDStatement.executeQuery();
+
+			if(resultSet.next()) {
+				user = new TwitterUser(userID, resultSet.getString(2), resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
+											resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+			} else {
+				user = new TwitterUser(userID);
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return user;
 	}
 	
 	/**
@@ -289,7 +422,7 @@ public class TweetBase {
 			preparedGetUserIDStatement.setString(1, screenName);
 			ResultSet resultSet = preparedGetUserIDStatement.executeQuery();
 			resultSet.next();
-			userID = resultSet.getLong(2);
+			userID = resultSet.getLong(1);
 
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
@@ -382,6 +515,27 @@ public class TweetBase {
 
 		return userMentions;
 	}
+	
+	public List<Long> getUserFollowers(long userID) {
+
+		List<Long> followers = new ArrayList<Long>();
+
+		try {
+			preparedGetUserFollowersStatement.clearParameters();
+			preparedGetUserFollowersStatement.setLong(1, userID);
+			ResultSet resultSet = preparedGetUserFollowersStatement.executeQuery();
+
+			while(resultSet.next()) {
+				followers.add(resultSet.getLong(2));
+			}
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+
+		return followers;
+	}
+	
 	
 	public ArrayList<String> getMedia(long tweetID) {
 

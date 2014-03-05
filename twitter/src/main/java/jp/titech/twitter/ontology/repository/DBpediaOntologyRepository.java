@@ -97,6 +97,7 @@ public class DBpediaOntologyRepository {
 			
 			try {
 				TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+				tupleQuery.setIncludeInferred(false);
 				TupleQueryResult result = tupleQuery.evaluate();
 				try {
 					

@@ -16,6 +16,13 @@ public class Vars {
 	 */
 	public static final String 	TWITTER_SEARCH_API	 			= c.getProperty("twitter.searchAPI");
 	public static final int		TIMELINE_TWEET_COUNT			= Integer.valueOf(c.getProperty("twitter.timelineTweetCount"));
+	public static final int		CONCATENATION_WINDOW			= Integer.valueOf(c.getProperty("twitter.concatenationWindow"));
+	public static final int		MIN_FOLLOWERS					= Integer.valueOf(c.getProperty("twitter.minFollowers"));
+	public static final int		MAX_FOLLOWERS					= Integer.valueOf(c.getProperty("twitter.maxFollowers"));
+	public static final int		MIN_FRIENDS						= Integer.valueOf(c.getProperty("twitter.minFriends"));
+	public static final int		MAX_FRIENDS						= Integer.valueOf(c.getProperty("twitter.maxFriends"));
+	public static final int		MIN_TWEETS						= Integer.valueOf(c.getProperty("twitter.minTweets"));
+	public static final int		MAX_TWEETS						= Integer.valueOf(c.getProperty("twitter.maxTweets"));
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	

@@ -64,7 +64,7 @@ public class ExtractTweetsFromJSON {
 					for(String username : USERNAMES) {
 						if(o.get("from_user").equals(username)){
 							TweetBase.getInstance().addTweet(Long.parseLong((String)o.get("id")), Long.parseLong((String)o.get("from_user_id_str")), username,
-							new Date((String)o.get("created_at")), (String)o.get("text"), false, null, null, null, null, null, null);
+							new Date((String)o.get("created_at")), (String)o.get("text"), false, null, null, null, null, null, null, null);
 						}
 					}
 				}

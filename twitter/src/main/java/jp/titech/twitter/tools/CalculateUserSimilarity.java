@@ -50,7 +50,7 @@ public class CalculateUserSimilarity {
 			for(int j = i+1; j < files.size(); j++){
 				File second = files.get(j);
 
-				double similarity = Util.calculateYAGOOntologySimilarity(first, second, outputFile, 0);
+				double similarity = Util.calculateYAGOOntologySimilarity(first, second, 0, 0, -1);
 				String relevanceFirst = rankingLines[i].split("\t")[2];
 				String relevanceSecond = rankingLines[j].split("\t")[2];
 				

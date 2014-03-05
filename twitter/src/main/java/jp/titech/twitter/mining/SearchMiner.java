@@ -76,7 +76,7 @@ public class SearchMiner {
 			User user = status.getUser();
 			
 			tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
-					status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities);
+					status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities, status.getIsoLanguageCode());
 		}
 	}
 	

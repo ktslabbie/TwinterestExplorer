@@ -13,13 +13,13 @@ import jp.titech.twitter.util.Util;
 public class Tweet {
 
 	private long tweetID, userID;
-	private String screenName, content, locationName;
+	private String screenName, content, locationName, language;
 	private boolean isRetweet;
 	private Date createdAt;
 	private ArrayList<String> userMentions, hashtags, URLs, media;
 	
 	
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> userMentions, ArrayList<String> hashtags, ArrayList<String> URLs, ArrayList<String> media, String locationName) {
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> userMentions, ArrayList<String> hashtags, ArrayList<String> URLs, ArrayList<String> media, String locationName, String language) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
@@ -32,6 +32,7 @@ public class Tweet {
 		this.URLs = URLs;
 		this.media = media;
 		this.locationName = locationName;
+		this.language = language;
 	}
 
 	public long getTweetID() {
@@ -145,6 +146,14 @@ public class Tweet {
 	public void setMedia(ArrayList<String> media) {
 		this.media = media;
 	}
+	
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -154,7 +163,7 @@ public class Tweet {
 		return "Tweet [tweetID=" + tweetID + ", userID=" + userID
 				+ ", screenName=" + screenName + ", content=" + content
 				+ ", locationName=" + locationName + ", isRetweet=" + isRetweet
-				+ ", createdAt=" + createdAt + ", hashtags=" + hashtags + "]";
+				+ ", createdAt=" + createdAt + ", hashtags=" + hashtags + ", language=" + language + "]";
 	}
 	
 	/**

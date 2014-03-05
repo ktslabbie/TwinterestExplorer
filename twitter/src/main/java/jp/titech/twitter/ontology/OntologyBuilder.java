@@ -5,6 +5,7 @@
  */
 package jp.titech.twitter.ontology;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -14,12 +15,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
+import org.dbpedia.spotlight.model.DBpediaType;
 import org.dbpedia.spotlight.model.OntologyType;
+import org.dbpedia.spotlight.model.SchemaOrgType;
 
 import jp.titech.twitter.data.AnnotatedTweet;
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.ner.spotlight.SpotlightQuery;
+import jp.titech.twitter.ontology.types.Category;
+import jp.titech.twitter.ontology.types.FreebaseType;
+import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -46,8 +52,8 @@ public class OntologyBuilder {
 		ontologyExists = TweetBase.getInstance().isContained(tUserID, Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
 	}
 
-	public void build() {
-		Log.getLogger().info("Building ontology for user " + userID + " based on the " + totalCount + " most recent tweets.");
+	public void build(int mergeWindow) {
+		Log.getLogger().info("Building ontology for user " + userID + " based on the " + totalCount + " most recent tweets, concatenating groups of " + mergeWindow + " tweets.");
 		
 		if(ontologyExists && startDate == null){
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
@@ -63,6 +69,9 @@ public class OntologyBuilder {
 				Log.getLogger().info("Getting tweets between " + startDate + " and " + endDate);
 			}
 			
+			String mergedContent = "";
+			int mergeCount = 0;
+			
 			for (Tweet tweet : tweets) {
 				
 				if(startDate != null && endDate != null){
@@ -73,33 +82,41 @@ public class OntologyBuilder {
 				}
 				
 				tweet.stripEverything();
+				mergedContent += tweet.getContent() + " ";
+				mergeCount++;
 
-				Log.getLogger().info("Stripped tweet content: " + tweet.getContent());
-				
-				if(tweet.getContent().isEmpty() || tweet.getContent().equals(" ")) continue;
-
-				SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
-				Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(tweet.getContent());
-
-				if(!occurrences.isEmpty()) {
-					for (String key : occurrences.keySet()) {
-						Log.getLogger().info("Match: " + key + ": " + occurrences.get(key));
+				if(mergeCount >= mergeWindow || count >= totalCount - 1) {
+					Log.getLogger().info("Stripped (and merged) tweet content: " + mergedContent);
+					
+					if(mergedContent.isEmpty() || mergedContent.equals(" ")) continue;
+	
+					SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
+					Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(mergedContent);
+	
+					if(!occurrences.isEmpty()) {
+						for (String key : occurrences.keySet()) {
+							Log.getLogger().info("Match: " + key + ": " + occurrences.get(key));
+						}
 					}
+	
+					AnnotatedTweet aTweet = new AnnotatedTweet(tweet, occurrences);
+	
+					DBpediaQuery dbpQuery = DBpediaQuery.getInstance();
+	
+					dbpQuery.collectYAGOClasses(aTweet);
+					Log.getLogger().info("Full YAGO map: " + aTweet.getYAGOTypes());
+					dbpQuery.collectCategories(aTweet);
+					Log.getLogger().info("Full Category map: " + aTweet.getCategories());
+	
+					annotatedTweets.add(aTweet);
+					
+					mergeCount = 0;
+					mergedContent = "";
 				}
-
-				AnnotatedTweet aTweet = new AnnotatedTweet(tweet, occurrences);
-
-				DBpediaQuery dbpQuery = DBpediaQuery.getInstance();
-
-				dbpQuery.collectYAGOClasses(aTweet);
-				Log.getLogger().info("Full YAGO map: " + aTweet.getYAGOTypes());
-				dbpQuery.collectCategories(aTweet);
-				Log.getLogger().info("Full Category map: " + aTweet.getCategories());
-
-				annotatedTweets.add(aTweet);
+				
 				count++;
 
-				if(count == totalCount) break;
+				if(count >= totalCount) break;
 			}
 
 			ontology = Util.mergeOntologyTypeMaps(annotatedTweets);

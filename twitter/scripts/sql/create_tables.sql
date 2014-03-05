@@ -16,6 +16,18 @@ CREATE TABLE TWEETBASE.USERMENTIONS (
 			PRIMARY KEY (tweet_id, user_mention)
 );
 
+CREATE TABLE TWEETBASE.FOLLOWERS (
+		user_id BIGINT NOT NULL,
+		follower_id BIGINT NOT NULL,
+			PRIMARY KEY (user_id, follower_id)
+);
+
+CREATE TABLE TWEETBASE.FRIENDS (
+		user_id BIGINT NOT NULL,
+		friend_id BIGINT NOT NULL,
+			PRIMARY KEY (user_id, friend_id)
+);
+
 CREATE TABLE TWEETBASE.URLS (
 		tweet_id BIGINT NOT NULL,
 		url VARCHAR(150) NOT NULL,
@@ -40,9 +52,24 @@ CREATE TABLE TWEETBASE.ONTOLOGY (
 CREATE TABLE TWEETBASE.TWEETS (
 		tweet_id BIGINT NOT NULL,
 		user_id BIGINT NOT NULL,
-		screen_name VARCHAR(30) NOT NULL,
+		screen_name VARCHAR(255) NOT NULL,
 		created_at DATE NOT NULL,
-		content VARCHAR(150) NOT NULL, 
+		content VARCHAR(255) NOT NULL, 
 		isretweet SMALLINT NOT NULL,
+		lang VARCHAR(3) NOT NULL,
 			PRIMARY KEY (tweet_id)
-)
+);
+
+CREATE TABLE TWEETBASE.USERS (
+		user_id BIGINT NOT NULL,
+		screen_name VARCHAR(255) NOT NULL,
+		name VARCHAR(64) NOT NULL,
+		description VARCHAR(255),
+		location VARCHAR(255),
+		followers_count INTEGER NOT NULL,
+		friends_count INTEGER NOT NULL,
+		statuses_count INTEGER NOT NULL,
+		created_at DATE NOT NULL,
+		protected SMALLINT NOT NULL,
+			PRIMARY KEY (user_id)
+);

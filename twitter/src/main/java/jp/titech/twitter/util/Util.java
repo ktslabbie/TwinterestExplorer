@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,6 +25,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import jp.titech.twitter.data.AnnotatedTweet;
+import jp.titech.twitter.ontology.DBpediaQuery;
 import jp.titech.twitter.ontology.types.Category;
 import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.ontology.types.YAGOType;
@@ -321,14 +322,13 @@ public class Util {
 		return result;
 	}
 
-	public static double calculateYAGOOntologySimilarity(File fileOne, File fileTwo, File output, double threshold) {
+	public static double calculateYAGOOntologyDistance(File fileOne, File fileTwo) {
 
-		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
-		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
-				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
-		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
+		Log.getLogger().info("Calculating average YAGO ontology path length for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
+		HashMap<YAGOType, Integer> mapOne = new HashMap<YAGOType, Integer>(), mapTwo = new HashMap<YAGOType, Integer>();
+		int totalOne = 0, totalTwo = 0;
 
-		String log = "";
+		YAGOType currentYAGOType = null;
 
 		try {
 			Scanner sc = new Scanner(new FileReader(fileOne));
@@ -337,9 +337,9 @@ public class Util {
 				if(line.startsWith("YAGO:")){
 					String[] split = line.split("\t");
 					int number = Integer.parseInt(split[1]);
-					//if(number != 1 && !split[0].contains("LivingPeople")){
 					if(!split[0].contains("LivingPeople")){
-						mapOne.put(split[0], number);
+						currentYAGOType = new YAGOType(split[0].split(":")[1]);
+						mapOne.put(currentYAGOType, number);
 						totalOne += number;
 					}
 				}
@@ -355,10 +355,84 @@ public class Util {
 				if(line.startsWith("YAGO:")){
 					String[] split = line.split("\t");
 					int number = Integer.parseInt(split[1]);
-					//if(number != 1 && !split[0].contains("LivingPeople")){
 					if(!split[0].contains("LivingPeople")){
+						currentYAGOType = new YAGOType(split[0].split(":")[1]);
+						mapTwo.put(currentYAGOType, number);
+						totalTwo += number;
+
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		DBpediaQuery dbpq = DBpediaQuery.getInstance();
+		int totalDistance = 0;
+
+		for (YAGOType v : mapOne.keySet()) {
+			int occsV = mapOne.get(v);
+			for (YAGOType w : mapTwo.keySet()) {
+				int occsW = mapTwo.get(w);
+				if(!v.equals(w))
+					totalDistance += dbpq.getYAGODistance(v, w)*(occsV*occsW);
+			}
+		}
+
+		double apl = (1/(double)(totalOne*totalTwo)*totalDistance);
+
+		return apl;
+	}
+
+	public static double calculateYAGOOntologySimilarity(File fileOne, File fileTwo, double confidence, int support, int topK) {
+
+		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
+		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
+				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
+		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
+		int count = 0;
+
+		String log = "";
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileOne));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					if(number >= support && !split[0].contains("LivingPeople")){
+						//if(!split[0].contains("LivingPeople")){
+						mapOne.put(split[0], number);
+						totalOne += number;
+						count++;
+						if(count == topK) {
+							count = 0;
+							break;
+						}
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileTwo));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					if(number >= support && !split[0].contains("LivingPeople")){
+						//if(!split[0].contains("LivingPeople")){
 						mapTwo.put(split[0], number);
 						totalTwo += number;
+						count++;
+						if(count == topK) {
+							count = 0;
+							break;
+						}
 					}
 				}
 			}
@@ -396,14 +470,134 @@ public class Util {
 
 		similarity = ((double)included/(double)totalSmallest);
 
-
-
-		if(similarity >= threshold || Double.isNaN(similarity)) {
+		if(similarity >= confidence || Double.isNaN(similarity)) {
 			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
 		} else {
-			Log.getLogger().info(log += "Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
+			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
 		}
 
 		return similarity;
+	}
+
+	public static double calculateYAGOOntologyTFIDFSimilarity(File fileOne, File fileTwo, double confidence, int support, int topK, Map<YAGOType, Double> tfIdfMap) {
+
+		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
+		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
+				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
+		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
+		int count = 0;
+
+		String log = "";
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileOne));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					if(number >= support && !split[0].contains("LivingPeople")){
+						//if(!split[0].contains("LivingPeople")){
+						mapOne.put(split[0], number);
+						totalOne += number;
+						count++;
+						if(count == topK) {
+							count = 0;
+							break;
+						}
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			Scanner sc = new Scanner(new FileReader(fileTwo));
+			while(sc.hasNextLine()){
+				String line = sc.nextLine();
+				if(line.startsWith("YAGO:")){
+					String[] split = line.split("\t");
+					int number = Integer.parseInt(split[1]);
+					if(number >= support && !split[0].contains("LivingPeople")){
+						//if(!split[0].contains("LivingPeople")){
+						mapTwo.put(split[0], number);
+						totalTwo += number;
+						count++;
+						if(count == topK) {
+							count = 0;
+							break;
+						}
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		if(totalOne > totalTwo) {
+			biggestMap = mapOne;
+			smallestMap = mapTwo;
+			totalBiggest = totalOne;
+			totalSmallest = totalTwo;
+		} else {
+			biggestMap = mapTwo;
+			smallestMap = mapOne;
+			totalBiggest = totalTwo;
+			totalSmallest = totalOne;
+		}
+
+		double similarity = 0.0;
+		int included = totalSmallest;
+
+		for (String type : smallestMap.keySet()) {
+
+			Integer numberBig = biggestMap.get(type);
+			int remaining = smallestMap.get(type);
+			//log += type + " - " + remaining + " vs. " + numberBig + " occurrences.\n";
+
+			if(numberBig != null){
+				remaining -= numberBig;
+				if(remaining < 0) remaining = 0;
+			}
+			included -= remaining;
+		}
+
+		similarity = ((double)included/(double)totalSmallest);
+
+		if(similarity >= confidence || Double.isNaN(similarity)) {
+			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
+		} else {
+			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
+		}
+
+		return similarity;
+	}
+
+	/**
+	 * Formats a number to a given amount of decimal places.
+	 * 
+	 * @param decs Decimal numbers to display
+	 * @param number The number to format
+	 * @return Formatted number String
+	 */
+	public static String format(int decs, double number) {
+		return String.format("%." + decs + "f", number);
+	}
+
+	/**
+	 * Rounds a double to a given amount of decimal places.
+	 * 
+	 * @param places Decimal numbers to round to
+	 * @param value The number to round
+	 * @return Rounded double
+	 */
+
+	public static double round(int places, double value) {
+		if (places < 0) throw new IllegalArgumentException();
+
+		BigDecimal bd = new BigDecimal(value);
+		bd = bd.setScale(places, BigDecimal.ROUND_HALF_UP);
+		return bd.doubleValue();
 	}
 }
