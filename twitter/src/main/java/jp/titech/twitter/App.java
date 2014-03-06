@@ -48,7 +48,7 @@ public class App {
 			control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
 
 			TweetBase tb = TweetBase.getInstance();
-			long userID = tb.getUserID(screenName);
+			long userID = tb.getUser(screenName).getUserID();
 			
 			Log.getLogger().info("Creating ontology...");
 			control.createOntology(userID, screenName, 500, topic, count);

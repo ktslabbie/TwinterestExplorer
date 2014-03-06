@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.URLs WHERE tweet_id = ?

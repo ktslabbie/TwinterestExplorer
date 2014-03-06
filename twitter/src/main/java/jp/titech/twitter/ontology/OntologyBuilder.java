@@ -57,7 +57,7 @@ public class OntologyBuilder {
 		
 		if(ontologyExists && startDate == null){
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
-			ontology = TweetBase.getInstance().getOntology(userID);
+			ontology = TweetBase.getInstance().getUserOntology(userID);
 		} else {
 			Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(userID);
@@ -121,7 +121,7 @@ public class OntologyBuilder {
 
 			ontology = Util.mergeOntologyTypeMaps(annotatedTweets);
 
-			TweetBase.getInstance().addOntology(userID, ontology);
+			TweetBase.getInstance().addUserOntology(userID, ontology);
 		}
 	}
 

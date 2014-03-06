@@ -1,0 +1,1 @@
+INSERT INTO TweetBase.Ontology (user_id, ontology_type, cardinality, confidence, support) VALUES (?, ?, ?, ?, ?)

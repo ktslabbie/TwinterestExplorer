@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Hashtags WHERE tweet_id = ?

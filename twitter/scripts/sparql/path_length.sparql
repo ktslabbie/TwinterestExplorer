@@ -1,0 +1,4 @@
+select distinct ?mid where { 
+  ?mid rdfs:subClassOf* <%URI1%> .
+  <%URI2%> rdfs:subClassOf+ ?mid .
+}

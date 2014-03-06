@@ -41,7 +41,7 @@ public class TFIDFBuilder {
 		for (int i = 0; i < users.size(); i++) {
 			TwitterUser user = users.get(i);
 			tfMap = new HashMap<YAGOType, Integer>();
-			Map<OntologyType, Integer> map = TweetBase.getInstance().getOntology(user.getUserID());
+			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID());
 
 
 			for(OntologyType ontType : map.keySet()) {
@@ -88,7 +88,7 @@ public class TFIDFBuilder {
 		for (int i = 0; i < users.size(); i++) {
 			TwitterUser user = users.get(i);
 
-			Map<OntologyType, Integer> map = TweetBase.getInstance().getOntology(user.getUserID());
+			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID());
 
 			for(OntologyType ontType : map.keySet()) {
 				if(ontType instanceof YAGOType) {

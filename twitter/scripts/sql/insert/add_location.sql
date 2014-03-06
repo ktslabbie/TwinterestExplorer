@@ -1,0 +1,1 @@
+INSERT INTO TweetBase.Locations (tweet_id, full_name) VALUES (?, ?)

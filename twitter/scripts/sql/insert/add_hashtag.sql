@@ -1,0 +1,1 @@
+INSERT INTO TweetBase.Hashtags (tweet_id, hashtag) VALUES (?, ?)

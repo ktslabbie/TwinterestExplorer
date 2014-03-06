@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Followers WHERE user_id = ?

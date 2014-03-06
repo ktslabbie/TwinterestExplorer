@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?

@@ -1,0 +1,10 @@
+select distinct ?yago where { 
+ { <%URI%> rdf:type ?yago } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf ?yago ] } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf ?yago ]] } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf ?yago ]]] } UNION
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf ?yago ]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf ?yago ]]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf ?yago ]]]]]] } UNION 
+ { <%URI%> rdf:type [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf [rdfs:subClassOf ?yago ]]]]]]] }
+}

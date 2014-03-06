@@ -25,6 +25,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import jp.titech.twitter.data.AnnotatedTweet;
+import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ontology.DBpediaQuery;
 import jp.titech.twitter.ontology.types.Category;
 import jp.titech.twitter.ontology.types.FreebaseType;

@@ -37,109 +37,33 @@ import twitter4j.TwitterFactory;
  *
  */
 public class GetUserNetworkApp {
-	
+
 	public static Controller control = Controller.getInstance();
 
 	public static void main( String[] args ) throws InterruptedException {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
-		
+
 		final long SEED_USER_ID = 55569628; //@mikegroner: 55569628
-		
+
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> dgraph;
 		//SimpleGraph<String, DefaultWeightedEdge> dgraph;
-		
+
 		dgraph = control.gatherNetworkFromSeedUser(SEED_USER_ID, 3, 500);
-		
+
 		//dgraph = control.gatherNetworkFromCommunityFile("../twitter/data/output/community/result.community.10-window.txt");
-		
+
 		Log.getLogger().info("");
 		Log.getLogger().info("Graph: " + dgraph.toString());
-		
+
 		annotateUsers(dgraph);
-		
+
 		//drawSimilarityGraph(dgraph);
 		//drawFollowGraph(dgraph);
 	}
-	
-private static void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
-		
-		JGraphModelAdapter<TwitterUser, DefaultWeightedEdge> model = new JGraphModelAdapter<TwitterUser, DefaultWeightedEdge>(dgraph);
-		//JGraphModelAdapter<String, WeightedEdge> model = new JGraphModelAdapter<String, WeightedEdge>(dgraph);
-		
-		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
-		//Log.getLogger().info("Creating ontology...");
-		//control.createUserOntology(screenName, 500);
-		
-		
-	    // Construct Model and Graph
-        JGraph graph = new JGraph(model);
-        // Control-drag should clone selection
-        graph.setCloneable(true);
-
-        // When over a cell, jump to its default port (we only have one, anyway)
-        graph.setJumpToDefaultPort(true);
-        
-        // Set Arrow Style for edge
-        //int arrow = GraphConstants.ARROW_CLASSIC;
-        //GraphConstants.setLineEnd(edge.getAttributes(), arrow);
-        //GraphConstants.setEndFill(edge.getAttributes(), true);
-
-        // Insert the cells via the cache, so they get selected
-        //graph.getGraphLayoutCache().insert(cells);
-
-        // Show in Frame
-        JFrame frame = new JFrame();
-        
-        frame.setSize(1600,900);
-        frame.setLocation(100,100);
-        
-        frame.getContentPane().add(new JScrollPane(graph));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //frame.pack();
-        frame.setVisible(true);
-	}
-
-	private static void drawFollowGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
-		
-		JGraphModelAdapter<TwitterUser, DefaultWeightedEdge> model = new JGraphModelAdapter<TwitterUser, DefaultWeightedEdge>(dgraph);
-		//JGraphModelAdapter<String, WeightedEdge> model = new JGraphModelAdapter<String, WeightedEdge>(dgraph);
-		
-		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
-		//Log.getLogger().info("Creating ontology...");
-		//control.createUserOntology(screenName, 500);
-		
-		
-	    // Construct Model and Graph
-        JGraph graph = new JGraph(model);
-        // Control-drag should clone selection
-        graph.setCloneable(true);
-
-        // When over a cell, jump to its default port (we only have one, anyway)
-        graph.setJumpToDefaultPort(true);
-        
-        // Set Arrow Style for edge
-        //int arrow = GraphConstants.ARROW_CLASSIC;
-        //GraphConstants.setLineEnd(edge.getAttributes(), arrow);
-        //GraphConstants.setEndFill(edge.getAttributes(), true);
-
-        // Insert the cells via the cache, so they get selected
-        //graph.getGraphLayoutCache().insert(cells);
-
-        // Show in Frame
-        JFrame frame = new JFrame();
-        
-        frame.setSize(1600,900);
-        frame.setLocation(100,100);
-        
-        frame.getContentPane().add(new JScrollPane(graph));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //frame.pack();
-        frame.setVisible(true);
-	}
 
 	private static void annotateUsers(DirectedGraph<TwitterUser, DefaultWeightedEdge> dgraph) {
-		
+
 		for (TwitterUser user : dgraph.vertexSet()) {
 
 			control.startSearchMining(user.getScreenName(), Vars.TIMELINE_TWEET_COUNT);
@@ -148,10 +72,86 @@ private static void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> 
 			if(control.getUserMiner().getEnglishRate() > 0.9) {
 
 				Log.getLogger().info("Enough English tweets, so create ontology...");
-				
+
 				control.createUserOntology(user.getScreenName(), Vars.TIMELINE_TWEET_COUNT);
 			}
 
 		}
+	}
+
+	private static void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
+
+		JGraphModelAdapter<TwitterUser, DefaultWeightedEdge> model = new JGraphModelAdapter<TwitterUser, DefaultWeightedEdge>(dgraph);
+		//JGraphModelAdapter<String, WeightedEdge> model = new JGraphModelAdapter<String, WeightedEdge>(dgraph);
+
+		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
+		//Log.getLogger().info("Creating ontology...");
+		//control.createUserOntology(screenName, 500);
+
+
+		// Construct Model and Graph
+		JGraph graph = new JGraph(model);
+		// Control-drag should clone selection
+		graph.setCloneable(true);
+
+		// When over a cell, jump to its default port (we only have one, anyway)
+		graph.setJumpToDefaultPort(true);
+
+		// Set Arrow Style for edge
+		//int arrow = GraphConstants.ARROW_CLASSIC;
+		//GraphConstants.setLineEnd(edge.getAttributes(), arrow);
+		//GraphConstants.setEndFill(edge.getAttributes(), true);
+
+		// Insert the cells via the cache, so they get selected
+		//graph.getGraphLayoutCache().insert(cells);
+
+		// Show in Frame
+		JFrame frame = new JFrame();
+
+		frame.setSize(1600,900);
+		frame.setLocation(100,100);
+
+		frame.getContentPane().add(new JScrollPane(graph));
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//frame.pack();
+		frame.setVisible(true);
+	}
+
+	private static void drawFollowGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
+
+		JGraphModelAdapter<TwitterUser, DefaultWeightedEdge> model = new JGraphModelAdapter<TwitterUser, DefaultWeightedEdge>(dgraph);
+		//JGraphModelAdapter<String, WeightedEdge> model = new JGraphModelAdapter<String, WeightedEdge>(dgraph);
+
+		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
+		//Log.getLogger().info("Creating ontology...");
+		//control.createUserOntology(screenName, 500);
+
+
+		// Construct Model and Graph
+		JGraph graph = new JGraph(model);
+		// Control-drag should clone selection
+		graph.setCloneable(true);
+
+		// When over a cell, jump to its default port (we only have one, anyway)
+		graph.setJumpToDefaultPort(true);
+
+		// Set Arrow Style for edge
+		//int arrow = GraphConstants.ARROW_CLASSIC;
+		//GraphConstants.setLineEnd(edge.getAttributes(), arrow);
+		//GraphConstants.setEndFill(edge.getAttributes(), true);
+
+		// Insert the cells via the cache, so they get selected
+		//graph.getGraphLayoutCache().insert(cells);
+
+		// Show in Frame
+		JFrame frame = new JFrame();
+
+		frame.setSize(1600,900);
+		frame.setLocation(100,100);
+
+		frame.getContentPane().add(new JScrollPane(graph));
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//frame.pack();
+		frame.setVisible(true);
 	}
 }

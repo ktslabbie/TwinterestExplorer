@@ -4,22 +4,43 @@
  * @since		16 okt. 2012
  */
 package jp.titech.twitter.data;
-
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import jp.titech.twitter.util.Util;
 
+/**
+ * A class to represent a tweet.
+ * 
+ * @author Kristian
+ *
+ */
 public class Tweet {
 
-	private long tweetID, userID;
-	private String screenName, content, locationName, language;
-	private boolean isRetweet;
-	private Date createdAt;
-	private ArrayList<String> userMentions, hashtags, URLs, media;
+	private long 			tweetID, userID;
+	private String 			screenName, content, locationName, language;
+	private boolean 		isRetweet;
+	private Date 			createdAt;
+	private List<String> 	userMentions, hashtags, URLs, media;
 	
-	
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, ArrayList<String> userMentions, ArrayList<String> hashtags, ArrayList<String> URLs, ArrayList<String> media, String locationName, String language) {
+	/**
+	 * Constructor for a Tweet.
+	 * 
+	 * @param tweetID
+	 * @param userID
+	 * @param screenName
+	 * @param createdAt
+	 * @param content
+	 * @param isRetweet
+	 * @param userMentions
+	 * @param hashtags
+	 * @param URLs
+	 * @param media
+	 * @param locationName
+	 * @param language
+	 */
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, List<String> userMentions, 
+			List<String> hashtags, List<String> URLs, List<String> media, String locationName, String language) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
@@ -35,36 +56,88 @@ public class Tweet {
 		this.language = language;
 	}
 
+	/**
+	 * @return the tweetID
+	 */
 	public long getTweetID() {
 		return tweetID;
 	}
 
+	/**
+	 * @param tweetID the tweetID to set
+	 */
 	public void setTweetID(long tweetID) {
 		this.tweetID = tweetID;
 	}
 
+	/**
+	 * @return the userID
+	 */
 	public long getUserID() {
 		return userID;
 	}
 
+	/**
+	 * @param userID the userID to set
+	 */
 	public void setUserID(long userID) {
 		this.userID = userID;
 	}
 
+	/**
+	 * @return the screenName
+	 */
 	public String getScreenName() {
 		return screenName;
 	}
 
+	/**
+	 * @param screenName the screenName to set
+	 */
 	public void setScreenName(String screenName) {
 		this.screenName = screenName;
 	}
 
+	/**
+	 * @return the content
+	 */
 	public String getContent() {
 		return content;
 	}
 
+	/**
+	 * @param content the content to set
+	 */
 	public void setContent(String content) {
 		this.content = content;
+	}
+
+	/**
+	 * @return the locationName
+	 */
+	public String getLocationName() {
+		return locationName;
+	}
+
+	/**
+	 * @param locationName the locationName to set
+	 */
+	public void setLocationName(String locationName) {
+		this.locationName = locationName;
+	}
+
+	/**
+	 * @return the language
+	 */
+	public String getLanguage() {
+		return language;
+	}
+
+	/**
+	 * @param language the language to set
+	 */
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 
 	/**
@@ -81,78 +154,76 @@ public class Tweet {
 		this.isRetweet = isRetweet;
 	}
 
+	/**
+	 * @return the createdAt
+	 */
 	public Date getCreatedAt() {
 		return createdAt;
 	}
 
+	/**
+	 * @param createdAt the createdAt to set
+	 */
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
-	}
-	
-	public ArrayList<String> getHashtags() {
-		return hashtags;
-	}
-
-	public void setHashtags(ArrayList<String> hashtags) {
-		this.hashtags = hashtags;
-	}
-
-	public String getLocationName() {
-		return locationName;
-	}
-
-	public void setLocationName(String locationName) {
-		this.locationName = locationName;
 	}
 
 	/**
 	 * @return the userMentions
 	 */
-	public ArrayList<String> getUserMentions() {
+	public List<String> getUserMentions() {
 		return userMentions;
 	}
 
 	/**
 	 * @param userMentions the userMentions to set
 	 */
-	public void setUserMentions(ArrayList<String> userMentions) {
+	public void setUserMentions(List<String> userMentions) {
 		this.userMentions = userMentions;
+	}
+
+	/**
+	 * @return the hashtags
+	 */
+	public List<String> getHashtags() {
+		return hashtags;
+	}
+
+	/**
+	 * @param hashtags the hashtags to set
+	 */
+	public void setHashtags(List<String> hashtags) {
+		this.hashtags = hashtags;
 	}
 
 	/**
 	 * @return the uRLs
 	 */
-	public ArrayList<String> getURLs() {
+	public List<String> getURLs() {
 		return URLs;
 	}
+
+
 
 	/**
 	 * @param uRLs the uRLs to set
 	 */
-	public void setURLs(ArrayList<String> uRLs) {
+	public void setURLs(List<String> uRLs) {
 		URLs = uRLs;
 	}
 
 	/**
 	 * @return the media
 	 */
-	public ArrayList<String> getMedia() {
+	public List<String> getMedia() {
 		return media;
 	}
 
 	/**
 	 * @param media the media to set
 	 */
-	public void setMedia(ArrayList<String> media) {
+	public void setMedia(List<String> media) {
 		this.media = media;
-	}
-	
-	public String getLanguage() {
-		return language;
-	}
-
-	public void setLanguage(String language) {
-		this.language = language;
 	}
 
 	/* (non-Javadoc)
@@ -211,7 +282,6 @@ public class Tweet {
 			}
 		}
 	}
-	
 	
 	/**
 	 * Strips the stopwords and netslang from tweet text.

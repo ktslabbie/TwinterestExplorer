@@ -1,0 +1,1 @@
+SELECT * FROM TweetBase.Locations WHERE tweet_id = ?

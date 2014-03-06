@@ -22,21 +22,24 @@ import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
 import org.dbpedia.spotlight.model.OntologyType;
 
 /**
+ * Class to represent annotated tweets. It extends a regular tweet with additional information.
+ * 
  * @author Kristian Slabbekoorn
  *
  */
 public class AnnotatedTweet extends Tweet {
 
-	private double confidence;
-	private int support;
-	private Map<String, List<DBpediaResourceOccurrence>> occurrences;
-	private List<DBpediaResourceOccurrence> bestCandidates;
-	private Map<OntologyType, Integer> nativeTypes, allTypes;
-	private Map<YAGOType, Integer> yagoTypes;
-	private Map<Category, Integer> categories;
+	private double 	confidence;
+	private int 	support;
+	
+	private Map<String, List<DBpediaResourceOccurrence>>	occurrences;
+	private List<DBpediaResourceOccurrence>					bestCandidates;
+	private Map<OntologyType, Integer> 						nativeTypes, allTypes;
+	private Map<YAGOType, Integer> 							yagoTypes;
+	private Map<Category, Integer> 							categories;
 
 	/**
-	 * 
+	 * Default constructor.
 	 * 
 	 * @param tweet
 	 */
@@ -46,6 +49,8 @@ public class AnnotatedTweet extends Tweet {
 	}
 
 	/**
+	 * Constructor for a Tweet with identified entities.
+	 * 
 	 * @param tweet
 	 * @param occs
 	 */
@@ -53,12 +58,12 @@ public class AnnotatedTweet extends Tweet {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getUserMentions(), 
 				tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLocationName(), tweet.getLanguage());
 
-		confidence = Vars.SPOTLIGHT_CONFIDENCE;
-		support = Vars.SPOTLIGHT_SUPPORT;
-		occurrences = occs;
-		allTypes = new HashMap<OntologyType, Integer>();
-		yagoTypes = new HashMap<YAGOType, Integer>();
-		categories = new HashMap<Category, Integer>();
+		this.confidence = Vars.SPOTLIGHT_CONFIDENCE;
+		this.support = Vars.SPOTLIGHT_SUPPORT;
+		this.occurrences = occs;
+		this.allTypes = new HashMap<OntologyType, Integer>();
+		this.yagoTypes = new HashMap<YAGOType, Integer>();
+		this.categories = new HashMap<Category, Integer>();
 		
 		this.initBestCandidates();
 		this.initNativeTypes();

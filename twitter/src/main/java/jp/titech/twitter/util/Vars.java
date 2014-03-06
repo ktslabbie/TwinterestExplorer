@@ -54,7 +54,7 @@ public class Vars {
 	public static int 			DBPEDIA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.dbpediaHighGeneralityPruningRate"));
 	public static int 			SCHEMA_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.schemaHighGeneralityPruningRate"));
 	public static int 			YAGO_HIGH_GENERALITY_PRUNING_RATE 		= Integer.parseInt(c.getProperty("pruning.yagoHighGeneralityPruningRate"));
-	public static int		CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
+	public static int			CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
 	
 	public static int 			CATEGORY_TOP_K				 	= Integer.parseInt(c.getProperty("pruning.categoryTopK"));
 }
