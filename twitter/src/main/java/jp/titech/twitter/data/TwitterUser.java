@@ -143,6 +143,34 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	public void setTweets(List<Tweet> tweets) {
 		this.tweets = tweets;
 	}
+	
+	public boolean hasTweet(long tweetID) {
+		for (Tweet tweet : tweets)
+			if(tweet.getTweetID() == tweetID) return true;
+		return false;
+	}
+	
+	public boolean hasTweets() {
+		return !tweets.isEmpty();
+	}
+	
+	/**
+	 * @return the userOntology
+	 */
+	public UserOntology getUserOntology() {
+		return userOntology;
+	}
+
+	/**
+	 * @param userOntology the userOntology to set
+	 */
+	public void setUserOntology(UserOntology userOntology) {
+		this.userOntology = userOntology;
+	}
+	
+	public boolean hasUserOntology() {
+		return !userOntology.isEmpty();
+	}
 
 	/**
 	 * Custom compareTo method to make it possible to check two TwitterUsers for equality (based on user ID).

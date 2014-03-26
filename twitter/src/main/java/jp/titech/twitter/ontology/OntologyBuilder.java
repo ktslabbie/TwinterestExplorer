@@ -5,72 +5,64 @@
  */
 package jp.titech.twitter.ontology;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
-import org.dbpedia.spotlight.model.DBpediaType;
 import org.dbpedia.spotlight.model.OntologyType;
-import org.dbpedia.spotlight.model.SchemaOrgType;
 
 import jp.titech.twitter.data.AnnotatedTweet;
 import jp.titech.twitter.data.Tweet;
+import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.ner.spotlight.SpotlightQuery;
-import jp.titech.twitter.ontology.types.Category;
-import jp.titech.twitter.ontology.types.FreebaseType;
-import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
 public class OntologyBuilder {
 
-	private long userID;
-	private String userName;
-	private int totalCount;
+	private TwitterUser user;
+	private UserOntology userOntology;
+	private int totalTweetCount;
 	private boolean ontologyExists;
-	private Map<OntologyType, Integer> ontology;
 	private Date startDate, endDate;
 
 
-	public OntologyBuilder(long tUserID) {
-		userID = tUserID;
-		totalCount = 3200;
-		ontologyExists = TweetBase.getInstance().isContained(tUserID, Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
+	public OntologyBuilder(TwitterUser user) {
+		this.user = user;
+		totalTweetCount = (Vars.TIMELINE_TWEET_COUNT <= 3200) ? Vars.TIMELINE_TWEET_COUNT : 3200;
+		ontologyExists = TweetBase.getInstance().isContained(user.getUserID(), Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
 	}
 
-	public OntologyBuilder(long tUserID, int tCount) {
-		userID = tUserID;
-		totalCount = (tCount <= 3200) ? tCount : 3200;
-		ontologyExists = TweetBase.getInstance().isContained(tUserID, Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
-	}
-
-	public void build(int mergeWindow) {
-		Log.getLogger().info("Building ontology for user " + userID + " based on the " + totalCount + " most recent tweets, concatenating groups of " + mergeWindow + " tweets.");
+	public void build() {
+		Log.getLogger().info("Building ontology for user " + user.getUserID() + " based on the " + totalTweetCount + " most recent tweets, "
+								+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
 		
-		if(ontologyExists && startDate == null){
+		if(ontologyExists && startDate == null) {
+			
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
-			ontology = TweetBase.getInstance().getUserOntology(userID);
+			userOntology = TweetBase.getInstance().getUserOntology(user.getUserID());
+			user.setUserOntology(userOntology);
+			
 		} else {
+			
 			Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
-			List<Tweet> tweets = TweetBase.getInstance().getTweets(userID);
+			
+			List<Tweet> tweets = TweetBase.getInstance().getTweets(user.getUserID());
 			List<AnnotatedTweet> annotatedTweets = new ArrayList<AnnotatedTweet>();
-			int count = 0;
+			int processedTweetCount = 0;
 			Util.loadStopwords(Vars.STOPWORDS_FILE);
 			
 			if(startDate != null && endDate != null){
 				Log.getLogger().info("Getting tweets between " + startDate + " and " + endDate);
 			}
 			
-			String mergedContent = "";
-			int mergeCount = 0;
+			String concatenatedContent = "";
+			int tweetsConcatenatedCount = 0;
 			
 			for (Tweet tweet : tweets) {
 				
@@ -82,16 +74,16 @@ public class OntologyBuilder {
 				}
 				
 				tweet.stripEverything();
-				mergedContent += tweet.getContent() + " ";
-				mergeCount++;
+				concatenatedContent += tweet.getContent() + " ";
+				tweetsConcatenatedCount++;
 
-				if(mergeCount >= mergeWindow || count >= totalCount - 1) {
-					Log.getLogger().info("Stripped (and merged) tweet content: " + mergedContent);
+				if(tweetsConcatenatedCount >= Vars.CONCATENATION_WINDOW || processedTweetCount >= totalTweetCount - 1) {
+					Log.getLogger().info("Stripped (and concatenated) tweet content: " + concatenatedContent);
 					
-					if(mergedContent.isEmpty() || mergedContent.equals(" ")) continue;
+					if(concatenatedContent.isEmpty() || concatenatedContent.equals(" ")) continue;
 	
 					SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
-					Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(mergedContent);
+					Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(concatenatedContent);
 	
 					if(!occurrences.isEmpty()) {
 						for (String key : occurrences.keySet()) {
@@ -110,33 +102,19 @@ public class OntologyBuilder {
 	
 					annotatedTweets.add(aTweet);
 					
-					mergeCount = 0;
-					mergedContent = "";
+					tweetsConcatenatedCount = 0;
+					concatenatedContent = "";
 				}
 				
-				count++;
+				processedTweetCount++;
 
-				if(count >= totalCount) break;
+				if(processedTweetCount >= totalTweetCount) break;
 			}
 
-			ontology = Util.mergeOntologyTypeMaps(annotatedTweets);
+			userOntology.setOntology(Util.mergeOntologyTypeMaps(annotatedTweets));
 
-			TweetBase.getInstance().addUserOntology(userID, ontology);
+			TweetBase.getInstance().addUserOntology(user.getUserID(), userOntology);
 		}
-	}
-
-	/**
-	 * @return the ontology
-	 */
-	public Map<OntologyType, Integer> getOntology() {
-		return ontology;
-	}
-
-	/**
-	 * @param ontology the ontology to set
-	 */
-	public void setOntology(Map<OntologyType, Integer> ontology) {
-		this.ontology = ontology;
 	}
 	
 	/**
@@ -166,4 +144,13 @@ public class OntologyBuilder {
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
 	}
+
+	/**
+	 * @return the userOntology
+	 */
+	public UserOntology getUserOntology() {
+		return userOntology;
+	}
+	
+	
 }

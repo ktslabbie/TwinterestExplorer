@@ -130,7 +130,7 @@ public class DBpediaQuery {
 	public Set<DBpediaType> getDirectDBpediaSubclasses(DBpediaType type) {
 		String typeURI = type.getFullUri();
 		Set<DBpediaType> subClasses = new HashSet<DBpediaType>();
-		Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
+		//Log.getLogger().info("Getting direct subclasses for " + type.typeID() + "...");
 		String query = Vars.SPARQL_PREFIXES + "SELECT ?dbpedia WHERE { ?dbpedia rdfs:subClassOf <" + typeURI + "> }";
 
 		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);

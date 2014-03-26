@@ -7,8 +7,12 @@ package jp.titech.twitter.mining;
 
 import java.util.List;
 
+import jp.titech.twitter.data.Tweet;
+import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBase;
+import jp.titech.twitter.db.TweetBaseUtil;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Vars;
 import twitter4j.HashtagEntity;
 import twitter4j.MediaEntity;
 import twitter4j.Paging;
@@ -22,54 +26,48 @@ import twitter4j.UserMentionEntity;
 
 public class UserMiner {
 
-	private TweetBase tweetBase;
+	private Twitter twitter;
+	private TwitterUser user;
 	private int tweetCount, englishCount;
-
-	public UserMiner(){
-		tweetBase = TweetBase.getInstance();
-	}
+	private int miningMode = 2;
+	private boolean finished;
 	
-	public void mineUser(long userID, int count){
+	public static final int MINE_NONE 	= 0;
+	public static final int MINE_NEW 	= 1;
+	public static final int MINE_ALL 	= 2;
+
+	public UserMiner(TwitterUser user, int miningMode){
+		this.twitter = new TwitterFactory().getInstance();
+		this.user = user;
+		this.tweetCount = 0;
+		this.englishCount = 0;
+		this.finished = false;
+		this.miningMode = miningMode;
 		
-		Twitter twitter = new TwitterFactory().getInstance();
-	    List<Status> statuses;
-	    tweetCount = 0;
-	    englishCount = 0;
-	    
-		try {
-			Log.getLogger().info("UserID to mine: " + userID);
-			
-			int pages = count / 200 + 1;
-			Log.getLogger().info("Mining " + count + " tweets, over " + pages +" pages.");
-			
-			for (int page = 1; page <= pages; page++) {
-				statuses = twitter.getUserTimeline(userID, new Paging(page, 200));
-				Log.getLogger().info("Mined page " + page + ". " + statuses.size() + " statuses found.");
-				processStatuses(statuses);
-			}
-			
-		} catch (TwitterException e) {
-			Log.getLogger().error(e.getMessage());
+		if(!user.hasTweets()) {
+			Log.getLogger().info("Gathering user @" + user.getScreenName() + "'s tweets from DB (if present)...");
+			user.setTweets(TweetBase.getInstance().getTweets(user.getUserID()));
 		}
 	}
 	
-	public void mineUser(String screenName, int count){
+	public void mineUser() {
 		
-		Twitter twitter = new TwitterFactory().getInstance();
-	    List<Status> statuses;
+		if(miningMode == 0 && user.hasTweets()) return;
+		
+		List<Status> statuses;
 	    tweetCount = 0;
 	    englishCount = 0;
 	    
+	    int pages = Vars.TIMELINE_TWEET_COUNT / 200 + 1;
+	    
+		Log.getLogger().info("Mining user: @" + user.getScreenName() + ". Mining " + Vars.TIMELINE_TWEET_COUNT + " tweets, over " + pages +" pages.");
+	    
 		try {
-			Log.getLogger().info("Screenname to mine: " + screenName);
-			
-			int pages = count / 200 + 1;
-			Log.getLogger().info("Mining " + count + " tweets, over " + pages +" pages.");
-			
 			for (int page = 1; page <= pages; page++) {
-				statuses = twitter.getUserTimeline(screenName, new Paging(page, 200));
-				Log.getLogger().info("Mined page " + page + ". " + statuses.size() + " statuses found.");
+				statuses = twitter.getUserTimeline(user.getUserID(), new Paging(page, 200));
+				Log.getLogger().info("Retrieved page " + page + ". " + statuses.size() + " statuses found.");
 				processStatuses(statuses);
+				if(finished) break;
 			}
 			
 		} catch (TwitterException e) {
@@ -80,7 +78,7 @@ public class UserMiner {
 				Log.getLogger().error("Error getting tweets (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
 				try {
 					Thread.sleep(secondsUntil*1000);
-					mineUser(screenName, count);
+					mineUser();
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -88,47 +86,54 @@ public class UserMiner {
 		}
 	}
 	
-	private void processStatuses(List<Status> statuses){
-		for(Status status : statuses){
-			String tweetText;
-			UserMentionEntity[] userMentionEntities;
-			HashtagEntity[] hashtagEntities;
-			URLEntity[] urlEntities;
-			MediaEntity[] mediaEntities;
+	private void processStatuses(List<Status> statuses) {
+		String tweetText;
+		UserMentionEntity[] userMentionEntities;
+		HashtagEntity[] hashtagEntities;
+		URLEntity[] urlEntities;
+		MediaEntity[] mediaEntities;
+		
+		for(Status status : statuses) {
 			tweetCount++;
-			
-			if(status.isRetweet()){
-				Status retweetedStatus = status.getRetweetedStatus();
-				tweetText = retweetedStatus.getText();
-				userMentionEntities = retweetedStatus.getUserMentionEntities();
-				hashtagEntities = retweetedStatus.getHashtagEntities();
-				urlEntities = retweetedStatus.getURLEntities();
-				mediaEntities = retweetedStatus.getMediaEntities();
-				Log.getLogger().info("Retweeted on: " + status.getCreatedAt() + " Content: " + tweetText);
-			} else {
-				tweetText = status.getText();
-				userMentionEntities = status.getUserMentionEntities();
-				hashtagEntities = status.getHashtagEntities();
-				urlEntities = status.getURLEntities();
-				mediaEntities = status.getMediaEntities();
-				Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + " Content: " + tweetText);
-			}
-			
-			User user = status.getUser();
-			
-			Log.getLogger().info("Status lang code: " + status.getIsoLanguageCode());
 			
 			if(status.getIsoLanguageCode().equals("en")) {
 				englishCount++;
 			}
 			
-			tweetBase.addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
-					status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities, status.getIsoLanguageCode());
+			if(!user.hasTweet(status.getId())) {
+			
+				if(status.isRetweet()) {
+					Status retweetedStatus = status.getRetweetedStatus();
+					tweetText = retweetedStatus.getText();
+					userMentionEntities = retweetedStatus.getUserMentionEntities();
+					hashtagEntities = retweetedStatus.getHashtagEntities();
+					urlEntities = retweetedStatus.getURLEntities();
+					mediaEntities = retweetedStatus.getMediaEntities();
+					Log.getLogger().info("Retweeted on: " + status.getCreatedAt() + ", Language: " + status.getIsoLanguageCode() + ", Content: " + tweetText);
+				} else {
+					tweetText = status.getText();
+					userMentionEntities = status.getUserMentionEntities();
+					hashtagEntities = status.getHashtagEntities();
+					urlEntities = status.getURLEntities();
+					mediaEntities = status.getMediaEntities();
+					Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + ", Language: " + status.getIsoLanguageCode() + ", Content: " + tweetText);
+				}
+				
+				User user = status.getUser();
+				
+				TweetBase.getInstance().addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
+						status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities, status.getIsoLanguageCode());
+			} else {
+				if(miningMode == 1) {
+					Log.getLogger().info("Found an already existing tweet. We are done.");
+					finished = true;
+				}
+				return;
+			}
 		}
 	}
 	
 	public double getEnglishRate() {
 		return (double)englishCount / (double)tweetCount;
 	}
-	
 }

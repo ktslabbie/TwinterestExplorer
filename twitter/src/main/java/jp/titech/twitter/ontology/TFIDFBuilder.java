@@ -1,13 +1,8 @@
 package jp.titech.twitter.ontology;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import org.dbpedia.spotlight.model.OntologyType;
 
@@ -18,14 +13,12 @@ import jp.titech.twitter.ontology.types.YAGOType;
 public class TFIDFBuilder {
 
 	private Map<String, Map<YAGOType, Double>> tfIdfMap;
-	private Map<String, Map<YAGOType, Double>> nTFIDFMap;
 	private List<TwitterUser> users;
 	private double maxTFScore = 0.0;
 	private double maxTFIDFScore = 0.0;
 
 	public TFIDFBuilder(List<TwitterUser> users) {
 		this.tfIdfMap = new HashMap<String, Map<YAGOType,Double>>();
-		this.nTFIDFMap = new HashMap<String, Map<YAGOType,Double>>();
 		this.users = users;
 	}
 
@@ -41,7 +34,7 @@ public class TFIDFBuilder {
 		for (int i = 0; i < users.size(); i++) {
 			TwitterUser user = users.get(i);
 			tfMap = new HashMap<YAGOType, Integer>();
-			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID());
+			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID()).getOntology();
 
 
 			for(OntologyType ontType : map.keySet()) {
@@ -68,7 +61,7 @@ public class TFIDFBuilder {
 				tempTFIDFMap.put(tfType, tfIdf);
 			}
 
-			tfIdfMap.put(user.getScreenName(), tempTFIDFMap );
+			tfIdfMap.put(user.getScreenName(), tempTFIDFMap);
 		}
 
 		return tfIdfMap;
@@ -88,7 +81,7 @@ public class TFIDFBuilder {
 		for (int i = 0; i < users.size(); i++) {
 			TwitterUser user = users.get(i);
 
-			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID());
+			Map<OntologyType, Integer> map = TweetBase.getInstance().getUserOntology(user.getUserID()).getOntology();
 
 			for(OntologyType ontType : map.keySet()) {
 				if(ontType instanceof YAGOType) {
@@ -105,16 +98,4 @@ public class TFIDFBuilder {
 
 		return dfMap;
 	}
-
-	/*public Map<String, Map<YAGOType, Double>> normalizeTFIDF() {
-		
-		for (String userName : tfIdfMap.keySet()) {
-			
-			
-			
-			for( YAGOType type : tfIdfMap.get(userName).keySet() ) {
-				tfIdfMap.get(userName).get(type)
-			}
-		}
-	}*/
 }

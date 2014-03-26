@@ -72,6 +72,7 @@ public class CommunityDetection {
 			for(int j = i+1; j < users.size(); j++) {
 				TwitterUser second = users.get(j);
 				
+				
 				//log += first.getName() + "\t\t" + Util.calculateYAGOOntologySimilarity(first, second, outputFile, THRESHOLD) + "\n";
 				
 				//TODO: file-based to user-based !

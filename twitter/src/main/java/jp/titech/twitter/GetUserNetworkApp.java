@@ -9,7 +9,9 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import jp.titech.twitter.config.Configuration;
-import jp.titech.twitter.control.Controller;
+import jp.titech.twitter.control.MiningController;
+import jp.titech.twitter.control.OntologyController;
+import jp.titech.twitter.control.NetworkController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.WeightedEdge;
 import jp.titech.twitter.db.TweetBase;
@@ -38,7 +40,9 @@ import twitter4j.TwitterFactory;
  */
 public class GetUserNetworkApp {
 
-	public static Controller control = Controller.getInstance();
+	public static MiningController miningController 	= MiningController.getInstance();
+	public static OntologyController ontologyController = OntologyController.getInstance();
+	public static NetworkController networkController 	= NetworkController.getInstance();
 
 	public static void main( String[] args ) throws InterruptedException {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
@@ -49,34 +53,26 @@ public class GetUserNetworkApp {
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> dgraph;
 		//SimpleGraph<String, DefaultWeightedEdge> dgraph;
 
-		dgraph = control.gatherNetworkFromSeedUser(SEED_USER_ID, 3, 500);
-
-		//dgraph = control.gatherNetworkFromCommunityFile("../twitter/data/output/community/result.community.10-window.txt");
+		dgraph = networkController.createNetworkFromSeedUser(SEED_USER_ID, 3, 500);
+		//dgraph = networkController.buildNetworkFromCommunityFile("../twitter/data/output/community/result.community.10-window.txt");
 
 		Log.getLogger().info("");
 		Log.getLogger().info("Graph: " + dgraph.toString());
 
-		annotateUsers(dgraph);
+		for (TwitterUser user : dgraph.vertexSet()) {
+			
+			miningController.mineUser(user);
+			double englishRate = miningController.getUserMiner().getEnglishRate();
+			Log.getLogger().info("Rate of English tweets of user @" + user.getScreenName() + ": " + englishRate);
+			
+			if(miningController.getUserMiner().getEnglishRate() > 0.9) {
+				Log.getLogger().info("Enough English tweets, so create ontology...");
+				ontologyController.createUserOntology(user);
+			}
+		}
 
 		//drawSimilarityGraph(dgraph);
 		//drawFollowGraph(dgraph);
-	}
-
-	private static void annotateUsers(DirectedGraph<TwitterUser, DefaultWeightedEdge> dgraph) {
-
-		for (TwitterUser user : dgraph.vertexSet()) {
-
-			control.startSearchMining(user.getScreenName(), Vars.TIMELINE_TWEET_COUNT);
-			double englishRate = control.getUserMiner().getEnglishRate();
-			Log.getLogger().info("Rate of English tweets of user @" + user.getScreenName() + ": " + englishRate);
-			if(control.getUserMiner().getEnglishRate() > 0.9) {
-
-				Log.getLogger().info("Enough English tweets, so create ontology...");
-
-				control.createUserOntology(user.getScreenName(), Vars.TIMELINE_TWEET_COUNT);
-			}
-
-		}
 	}
 
 	private static void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
@@ -87,7 +83,6 @@ public class GetUserNetworkApp {
 		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
 		//Log.getLogger().info("Creating ontology...");
 		//control.createUserOntology(screenName, 500);
-
 
 		// Construct Model and Graph
 		JGraph graph = new JGraph(model);
@@ -125,7 +120,6 @@ public class GetUserNetworkApp {
 		//control.startSearchMining(screenName, Vars.TIMELINE_TWEET_COUNT);
 		//Log.getLogger().info("Creating ontology...");
 		//control.createUserOntology(screenName, 500);
-
 
 		// Construct Model and Graph
 		JGraph graph = new JGraph(model);

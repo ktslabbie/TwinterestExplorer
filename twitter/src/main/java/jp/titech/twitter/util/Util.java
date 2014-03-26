@@ -5,6 +5,7 @@
  */
 package jp.titech.twitter.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -12,8 +13,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,8 +48,9 @@ public class Util {
 	 * @param log The string
 	 * @param file The file
 	 */
-	public static void writeToFile(String log, File file){
+	public static void writeToFile(String log, File file) {
 		try {
+			file.getParentFile().mkdirs();
 			FileWriter fw = new FileWriter(file);
 			fw.write(log);
 			fw.close();
@@ -61,7 +65,7 @@ public class Util {
 	 * @param log The String
 	 * @param file The file
 	 */
-	public static void addToFile(String log, File file){
+	public static void addToFile(String log, File file) {
 		try {
 			FileWriter fw = new FileWriter(file, true);
 			fw.write(log);
@@ -78,14 +82,21 @@ public class Util {
 	 * @return The (text) file contents
 	 */
 	public static String readFile(File file) {
+		BufferedReader br = null;
 		String out = "";
+		 
 		try {
-			Scanner sc = new Scanner(new FileReader(file));
-			while(sc.hasNextLine()){
-				out += sc.nextLine() + "\n";
-			}
-		} catch (FileNotFoundException e) {
+			String currentLine;
+			br = new BufferedReader(new FileReader(file));
+			while ((currentLine = br.readLine()) != null) out += currentLine + "\n";
+		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null) br.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
 		return out;
 	}
@@ -234,6 +245,31 @@ public class Util {
 		}
 		return returnTypes;
 	}
+	
+	/**
+	 * Create an OntologyType object from a type URI.
+	 * 
+	 * @param string A type URI
+	 * @return
+	 */
+	public static OntologyType determineOntologyType(String uri) {
+		if(uri.contains("dbpedia.org/ontology/")){
+			return new DBpediaType(uri.split("dbpedia.org/ontology/")[1]);
+		} else if(uri.contains("schema.org/")){
+			return new SchemaOrgType(uri.split("schema.org/")[1]);
+		} else if(uri.contains("rdf.freebase.com/ns/")){
+			String[] pathSplit = uri.split("rdf.freebase.com/ns/");
+			String[] domainSplit = pathSplit[1].split("/");
+			return (domainSplit.length == 1) ? new FreebaseType(domainSplit[0]) : new FreebaseType(domainSplit[0], domainSplit[1]);
+		} else if(uri.contains("dbpedia.org/class/yago/")){
+			return new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
+		} else if(uri.contains("dbpedia.org/resource/Category:")){
+			return new Category(uri.split("dbpedia.org/resource/Category:")[1]);
+		} else {
+			Log.getLogger().error("Unknown ontology type: " + uri);
+			return null;
+		}
+	}
 
 	/**
 	 * @param annotatedTweets
@@ -254,31 +290,6 @@ public class Util {
 			}
 		}
 		return fullMap;
-	}
-
-	/**
-	 * Create OntologyType object from type URI
-	 * 
-	 * @param string A type URI
-	 * @return
-	 */
-	public static OntologyType determineOntologyType(String uri) {
-		OntologyType returnType = null;
-
-		if(uri.contains("dbpedia.org/ontology/")){
-			returnType = new DBpediaType(uri.split("dbpedia.org/ontology/")[1]);
-		} else if(uri.contains("schema.org/")){
-			returnType = new SchemaOrgType(uri.split("schema.org/")[1]);
-		} else if(uri.contains("rdf.freebase.com/ns/")){
-			String[] pathSplit = uri.split("rdf.freebase.com/ns/");
-			String[] domainSplit = pathSplit[1].split("/");
-			returnType = (domainSplit.length == 1) ? new FreebaseType(domainSplit[0]) : new FreebaseType(domainSplit[0], domainSplit[1]);
-		} else if(uri.contains("dbpedia.org/class/yago/")){
-			returnType = new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
-		} else if(uri.contains("dbpedia.org/resource/Category:")){
-			returnType = new Category(uri.split("dbpedia.org/resource/Category:")[1]);
-		}
-		return returnType;
 	}
 
 	/**
@@ -307,19 +318,20 @@ public class Util {
 	 * Sorts a map by its values (descending order).
 	 * 
 	 * @param map
-	 * @return
+	 * @return the sorted map
 	 */
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
 		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
+		
 		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
 				return (o2.getValue()).compareTo(o1.getValue());
 			}
 		});
+		
 		Map<K, V> result = new LinkedHashMap<K, V>();
-		for (Map.Entry<K, V> entry : list) {
-			result.put(entry.getKey(), entry.getValue());
-		}
+		for (Map.Entry<K, V> entry : list) result.put(entry.getKey(), entry.getValue());
+		
 		return result;
 	}
 
@@ -600,5 +612,22 @@ public class Util {
 		BigDecimal bd = new BigDecimal(value);
 		bd = bd.setScale(places, BigDecimal.ROUND_HALF_UP);
 		return bd.doubleValue();
+	}
+
+	/**
+	 * Returns a Date object with the given year, month and day.
+	 * 
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @return the date
+	 */
+	public static Date getDate(int year, int month, int day) {
+		Calendar cal = Calendar.getInstance();
+	    cal.set(Calendar.YEAR, year);
+	    cal.set(Calendar.MONTH, month-1);
+	    cal.set(Calendar.DAY_OF_MONTH, day);
+	    
+	    return cal.getTime();
 	}
 }

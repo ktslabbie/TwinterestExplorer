@@ -23,6 +23,7 @@ public class Vars {
 	public static final int		MAX_FRIENDS						= Integer.valueOf(c.getProperty("twitter.maxFriends"));
 	public static final int		MIN_TWEETS						= Integer.valueOf(c.getProperty("twitter.minTweets"));
 	public static final int		MAX_TWEETS						= Integer.valueOf(c.getProperty("twitter.maxTweets"));
+	public static final String	MINING_MODE						= c.getProperty("twitter.miningMode");
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	
@@ -31,6 +32,7 @@ public class Vars {
 	public static final boolean	DBPEDIA_REMOTE					= Boolean.valueOf(c.getProperty("dbpedia.remote"));				// Remote DBpedia querying yes/no
 	
 	public static final String	DATA_DIRECTORY					= c.getProperty("data.dataDirectory");
+	public static final String	USER_DIRECTORY					= c.getProperty("data.userDirectory");
 	public static final String	OUTPUT_DIRECTORY				= c.getProperty("data.outputDirectory");
 	
 	public static final String	STOPWORDS_FILE					= c.getProperty("data.stopwordsFile");

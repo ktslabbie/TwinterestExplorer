@@ -5,6 +5,7 @@
  */
 package jp.titech.twitter.tools;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -31,9 +32,9 @@ public class FileSplitter {
 	/*
 	 * Variables
 	 */
-	static final String RDF_DIRECTORY = Vars.DBPEDIA_RDF_DIRECTORY;					// Directory with RDF files
-	static final String EXTENSION = "nt";											// Extension of RDF files
-	static final int LINES_PER_FILE = 1000;											// Number of lines per split file
+	static final String RDF_DIRECTORY = "C://may_split/";							// Directory with RDF files
+	static final String EXTENSION = "csv";											// Extension of RDF files
+	static final int LINES_PER_FILE = 10000;										// Number of lines per split file
 	
 	public static void main( String[] args ) {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
@@ -59,14 +60,16 @@ public class FileSplitter {
 	 * @return The (text) file contents
 	 */
 	public static void splitHugeFile(File file, int lines) {
+		BufferedReader br = null;
 		String out = "";
 		try {
-			Scanner sc = new Scanner(new FileReader(file));
+			br = new BufferedReader(new FileReader(file));
 			FileWriter fw;
+			String currentLine;
 			int count = 0;
 			int fileIndex = 1;
-			while(sc.hasNextLine()){
-				out += sc.nextLine() + "\n";
+			while ((currentLine = br.readLine()) != null) {
+				out += currentLine + "\n";
 				count++;
 				//showProgress(count, lines);
 				if(count == lines){

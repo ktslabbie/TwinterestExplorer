@@ -39,8 +39,8 @@ public class Tweet {
 	 * @param locationName
 	 * @param language
 	 */
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, List<String> userMentions, 
-			List<String> hashtags, List<String> URLs, List<String> media, String locationName, String language) {
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, String locationName, List<String> userMentions, 
+			List<String> hashtags, List<String> URLs, List<String> media, String language) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
@@ -202,8 +202,6 @@ public class Tweet {
 	public List<String> getURLs() {
 		return URLs;
 	}
-
-
 
 	/**
 	 * @param uRLs the uRLs to set
