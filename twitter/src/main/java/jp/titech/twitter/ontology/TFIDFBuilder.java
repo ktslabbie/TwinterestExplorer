@@ -3,8 +3,10 @@ package jp.titech.twitter.ontology;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.dbpedia.spotlight.model.OntologyType;
+import org.hsqldb.lib.Iterator;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBase;

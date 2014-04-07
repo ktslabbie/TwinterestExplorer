@@ -31,25 +31,21 @@ public class OntologyBuilder {
 	private boolean ontologyExists;
 	private Date startDate, endDate;
 
-
 	public OntologyBuilder(TwitterUser user) {
 		this.user = user;
 		totalTweetCount = (Vars.TIMELINE_TWEET_COUNT <= 3200) ? Vars.TIMELINE_TWEET_COUNT : 3200;
-		ontologyExists = TweetBase.getInstance().isContained(user.getUserID(), Vars.SPOTLIGHT_CONFIDENCE, Vars.SPOTLIGHT_SUPPORT);
+		ontologyExists = TweetBase.getInstance().isOntologyContained(user.getUserID());
 	}
 
 	public void build() {
-		Log.getLogger().info("Building ontology for user " + user.getUserID() + " based on the " + totalTweetCount + " most recent tweets, "
+		Log.getLogger().info("Building ontology for user @" + user.getScreenName() + " based on the " + totalTweetCount + " most recent tweets, "
 								+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
 		
 		if(ontologyExists && startDate == null) {
-			
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
 			userOntology = TweetBase.getInstance().getUserOntology(user.getUserID());
-			user.setUserOntology(userOntology);
 			
 		} else {
-			
 			Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
 			
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(user.getUserID());
@@ -111,8 +107,7 @@ public class OntologyBuilder {
 				if(processedTweetCount >= totalTweetCount) break;
 			}
 
-			userOntology.setOntology(Util.mergeOntologyTypeMaps(annotatedTweets));
-
+			userOntology = new UserOntology(Util.mergeOntologyTypeMaps(annotatedTweets));
 			TweetBase.getInstance().addUserOntology(user.getUserID(), userOntology);
 		}
 	}
@@ -144,13 +139,8 @@ public class OntologyBuilder {
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
 	}
-
-	/**
-	 * @return the userOntology
-	 */
+	
 	public UserOntology getUserOntology() {
-		return userOntology;
+		return this.userOntology;
 	}
-	
-	
 }

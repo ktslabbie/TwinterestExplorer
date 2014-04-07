@@ -44,9 +44,10 @@ CREATE TABLE TWEETBASE.ONTOLOGY (
 		user_id BIGINT NOT NULL,
 		ontology_type VARCHAR(150) NOT NULL,
 		cardinality INTEGER NOT NULL,
+		concatenation_window INTEGER NOT NULL,
 		confidence DOUBLE NOT NULL,
 		support INTEGER NOT NULL,
-			PRIMARY KEY (user_id, ontology_type, confidence, support)
+			PRIMARY KEY (user_id, ontology_type, concatenation_window, confidence, support)
 );
 
 CREATE TABLE TWEETBASE.TWEETS (

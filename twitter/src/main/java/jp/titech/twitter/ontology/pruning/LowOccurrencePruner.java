@@ -77,7 +77,7 @@ public class LowOccurrencePruner implements Pruner {
 		}
 	}
 
-	public UserOntology getPrunedUserOntology(){
+	public UserOntology getPrunedUserOntology() {
 		return prunedUserOntology;
 	}
 }

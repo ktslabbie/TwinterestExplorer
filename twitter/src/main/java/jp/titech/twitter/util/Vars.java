@@ -23,6 +23,7 @@ public class Vars {
 	public static final int		MAX_FRIENDS						= Integer.valueOf(c.getProperty("twitter.maxFriends"));
 	public static final int		MIN_TWEETS						= Integer.valueOf(c.getProperty("twitter.minTweets"));
 	public static final int		MAX_TWEETS						= Integer.valueOf(c.getProperty("twitter.maxTweets"));
+	public static final double	MIN_ENGLISH_RATE				= Double.valueOf(c.getProperty("twitter.minEnglishRate"));
 	public static final String	MINING_MODE						= c.getProperty("twitter.miningMode");
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
@@ -47,6 +48,8 @@ public class Vars {
 	public static int 			SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
 	public static final boolean INCLUDE_EMPTY_SURFACE_FORMS 	= Boolean.valueOf(c.getProperty("spotlight.includeEmptySurfaceForms"));
 
+	public static String		PRUNING_MODE							= c.getProperty("pruning.pruningMode");
+	
 	public static double		DBPEDIA_LOW_OCCURRENCE_PRUNING_RATE 	= Double.parseDouble(c.getProperty("pruning.dbpediaLowOccurrencePruningRate"));
 	public static double		SCHEMA_LOW_OCCURRENCE_PRUNING_RATE 		= Double.parseDouble(c.getProperty("pruning.schemaLowOccurrencePruningRate"));
 	public static double		YAGO_LOW_OCCURRENCE_PRUNING_RATE 		= Double.parseDouble(c.getProperty("pruning.yagoLowOccurrencePruningRate"));
@@ -58,5 +61,8 @@ public class Vars {
 	public static int 			YAGO_HIGH_GENERALITY_PRUNING_RATE 		= Integer.parseInt(c.getProperty("pruning.yagoHighGeneralityPruningRate"));
 	public static int			CATEGORY_HIGH_GENERALITY_PRUNING_RATE 	= Integer.parseInt(c.getProperty("pruning.categoryHighGeneralityPruningRate"));
 	
-	public static int 			CATEGORY_TOP_K				 	= Integer.parseInt(c.getProperty("pruning.categoryTopK"));
+	public static int 			CATEGORY_TOP_K				 			= Integer.parseInt(c.getProperty("pruning.categoryTopK"));
+	
+	// String for printing experimental results. Ex: [2 0.2 0]
+	public static String		PARAMETER_STRING					= "[" + CONCATENATION_WINDOW + " " + SPOTLIGHT_CONFIDENCE + " " + SPOTLIGHT_SUPPORT + "]";
 }

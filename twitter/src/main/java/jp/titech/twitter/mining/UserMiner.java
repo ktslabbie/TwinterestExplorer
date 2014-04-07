@@ -27,7 +27,7 @@ import twitter4j.UserMentionEntity;
 public class UserMiner {
 
 	private Twitter twitter;
-	private TwitterUser user;
+	private TwitterUser twitterUser;
 	private int tweetCount, englishCount;
 	private int miningMode = 2;
 	private boolean finished;
@@ -38,7 +38,7 @@ public class UserMiner {
 
 	public UserMiner(TwitterUser user, int miningMode){
 		this.twitter = new TwitterFactory().getInstance();
-		this.user = user;
+		this.twitterUser = user;
 		this.tweetCount = 0;
 		this.englishCount = 0;
 		this.finished = false;
@@ -52,7 +52,7 @@ public class UserMiner {
 	
 	public void mineUser() {
 		
-		if(miningMode == 0 && user.hasTweets()) return;
+		if(miningMode == 0 && twitterUser.hasTweets()) return;
 		
 		List<Status> statuses;
 	    tweetCount = 0;
@@ -60,11 +60,11 @@ public class UserMiner {
 	    
 	    int pages = Vars.TIMELINE_TWEET_COUNT / 200 + 1;
 	    
-		Log.getLogger().info("Mining user: @" + user.getScreenName() + ". Mining " + Vars.TIMELINE_TWEET_COUNT + " tweets, over " + pages +" pages.");
+		Log.getLogger().info("Mining user: @" + twitterUser.getScreenName() + ". Mining " + Vars.TIMELINE_TWEET_COUNT + " tweets, over " + pages +" pages.");
 	    
 		try {
 			for (int page = 1; page <= pages; page++) {
-				statuses = twitter.getUserTimeline(user.getUserID(), new Paging(page, 200));
+				statuses = twitter.getUserTimeline(twitterUser.getUserID(), new Paging(page, 200));
 				Log.getLogger().info("Retrieved page " + page + ". " + statuses.size() + " statuses found.");
 				processStatuses(statuses);
 				if(finished) break;
@@ -100,7 +100,10 @@ public class UserMiner {
 				englishCount++;
 			}
 			
-			if(!user.hasTweet(status.getId())) {
+			if(!twitterUser.hasTweet(status.getId())) {
+				
+				User user = status.getUser();
+				Tweet tweet = new Tweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt());
 			
 				if(status.isRetweet()) {
 					Status retweetedStatus = status.getRetweetedStatus();
@@ -119,10 +122,19 @@ public class UserMiner {
 					Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + ", Language: " + status.getIsoLanguageCode() + ", Content: " + tweetText);
 				}
 				
-				User user = status.getUser();
+				tweet.setContent(tweetText);
+				tweet.setRetweet(status.isRetweet());
+				if(status.getPlace() != null) tweet.setLocationName(status.getPlace().getFullName());
+				tweet.setLanguage(status.getIsoLanguageCode());
 				
-				TweetBase.getInstance().addTweet(status.getId(), user.getId(), user.getScreenName(), status.getCreatedAt(), tweetText, status.isRetweet(), status.getPlace(), 
-						status.getGeoLocation(), userMentionEntities, hashtagEntities, urlEntities, mediaEntities, status.getIsoLanguageCode());
+				for(UserMentionEntity entity : userMentionEntities) tweet.addUserMention(entity.getText());
+				for(HashtagEntity entity : hashtagEntities) tweet.addHashtag(entity.getText());
+				for(URLEntity entity : urlEntities) tweet.addURL(entity.getText());
+				for(MediaEntity entity : mediaEntities) tweet.addMedia(entity.getText());
+				
+				twitterUser.addTweet(tweet);
+				TweetBase.getInstance().addTweet(tweet);
+				
 			} else {
 				if(miningMode == 1) {
 					Log.getLogger().info("Found an already existing tweet. We are done.");

@@ -41,21 +41,21 @@ import jp.titech.twitter.util.Vars;
  *
  */
 public class TweetBase {
-	
+
 	private static TweetBase 	tweetBase; // TweetBase is a singleton class
-	
+
 	private Connection			dbConnection;
-	
+
 	private String				sqlSelectDir = Vars.SQL_SCRIPT_DIRECTORY + "select/";
 	private String				sqlInsertDir = Vars.SQL_SCRIPT_DIRECTORY + "insert/";
 
 	private PreparedStatement 	addTweetStatement, addHashtagStatement, addURLStatement, addUserMentionStatement, 
-								addMediaStatement, addLocationStatement, addOntologyStatement, addUserStatement, addUserFollowerStatement;
-	
+	addMediaStatement, addLocationStatement, addOntologyStatement, addUserStatement, addUserFollowerStatement;
+
 	private PreparedStatement 	getSingleTweetStatement, getTweetsStatement, getHashtagsStatement, getLocationStatement, getURLStatement,
-								getUserMentionsStatement, getMediaStatement, getUserOntologyStatement, getUserByIDStatement,
-								getUserByNameStatement, getUserFollowersStatement;
-	
+	getUserMentionsStatement, getMediaStatement, getUserOntologyStatement, getUserByIDStatement,
+	getUserByNameStatement, getUserFollowersStatement;
+
 	/**
 	 * Default constructor.
 	 */
@@ -63,7 +63,7 @@ public class TweetBase {
 		initDB();
 		prepareStatements();
 	}
-	
+
 	/**
 	 * Initialize the database.
 	 */
@@ -91,7 +91,7 @@ public class TweetBase {
 			addOntologyStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlInsertDir + "add_ontology.sql"));
 			addUserStatement 			= dbConnection.prepareStatement(Util.readFile(this.sqlInsertDir + "add_user.sql"));
 			addUserFollowerStatement	= dbConnection.prepareStatement(Util.readFile(this.sqlInsertDir + "add_user_follower.sql"));
-			
+
 			getTweetsStatement 			= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_tweets.sql"));
 			getSingleTweetStatement 	= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_single_tweet.sql"));
 			getUserMentionsStatement 	= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_mentions.sql"));
@@ -114,98 +114,75 @@ public class TweetBase {
 	/**
 	 * Add a tweet with the given parameters to the database (if not yet contained).
 	 * 
-	 * @param tweetID
-	 * @param userID
-	 * @param screenName
-	 * @param createdAt
-	 * @param content
-	 * @param isRetweet
-	 * @param place
-	 * @param geoLocation
-	 * @param userMentionEntities
-	 * @param hashtagEntities
-	 * @param urlEntities
-	 * @param mediaEntities
-	 * @param language
+	 * @param tweet the tweet to add
 	 */
-	public void addTweet(long tweetID, long userID, String screenName, Date createdAt, String content, boolean isRetweet, Place place, GeoLocation geoLocation, 
-			UserMentionEntity[] userMentionEntities, HashtagEntity[] hashtagEntities, URLEntity[] urlEntities, MediaEntity[] mediaEntities, String language) {
+	public void addTweet(Tweet tweet) {
+
+		long tweetID = tweet.getTweetID();
 
 		if(this.isContained(tweetID)) {
-			Log.getLogger().warn("Tweet from user " + screenName + " with ID " + tweetID + " already contained in DB! Skipping.");
+			Log.getLogger().warn("Tweet from user @" + tweet.getScreenName() + " with ID " + tweetID + " already contained in DB! Skipping.");
 			return;
 		}
-		
+
 		try {
 			addTweetStatement.clearParameters();
 			addTweetStatement.setLong(1, tweetID);
-			addTweetStatement.setLong(2, userID);
-			addTweetStatement.setString(3, screenName);
-			addTweetStatement.setDate(4, new java.sql.Date(createdAt.getTime()));
-			addTweetStatement.setString(5, content);
-			addTweetStatement.setBoolean(6, isRetweet);
-			addTweetStatement.setString(7, language);
+			addTweetStatement.setLong(2, tweet.getUserID());
+			addTweetStatement.setString(3, tweet.getScreenName());
+			addTweetStatement.setDate(4, new java.sql.Date(tweet.getCreatedAt().getTime()));
+			addTweetStatement.setString(5, tweet.getContent());
+			addTweetStatement.setBoolean(6, tweet.isRetweet());
+			addTweetStatement.setString(7, tweet.getLanguage());
 			addTweetStatement.executeUpdate();
-			
+
 			Log.getLogger().info("Successfully added tweet to DB!");
 
-			if(place != null) {
+			if(tweet.getLocationName() != null) {
 				addLocationStatement.clearParameters();
 				addLocationStatement.setLong(1, tweetID);
-				addLocationStatement.setString(2, place.getFullName());
+				addLocationStatement.setString(2, tweet.getLocationName());
 				addLocationStatement.executeUpdate();
-				Log.getLogger().info("Successfully added location " + place.getFullName() + " to DB!");
+				Log.getLogger().info("Successfully added location " + tweet.getLocationName() + " to DB!");
 			}
 
-			if(userMentionEntities != null) {
-				for (int i = 0; i < userMentionEntities.length; i++) {
-					UserMentionEntity userMentionEntity = userMentionEntities[i];
-					addUserMentionStatement.clearParameters();
-					addUserMentionStatement.setLong(1, tweetID);
-					addUserMentionStatement.setString(2, userMentionEntity.getScreenName());
-					addUserMentionStatement.executeUpdate();
-					Log.getLogger().info("Successfully added user mention " + userMentionEntity.getScreenName() + " to DB!");
-				}
+			for (String entity : tweet.getUserMentions()) {
+				addUserMentionStatement.clearParameters();
+				addUserMentionStatement.setLong(1, tweetID);
+				addUserMentionStatement.setString(2, entity);
+				addUserMentionStatement.executeUpdate();
+				Log.getLogger().info("Successfully added user mention " + entity + " to DB!");
 			}
-			
-			if(hashtagEntities != null) {
-				for (int i = 0; i < hashtagEntities.length; i++) {
-					HashtagEntity hashtagEntity = hashtagEntities[i];
-					addHashtagStatement.clearParameters();
-					addHashtagStatement.setLong(1, tweetID);
-					addHashtagStatement.setString(2, hashtagEntity.getText());
-					addHashtagStatement.executeUpdate();
-					Log.getLogger().info("Successfully added hashtag " + hashtagEntity.getText() + " to DB!");
-				}	
+
+			for (String entity : tweet.getHashtags()) {
+				addHashtagStatement.clearParameters();
+				addHashtagStatement.setLong(1, tweetID);
+				addHashtagStatement.setString(2, entity);
+				addHashtagStatement.executeUpdate();
+				Log.getLogger().info("Successfully added hashtag " + entity + " to DB!");
+			}	
+
+			for (String entity : tweet.getURLs()) {
+				addURLStatement.clearParameters();
+				addURLStatement.setLong(1, tweetID);
+				addURLStatement.setString(2, entity);
+				addURLStatement.executeUpdate();
+				Log.getLogger().info("Successfully added URL " + entity + " to DB!");
 			}
-			
-			if(urlEntities != null) {
-				for (int i = 0; i < urlEntities.length; i++) {
-					URLEntity urlEntity = urlEntities[i];
-					addURLStatement.clearParameters();
-					addURLStatement.setLong(1, tweetID);
-					addURLStatement.setString(2, urlEntity.getURL());
-					addURLStatement.executeUpdate();
-					Log.getLogger().info("Successfully added URL " + urlEntity.getURL() + " to DB!");
-				}	
-			}
-			
-			if(mediaEntities != null) {
-				for (int i = 0; i < mediaEntities.length; i++) {
-					MediaEntity mediaEntity = mediaEntities[i];
-					addMediaStatement.clearParameters();
-					addMediaStatement.setLong(1, tweetID);
-					addMediaStatement.setString(2, mediaEntity.getURL());
-					addMediaStatement.executeUpdate();
-					Log.getLogger().info("Successfully added media " + mediaEntity.getURL() + " to DB!");
-				}	
-			}
-			
+
+			for (String entity : tweet.getMedia()) {
+				addMediaStatement.clearParameters();
+				addMediaStatement.setLong(1, tweetID);
+				addMediaStatement.setString(2, entity);
+				addMediaStatement.executeUpdate();
+				Log.getLogger().info("Successfully added media " + entity + " to DB!");
+			}	
+
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Add a user (in twitter4j format) to the database.
 	 * 
@@ -213,9 +190,9 @@ public class TweetBase {
 	 */
 	public TwitterUser addUser(User user) {
 		return addUser(user.getId(), user.getScreenName(), user.getName(), user.getDescription(), user.getLocation(),
-					user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected());
+				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected());
 	}
-	
+
 	/**
 	 * Add a user with the given parameters to the database (if not yet contained).
 	 * 
@@ -233,13 +210,13 @@ public class TweetBase {
 	 * @return the user just added in TwitterUser object form
 	 */
 	public TwitterUser addUser(long userID, String screenName, String name, String description, String location, 
-								int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected) {
+			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected) {
 
 		if(this.isContained(userID)) {
 			Log.getLogger().warn("User " + screenName + " with ID " + userID + " already contained in DB! Skipping.");
 			return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected);
 		}
-		
+
 		try {
 			addUserStatement.clearParameters();
 			addUserStatement.setLong(1, userID);
@@ -254,14 +231,14 @@ public class TweetBase {
 			addUserStatement.setBoolean(10, isProtected);
 			addUserStatement.executeUpdate();
 			Log.getLogger().info("Successfully added user to DB!");
-			
+
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		}
-		
+
 		return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected);
 	}
-	
+
 	/**
 	 * Add a user follower to the database.
 	 * 
@@ -276,7 +253,7 @@ public class TweetBase {
 			addUserFollowerStatement.executeUpdate();
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 	}
-	
+
 	/**
 	 * Check whether a user is contained in the database or not.
 	 * 
@@ -292,7 +269,7 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return false;
 	}
-	
+
 	/**
 	 * Check if a user's followers are already in the database.
 	 * 
@@ -324,27 +301,26 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return false;
 	}
-	
+
 	/**
 	 * Check containment of a user ontology in the database.
 	 * 
 	 * @param userID
-	 * @param confidence
-	 * @param support
 	 * @return true if contained, false otherwise
 	 */
-	public boolean isContained(long userID, double confidence, int support) {
+	public boolean isOntologyContained(long userID) {
 		try {
 			getUserOntologyStatement.clearParameters();
 			getUserOntologyStatement.setLong(1, userID);
-			getUserOntologyStatement.setDouble(2, Vars.SPOTLIGHT_CONFIDENCE);
-			getUserOntologyStatement.setInt(3, Vars.SPOTLIGHT_SUPPORT);
+			getUserOntologyStatement.setInt(2, Vars.CONCATENATION_WINDOW);
+			getUserOntologyStatement.setDouble(3, Vars.SPOTLIGHT_CONFIDENCE);
+			getUserOntologyStatement.setInt(4, Vars.SPOTLIGHT_SUPPORT);
 			ResultSet resultSet = getUserOntologyStatement.executeQuery();
 			if(resultSet.next()) return true;
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return false;
 	}
-	
+
 	/**
 	 * Add a user ontology to the database.
 	 * 
@@ -352,15 +328,16 @@ public class TweetBase {
 	 * @param fullMap
 	 */
 	public void addUserOntology(long userID, UserOntology userOntology) {
-		
+
 		for (OntologyType type : userOntology.getOntology().keySet()) {
 			try {
 				addOntologyStatement.clearParameters();
 				addOntologyStatement.setLong(1, userID);
 				addOntologyStatement.setString(2, type.getFullUri());
 				addOntologyStatement.setInt(3, userOntology.getOntology().get(type));
-				addOntologyStatement.setDouble(4, Vars.SPOTLIGHT_CONFIDENCE);
-				addOntologyStatement.setInt(5, Vars.SPOTLIGHT_SUPPORT);
+				addOntologyStatement.setInt(4, Vars.CONCATENATION_WINDOW);
+				addOntologyStatement.setDouble(5, Vars.SPOTLIGHT_CONFIDENCE);
+				addOntologyStatement.setInt(6, Vars.SPOTLIGHT_SUPPORT);
 				addOntologyStatement.executeUpdate();
 			} catch (SQLIntegrityConstraintViolationException sqlicve) {
 				Log.getLogger().error("Row already exists in ONTOLOGY database! Delete ontology of user " + userID + " first. Aborting entire procedure.");
@@ -389,9 +366,9 @@ public class TweetBase {
 
 			while(resultSet.next()) {
 				long tweetID = resultSet.getLong(1);
-				Tweet tweet = new Tweet(tweetID, resultSet.getLong(2), resultSet.getString(3), resultSet.getDate(4), resultSet.getString(5), 
-										resultSet.getBoolean(6), getLocation(tweetID), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID), 
-										resultSet.getString(7));
+				Tweet tweet = new Tweet(tweetID, resultSet.getLong(2), resultSet.getString(3), resultSet.getDate(4), 
+						resultSet.getString(5), resultSet.getBoolean(6), resultSet.getString(7), 
+						getLocation(tweetID), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID));
 				tweets.add(tweet);
 			}
 		} catch (SQLException sqle) {
@@ -400,7 +377,7 @@ public class TweetBase {
 
 		return tweets;
 	}
-	
+
 	/**
 	 * Fetch a user from the database based on user name.
 	 * 
@@ -418,16 +395,16 @@ public class TweetBase {
 
 			if(resultSet.next()) {
 				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-											resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
-				
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+
 				user.setTweets(getTweets(resultSet.getLong(1)));
 				user.setUserOntology(getUserOntology(resultSet.getLong(1)));
 			}
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
-		
+
 		return user;
 	}
-	
+
 	/**
 	 * Fetch a user and their ontology (if exists) from the database based on user ID.
 	 * 
@@ -445,13 +422,13 @@ public class TweetBase {
 
 			if(resultSet.next())
 				user = new TwitterUser(userID, resultSet.getString(2), resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-											resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
-			
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 
 		return user;
 	}
-	
+
 	/**
 	 * Get a user ontology from the database.
 	 * 
@@ -465,8 +442,9 @@ public class TweetBase {
 		try {
 			getUserOntologyStatement.clearParameters();
 			getUserOntologyStatement.setLong(1, userID);
-			getUserOntologyStatement.setDouble(2, Vars.SPOTLIGHT_CONFIDENCE);
-			getUserOntologyStatement.setInt(3, Vars.SPOTLIGHT_SUPPORT);
+			getUserOntologyStatement.setInt(2, Vars.CONCATENATION_WINDOW);
+			getUserOntologyStatement.setDouble(3, Vars.SPOTLIGHT_CONFIDENCE);
+			getUserOntologyStatement.setInt(4, Vars.SPOTLIGHT_SUPPORT);
 			ResultSet resultSet = getUserOntologyStatement.executeQuery();
 
 			while(resultSet.next()) {
@@ -476,7 +454,7 @@ public class TweetBase {
 				userOntology.addClass(ontologyType, cardinality);
 			}
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
-		
+
 		return userOntology;
 	}
 
@@ -496,7 +474,7 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return hashtags;
 	}
-	
+
 	/**
 	 * Get a tweet's associated URLs from the database.
 	 * 
@@ -513,7 +491,7 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return URLs;
 	}
-	
+
 	/**
 	 * Get a tweet's associated user mentions from the database.
 	 * 
@@ -530,7 +508,7 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return userMentions;
 	}
-	
+
 	/**
 	 * Get a tweet's associated media from the database.
 	 * 
@@ -564,7 +542,7 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return location;
 	}
-	
+
 	/**
 	 * Get a user's followers from the database.
 	 * 

@@ -56,9 +56,9 @@ public class TweetBaseUtil {
 				Twitter twitter = new TwitterFactory().getInstance();
 				user = twitter.showUser(userID);
 
-				if(user != null) { // Can a user be null here?
+				if(user != null) // Can a user be null here?
 					twitterUser = tweetBase.addUser(user);
-				}
+				
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
 					Log.getLogger().error("Error getting user (suspended account). Skip this user.");
@@ -75,7 +75,6 @@ public class TweetBaseUtil {
 				}
 			}
 		}
-
 		return twitterUser;
 	}
 
@@ -90,9 +89,9 @@ public class TweetBaseUtil {
 				Twitter twitter = new TwitterFactory().getInstance();
 				user = twitter.showUser(screenName);
 
-				if(user != null) { // Can a user be null here?
+				if(user != null) // Can a user be null here?
 					twitterUser = tweetBase.addUser(user);
-				}
+				
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
 					Log.getLogger().error("Error getting user (suspended account). Skip this user.");
@@ -109,7 +108,6 @@ public class TweetBaseUtil {
 				}
 			}
 		}
-		
 		return twitterUser;
 	}
 

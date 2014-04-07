@@ -45,7 +45,7 @@ public class AnnotatedTweet extends Tweet {
 	 */
 	public AnnotatedTweet(Tweet tweet) {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getLocationName(), 
-				tweet.getUserMentions(), tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLanguage());
+				tweet.getLanguage(), tweet.getUserMentions(), tweet.getHashtags(), tweet.getURLs(), tweet.getMedia());
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class AnnotatedTweet extends Tweet {
 	 */
 	public AnnotatedTweet(Tweet tweet, Map<String, List<DBpediaResourceOccurrence>> occs) {
 		super(tweet.getTweetID(), tweet.getUserID(), tweet.getScreenName(), tweet.getCreatedAt(), tweet.getContent(), tweet.isRetweet(), tweet.getLocationName(), 
-				tweet.getUserMentions(), tweet.getHashtags(), tweet.getURLs(), tweet.getMedia(), tweet.getLanguage());
+				tweet.getLanguage(), tweet.getUserMentions(), tweet.getHashtags(), tweet.getURLs(), tweet.getMedia());
 
 		this.confidence = Vars.SPOTLIGHT_CONFIDENCE;
 		this.support = Vars.SPOTLIGHT_SUPPORT;
@@ -247,7 +247,7 @@ public class AnnotatedTweet extends Tweet {
 				for(Iterator<OntologyType> typeIt = ontoTypes.iterator(); typeIt.hasNext();) {
 					OntologyType currentType = typeIt.next();
 					String typeID = currentType.typeID();
-					Log.getLogger().info("Type: " + typeID);
+					//Log.getLogger().info("Type: " + typeID);
 	
 					if(typeID.contains("DBpedia:") || typeID.contains("Freebase:") || typeID.contains("Schema:")){
 						if(nativeTypes.get(currentType) != null) {

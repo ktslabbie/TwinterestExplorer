@@ -42,7 +42,7 @@ public class NetworkBuilder {
 		processed = new HashSet<Long>();
 	}
 
-	public NetworkBuilder(TwitterUser seedUser, int maxDepth, int maxSize) {
+	public NetworkBuilder(TwitterUser seedUser, int maxSize) {
 		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		this.seedUser = seedUser;
 		processQueue = new PriorityQueue<TwitterUser>();

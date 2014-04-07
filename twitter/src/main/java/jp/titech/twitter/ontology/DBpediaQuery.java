@@ -33,20 +33,13 @@ import org.openrdf.query.BindingSet;
 public class DBpediaQuery {
 
 	private static DBpediaQuery instance;
-
+	
 	private boolean remote;
 	private DBpediaOntologyRepository dbpediaOntologyRepository;
 
 	public DBpediaQuery() {
 		remote = Vars.DBPEDIA_REMOTE;
 		if(!remote)	dbpediaOntologyRepository = DBpediaOntologyRepository.getInstance();
-	}
-
-	public static DBpediaQuery getInstance(){
-		if(instance == null){
-			instance = new DBpediaQuery();
-		}
-		return instance;
 	}
 
 	/**
@@ -64,9 +57,9 @@ public class DBpediaQuery {
 
 			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
 
-			Log.getLogger().info("Querying local repository for YAGO types...");
+			//Log.getLogger().info("Querying local repository for YAGO types...");
 			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-			Log.getLogger().info("Done!");
+			//Log.getLogger().info("Done!");
 
 			for (BindingSet bindingSet : bindingList) {
 				Value value = bindingSet.getValue("yago");
@@ -100,9 +93,9 @@ public class DBpediaQuery {
 
 			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
 
-			Log.getLogger().info("Querying local repository for categories...");
+			//Log.getLogger().info("Querying local repository for categories...");
 			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-			Log.getLogger().info("Done!");
+			//Log.getLogger().info("Done!");
 
 			for (BindingSet bindingSet : bindingList) {
 				Value value = bindingSet.getValue("category");
@@ -273,5 +266,8 @@ public class DBpediaQuery {
 		}
 	}
 
-
+	public static DBpediaQuery getInstance(){
+		if(instance == null) instance = new DBpediaQuery();
+		return instance;
+	}
 }

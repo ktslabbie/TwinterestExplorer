@@ -4,6 +4,7 @@
  * @since		16 okt. 2012
  */
 package jp.titech.twitter.data;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -39,8 +40,8 @@ public class Tweet {
 	 * @param locationName
 	 * @param language
 	 */
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, String locationName, List<String> userMentions, 
-			List<String> hashtags, List<String> URLs, List<String> media, String language) {
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, String locationName, String language,
+			List<String> userMentions, List<String> hashtags, List<String> URLs, List<String> media) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
@@ -48,12 +49,24 @@ public class Tweet {
 		this.createdAt = createdAt;
 		this.content = content;
 		this.isRetweet = isRetweet;
+		this.locationName = locationName;
+		this.language = language;
 		this.userMentions = userMentions;
 		this.hashtags = hashtags;
 		this.URLs = URLs;
 		this.media = media;
-		this.locationName = locationName;
-		this.language = language;
+	}
+
+	public Tweet(long tweetID, long userID, String screenName,  Date createdAt) {
+		
+		this.tweetID = tweetID;
+		this.userID = userID;
+		this.screenName = screenName;
+		this.createdAt = createdAt;
+		this.userMentions = new ArrayList<String>();
+		this.hashtags = new ArrayList<String>();
+		this.URLs = new ArrayList<String>();
+		this.media = new ArrayList<String>();
 	}
 
 	/**
@@ -181,6 +194,13 @@ public class Tweet {
 	public void setUserMentions(List<String> userMentions) {
 		this.userMentions = userMentions;
 	}
+	
+	/**
+	 * @param userMention the userMention to add
+	 */
+	public void addUserMention(String userMention) {
+		this.userMentions.add(userMention);
+	}
 
 	/**
 	 * @return the hashtags
@@ -194,6 +214,13 @@ public class Tweet {
 	 */
 	public void setHashtags(List<String> hashtags) {
 		this.hashtags = hashtags;
+	}
+	
+	/**
+	 * @param hashtags the hashtag to add
+	 */
+	public void addHashtag(String hashtag) {
+		this.hashtags.add(hashtag);
 	}
 
 	/**
@@ -209,6 +236,13 @@ public class Tweet {
 	public void setURLs(List<String> uRLs) {
 		URLs = uRLs;
 	}
+	
+	/**
+	 * @param url the url to set
+	 */
+	public void addURL(String url) {
+		this.URLs.add(url);
+	}
 
 	/**
 	 * @return the media
@@ -222,6 +256,13 @@ public class Tweet {
 	 */
 	public void setMedia(List<String> media) {
 		this.media = media;
+	}
+	
+	/**
+	 * @param media the media to add
+	 */
+	public void addMedia(String media) {
+		this.media.add(media);
 	}
 
 	/* (non-Javadoc)

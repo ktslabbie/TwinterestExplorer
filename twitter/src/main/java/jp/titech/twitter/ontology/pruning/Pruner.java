@@ -5,6 +5,8 @@
  */
 package jp.titech.twitter.ontology.pruning;
 
+import jp.titech.twitter.data.UserOntology;
+
 /**
  * @author Kristian Slabbekoorn
  *
@@ -12,4 +14,6 @@ package jp.titech.twitter.ontology.pruning;
 public interface Pruner {
 	
 	public void prune();
+
+	public UserOntology getPrunedUserOntology();
 }

@@ -144,6 +144,10 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.tweets = tweets;
 	}
 	
+	public void addTweet(Tweet tweet) {
+		this.tweets.add(tweet);
+	}
+	
 	public boolean hasTweet(long tweetID) {
 		for (Tweet tweet : tweets)
 			if(tweet.getTweetID() == tweetID) return true;
