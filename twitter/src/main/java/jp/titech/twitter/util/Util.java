@@ -27,9 +27,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import jp.titech.twitter.data.AnnotatedTweet;
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.ontology.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.ontology.types.Category;
 import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.ontology.types.YAGOType;
@@ -274,8 +273,8 @@ public class Util {
 	/**
 	 * @param annotatedTweets
 	 * @return 
-	 */
-	public static Map<OntologyType, Integer> mergeOntologyTypeMaps(List<AnnotatedTweet> annotatedTweets){
+	 *//*
+	public static Map<OntologyType, Integer> mergeOntologyTypeMaps(List<AnnotatedTweet> annotatedTweets) {
 		Map<OntologyType, Integer> fullMap = new HashMap<OntologyType, Integer>();
 
 		for (AnnotatedTweet tempTweet : annotatedTweets) {
@@ -290,7 +289,7 @@ public class Util {
 			}
 		}
 		return fullMap;
-	}
+	}*/
 
 	/**
 	 * Returns the file name without extension.

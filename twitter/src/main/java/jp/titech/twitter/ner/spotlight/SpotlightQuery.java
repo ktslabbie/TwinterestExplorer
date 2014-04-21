@@ -64,8 +64,6 @@ public class SpotlightQuery {
 		return null;
 	}
 
-
-
 	/**
 	 * @param text
 	 * @return
@@ -73,7 +71,7 @@ public class SpotlightQuery {
 	private Map<String, List<DBpediaResourceOccurrence>> annotateRemotely(String text) {
 		JSONObject json = null;
 
-		Log.getLogger().info("Running DBpedia Spotlight annotator (retrieving all candidates)...");
+		//Log.getLogger().info("Running DBpedia Spotlight annotator (retrieving all candidates)...");
 
 		String query = "text=" + text.replace("&", "%26") + 
 				"&confidence=" + Vars.SPOTLIGHT_CONFIDENCE + "&support=" + Vars.SPOTLIGHT_SUPPORT +
@@ -82,8 +80,10 @@ public class SpotlightQuery {
 		try {
 			URI uri = new URI("http", "spotlight.dbpedia.org", "/rest/candidates", query, null);
 			URL url = new URL(uri.toASCIIString());
-			Log.getLogger().info(url.getQuery());
-
+			
+			//Log.getLogger().info(url.getQuery());
+			Log.getLogger().info("Sending tweet content to DBpedia Spotlight for annotation...");
+			
 			HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
 			urlc.setRequestMethod("GET");
 			urlc.setRequestProperty("accept", "application/json");
@@ -92,8 +92,6 @@ public class SpotlightQuery {
 				Log.getLogger().error("Failed : HTTP error code : " + urlc.getResponseCode() + ". Returning empty occurrence map.");
 				return new HashMap<String, List<DBpediaResourceOccurrence>>();
 			}
-
-			Log.getLogger().info("Sending query to DBpedia Spotlight.");
 
 			boolean queried = false;
 			while(!queried){
@@ -108,7 +106,6 @@ public class SpotlightQuery {
 
 					json = new JSONObject(jsonString);
 
-					//Log.getLogger().info(json.toString(2));
 					queried = true;
 				} catch (Exception e) {
 					Log.getLogger().error(e.getMessage());

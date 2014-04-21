@@ -6,19 +6,20 @@
 package jp.titech.twitter.ontology;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
-import org.dbpedia.spotlight.model.OntologyType;
 
-import jp.titech.twitter.data.AnnotatedTweet;
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.ner.spotlight.SpotlightQuery;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -38,8 +39,8 @@ public class OntologyBuilder {
 	}
 
 	public void build() {
-		Log.getLogger().info("Building ontology for user @" + user.getScreenName() + " based on the " + totalTweetCount + " most recent tweets, "
-								+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
+		//Log.getLogger().info("Building ontology for user @" + user.getScreenName() + " based on the " + totalTweetCount + " most recent tweets, "
+		//						+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
 		
 		if(ontologyExists && startDate == null) {
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
@@ -48,8 +49,9 @@ public class OntologyBuilder {
 		} else {
 			Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
 			
+			userOntology = new UserOntology();
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(user.getUserID());
-			List<AnnotatedTweet> annotatedTweets = new ArrayList<AnnotatedTweet>();
+			
 			int processedTweetCount = 0;
 			Util.loadStopwords(Vars.STOPWORDS_FILE);
 			
@@ -83,20 +85,14 @@ public class OntologyBuilder {
 	
 					if(!occurrences.isEmpty()) {
 						for (String key : occurrences.keySet()) {
-							Log.getLogger().info("Match: " + key + ": " + occurrences.get(key));
+							Log.getLogger().info("Match: " + key + ": " + occurrences.get(key).get(0)); // Only show the first candidate.
 						}
 					}
-	
-					AnnotatedTweet aTweet = new AnnotatedTweet(tweet, occurrences);
-	
+					
+					List<DBpediaResourceOccurrence> bestCandidates = this.initBestCandidates(occurrences);
+					
 					DBpediaQuery dbpQuery = DBpediaQuery.getInstance();
-	
-					dbpQuery.collectYAGOClasses(aTweet);
-					Log.getLogger().info("Full YAGO map: " + aTweet.getYAGOTypes());
-					dbpQuery.collectCategories(aTweet);
-					Log.getLogger().info("Full Category map: " + aTweet.getCategories());
-	
-					annotatedTweets.add(aTweet);
+					dbpQuery.collectClasses(bestCandidates, userOntology);
 					
 					tweetsConcatenatedCount = 0;
 					concatenatedContent = "";
@@ -107,9 +103,26 @@ public class OntologyBuilder {
 				if(processedTweetCount >= totalTweetCount) break;
 			}
 
-			userOntology = new UserOntology(Util.mergeOntologyTypeMaps(annotatedTweets));
 			TweetBase.getInstance().addUserOntology(user.getUserID(), userOntology);
 		}
+	}
+	
+	/**
+	 * Extract the best candidates from the full list of occurrences.
+	 * 
+	 * @return A list of the 1st ranked candidate DBpedia resource occurrences
+	 */
+	private List<DBpediaResourceOccurrence> initBestCandidates(Map<String, List<DBpediaResourceOccurrence>> occurrences) {
+		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
+		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
+
+		for (Iterator<List<DBpediaResourceOccurrence>> iterator = col.iterator(); iterator.hasNext();) {
+			List<DBpediaResourceOccurrence> candidates = iterator.next();
+			if(!candidates.isEmpty())
+				bestCandidates.add(candidates.get(0));
+		}
+		
+		return bestCandidates;
 	}
 	
 	/**

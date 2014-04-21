@@ -2,7 +2,7 @@
  * @author		Kristian Slabbekoorn
  * @version		1.0
  * @since		16 dec. 2012
- */
+ *//*
 package jp.titech.twitter.tools;
 
 import java.io.File;
@@ -16,17 +16,17 @@ import org.dbpedia.spotlight.model.OntologyType;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.db.TweetBaseUtil;
-import jp.titech.twitter.ontology.DBpediaQuery;
-import jp.titech.twitter.ontology.TFIDFBuilder;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
+import jp.titech.twitter.ontology.similarity.CFIUF;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
-/**
+*//**
  * @author Kristian Slabbekoorn
  *
- */
+ *//*
 public class CommunityDetection {
 
 	public static double CONFIDENCE = 0.7;
@@ -45,10 +45,10 @@ public class CommunityDetection {
 		String log = "";
 		String ranking = "";
 
-		TFIDFBuilder builder = new TFIDFBuilder(users);
+		CFIUF builder = new CFIUF(users);
 
-		Map<String, Map<YAGOType, Double>> tfIdfMap = builder.calculateYAGOTFIDF();
-		double max = builder.getMaxTFIDFScore();
+		Map<String, Map<YAGOType, Double>> tfIdfMap = builder.calculate();
+		double max = builder.getMaxCFIUFScore();
 		
 		Log.getLogger().info("Max TF-IDF: " + max);
 		
@@ -88,15 +88,16 @@ public class CommunityDetection {
 				//String relevance = rankingLines[i/2].split("\t")[2];
 				//ranking += "\n";
 
-				/*if(similarity >= CONFIDENCE){
+				if(similarity >= CONFIDENCE){
 					ranking += first.getName().split("#")[1] + "\t" + second.getName().split("#")[1] + "\t" + similarity + "\t";
 
 					//String relevance = rankingLines[i/2].split("\t")[2];
 					ranking += "\n";
-				}*/
+				}
 			}
 		}
 		
 		Util.writeToFile(ranking, outputFile);
 	}
 }
+*/

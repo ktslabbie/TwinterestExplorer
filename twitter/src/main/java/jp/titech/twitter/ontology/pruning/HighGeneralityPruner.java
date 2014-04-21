@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jp.titech.twitter.data.UserOntology;
-import jp.titech.twitter.ontology.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.ontology.types.Category;
 import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.ontology.types.YAGOType;
@@ -95,12 +95,13 @@ public class HighGeneralityPruner implements Pruner {
 			
 			for (YAGOType subYAGOType : subClasses) {
 
-				if(multiOntologyProcessing)
+				if(multiOntologyProcessing) {
 					if(originalUserOntology.contains(subYAGOType))
 						subClassCount += originalUserOntology.getOccurrences(subYAGOType);
-				else
+				} else {
 					if(userOntology.contains(subYAGOType))
 						subClassCount += userOntology.getOccurrences(subYAGOType);
+				}
 			}
 
 			double ratio = ((double)subClassCount / (double)superClassCount);

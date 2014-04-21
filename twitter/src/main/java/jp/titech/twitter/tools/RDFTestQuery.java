@@ -5,7 +5,7 @@
  */
 package jp.titech.twitter.tools;
 
-import jp.titech.twitter.ontology.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import jp.titech.twitter.ontology.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 

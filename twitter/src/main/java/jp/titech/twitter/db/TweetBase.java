@@ -48,9 +48,10 @@ public class TweetBase {
 
 	private String				sqlSelectDir = Vars.SQL_SCRIPT_DIRECTORY + "select/";
 	private String				sqlInsertDir = Vars.SQL_SCRIPT_DIRECTORY + "insert/";
+	private String				sqlUpdateDir = Vars.SQL_SCRIPT_DIRECTORY + "update/";
 
 	private PreparedStatement 	addTweetStatement, addHashtagStatement, addURLStatement, addUserMentionStatement, 
-	addMediaStatement, addLocationStatement, addOntologyStatement, addUserStatement, addUserFollowerStatement;
+	addMediaStatement, addLocationStatement, addOntologyStatement, addUserStatement, updateUserEnglishRateStatement, addUserFollowerStatement;
 
 	private PreparedStatement 	getSingleTweetStatement, getTweetsStatement, getHashtagsStatement, getLocationStatement, getURLStatement,
 	getUserMentionsStatement, getMediaStatement, getUserOntologyStatement, getUserByIDStatement,
@@ -103,6 +104,8 @@ public class TweetBase {
 			getUserByIDStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_by_id.sql"));
 			getUserByNameStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_by_screen_name.sql"));
 			getUserFollowersStatement	= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_followers.sql"));
+			
+			updateUserEnglishRateStatement	= dbConnection.prepareStatement(Util.readFile(this.sqlUpdateDir + "update_user_english_rate.sql"));
 
 			Log.getLogger().info("SQL statements prepared.");
 
@@ -190,7 +193,7 @@ public class TweetBase {
 	 */
 	public TwitterUser addUser(User user) {
 		return addUser(user.getId(), user.getScreenName(), user.getName(), user.getDescription(), user.getLocation(),
-				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected());
+				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected(), -1.0);
 	}
 
 	/**
@@ -210,11 +213,11 @@ public class TweetBase {
 	 * @return the user just added in TwitterUser object form
 	 */
 	public TwitterUser addUser(long userID, String screenName, String name, String description, String location, 
-			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected) {
+			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate) {
 
 		if(this.isContained(userID)) {
 			Log.getLogger().warn("User " + screenName + " with ID " + userID + " already contained in DB! Skipping.");
-			return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected);
+			return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate);
 		}
 
 		try {
@@ -229,6 +232,7 @@ public class TweetBase {
 			addUserStatement.setInt(8, statusesCount);
 			addUserStatement.setDate(9, new java.sql.Date(createdAt.getTime()));
 			addUserStatement.setBoolean(10, isProtected);
+			addUserStatement.setDouble(11, englishRate);
 			addUserStatement.executeUpdate();
 			Log.getLogger().info("Successfully added user to DB!");
 
@@ -236,7 +240,21 @@ public class TweetBase {
 			sqle.printStackTrace();
 		}
 
-		return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected);
+		return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate);
+	}
+	
+	public void updateUserEnglishRate(long userID, double englishRate) {
+		try {
+			updateUserEnglishRateStatement.clearParameters();
+			updateUserEnglishRateStatement.setDouble(1, englishRate);
+			updateUserEnglishRateStatement.setLong(2, userID);
+			updateUserEnglishRateStatement.executeUpdate();
+			Log.getLogger().info("Successfully updated user English rate in DB!");
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		}
+		
 	}
 
 	/**
@@ -367,8 +385,8 @@ public class TweetBase {
 			while(resultSet.next()) {
 				long tweetID = resultSet.getLong(1);
 				Tweet tweet = new Tweet(tweetID, resultSet.getLong(2), resultSet.getString(3), resultSet.getDate(4), 
-						resultSet.getString(5), resultSet.getBoolean(6), resultSet.getString(7), 
-						getLocation(tweetID), getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID));
+						resultSet.getString(5), resultSet.getBoolean(6), getLocation(tweetID), resultSet.getString(7), 
+						getUserMentions(tweetID), getHashtags(tweetID), getURLs(tweetID), getMedia(tweetID));
 				tweets.add(tweet);
 			}
 		} catch (SQLException sqle) {
@@ -395,7 +413,7 @@ public class TweetBase {
 
 			if(resultSet.next()) {
 				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11));
 
 				user.setTweets(getTweets(resultSet.getLong(1)));
 				user.setUserOntology(getUserOntology(resultSet.getLong(1)));
@@ -422,7 +440,7 @@ public class TweetBase {
 
 			if(resultSet.next())
 				user = new TwitterUser(userID, resultSet.getString(2), resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10));
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11));
 
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 

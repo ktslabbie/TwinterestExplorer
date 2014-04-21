@@ -3,17 +3,14 @@
  * @version		1.0
  * @since		25 okt. 2012
  */
-package jp.titech.twitter.ontology;
+package jp.titech.twitter.ontology.dbpedia;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import jp.titech.twitter.data.AnnotatedTweet;
-import jp.titech.twitter.ontology.repository.DBpediaOntologyRepository;
+import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.ontology.types.Category;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
@@ -22,7 +19,6 @@ import jp.titech.twitter.util.Vars;
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
 import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.OntologyType;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
 
@@ -33,7 +29,7 @@ import org.openrdf.query.BindingSet;
 public class DBpediaQuery {
 
 	private static DBpediaQuery instance;
-	
+
 	private boolean remote;
 	private DBpediaOntologyRepository dbpediaOntologyRepository;
 
@@ -42,78 +38,45 @@ public class DBpediaQuery {
 		if(!remote)	dbpediaOntologyRepository = DBpediaOntologyRepository.getInstance();
 	}
 
-	/**
-	 * @param aTweet
-	 */
-	public void collectYAGOClasses(AnnotatedTweet aTweet) {
-
-		Map<YAGOType, Integer> yagoTypes = new HashMap<YAGOType, Integer>();
-
-		List<DBpediaResourceOccurrence> occs = aTweet.getBestCandidates();
-
-		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();){
+	public void collectClasses(List<DBpediaResourceOccurrence> occs, UserOntology userOntology) {
+		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();) {
 			DBpediaResourceOccurrence occ = occIt.next();
 			String resourceURI = occ.resource().getFullUri();
 
-			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
+			String yagoQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
+			String categoryQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
 
-			//Log.getLogger().info("Querying local repository for YAGO types...");
-			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-			//Log.getLogger().info("Done!");
-
-			for (BindingSet bindingSet : bindingList) {
-				Value value = bindingSet.getValue("yago");
-				String stringValue = value.stringValue();
-				//Log.getLogger().info("Class found: " + stringValue);
-
-				if(stringValue.contains("class/yago/")){
-					YAGOType newType = new YAGOType(stringValue.split("class/yago/")[1]);
-					if(yagoTypes.get(newType) != null) {
-						yagoTypes.put(newType, yagoTypes.get(newType) + 1);
-					} else {
-						yagoTypes.put(newType, 1);
-					}
-				}
-			}
+			this.collectYAGOTypes(yagoQuery, userOntology);
+			this.collectCategories(categoryQuery, userOntology);
 		}
-		aTweet.setYAGOTypes(yagoTypes);
+	}
+
+	private void collectYAGOTypes(String query, UserOntology userOntology) {
+		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
+
+		for (BindingSet bindingSet : bindingList) {
+			Value value = bindingSet.getValue("yago");
+			String stringValue = value.stringValue();
+
+			if(stringValue.contains("class/yago/"))
+				userOntology.addClass(new YAGOType(stringValue.split("class/yago/")[1]));
+		}
 	}
 
 	/**
 	 * @param aTweet
 	 */
-	public void collectCategories(AnnotatedTweet aTweet) {
-		Map<Category, Integer> categories = new HashMap<Category, Integer>();
+	public void collectCategories(String query, UserOntology userOntology) {
+		List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
 
-		List<DBpediaResourceOccurrence> occs = aTweet.getBestCandidates();
+		for (BindingSet bindingSet : bindingList) {
+			Value value = bindingSet.getValue("category");
+			String stringValue = value.stringValue();
 
-		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();){
-			DBpediaResourceOccurrence occ = occIt.next();
-			String resourceURI = occ.resource().getFullUri();
-
-			String query = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
-
-			//Log.getLogger().info("Querying local repository for categories...");
-			List<BindingSet> bindingList = dbpediaOntologyRepository.query(query);
-			//Log.getLogger().info("Done!");
-
-			for (BindingSet bindingSet : bindingList) {
-				Value value = bindingSet.getValue("category");
-				String stringValue = value.stringValue();
-				//Log.getLogger().info("Class found: " + stringValue);
-
-				if(stringValue.contains("resource/Category:")){
-					Category newType = new Category(stringValue.split("resource/Category:")[1]);
-
-					if(categories.get(newType) != null) {
-						categories.put(newType, categories.get(newType) + 1);
-					} else {
-						categories.put(newType, 1);
-					}
-				}
-			}
+			if(stringValue.contains("resource/Category:"))
+				userOntology.addClass(new Category(stringValue.split("resource/Category:")[1]));					
 		}
-		aTweet.setCategories(categories);
+
 	}
 
 	/**
@@ -137,7 +100,7 @@ public class DBpediaQuery {
 				subClasses.add(new DBpediaType(stringValue.split("dbpedia.org/ontology/")[1]));
 			}
 		}
-		
+
 		return subClasses;
 	}
 
@@ -164,7 +127,7 @@ public class DBpediaQuery {
 
 		return subClasses;
 	}
-	
+
 	public Set<YAGOType> getDirectYAGOSuperclasses(YAGOType type){
 		String typeURI = type.getFullUri();
 		Set<YAGOType> superClasses = new HashSet<YAGOType>();
@@ -191,44 +154,44 @@ public class DBpediaQuery {
 
 	public int getYAGODistance(YAGOType v, YAGOType w) {
 		Log.getLogger().info("Getting YAGO ontology distance (hops) between classes " + v.typeID() + " and " + w.typeID() + "...");
-		
+
 		Set<YAGOType> vSet = new HashSet<YAGOType>(),
-					  wSet = new HashSet<YAGOType>();
-		
+				wSet = new HashSet<YAGOType>();
+
 		vSet.add(v); wSet.add(w);
 		int distance = getYAGODistance(vSet, wSet, 0);
 		Log.getLogger().info("Distance: " + distance);
 		return distance;
 	}
-	
+
 	public int getYAGODistance(Set<YAGOType> vSet, Set<YAGOType> wSet, int distance) {
-		
+
 		for (YAGOType v : vSet)
 			if(wSet.contains(v))
 				return distance;
-		
+
 		distance++;
 		Log.getLogger().info("Current distance: " + distance);
-		
+
 		Set<YAGOType> vSuperSet = new HashSet<YAGOType>(vSet);
-		
+
 		for (YAGOType v : vSet) {
 			Log.getLogger().info("Adding direct superclasses for " + v.typeID());
 			vSuperSet.addAll(getDirectYAGOSuperclasses(v));
 		}
-			
-		
+
+
 		for(YAGOType v : vSuperSet) {
 			if(wSet.contains(v))
 				return distance;
 		}
-			
-		
+
+
 		Set<YAGOType> wSuperSet = new HashSet<YAGOType>(wSet);
-		
+
 		for (YAGOType w : wSet)
 			wSuperSet.addAll(getDirectYAGOSuperclasses(w));
-		
+
 		return getYAGODistance(vSuperSet, wSuperSet, distance);
 	}
 

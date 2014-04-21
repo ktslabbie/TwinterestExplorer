@@ -72,5 +72,6 @@ CREATE TABLE TWEETBASE.USERS (
 		statuses_count INTEGER NOT NULL,
 		created_at DATE NOT NULL,
 		protected SMALLINT NOT NULL,
+		english_rate DOUBLE NOT NULL,
 			PRIMARY KEY (user_id)
 );

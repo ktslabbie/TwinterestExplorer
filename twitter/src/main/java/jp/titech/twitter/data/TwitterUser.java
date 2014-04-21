@@ -3,9 +3,11 @@ package jp.titech.twitter.data;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 
 /**
@@ -22,6 +24,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	private int 			followersCount, friendsCount, statusesCount;
 	private Date 			createdAt;
 	private boolean 		isProtected;
+	private double			englishRate;
 	private List<Tweet>		tweets;
 	private UserOntology	userOntology;
 
@@ -40,7 +43,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	 * @param isProtected
 	 */
 	public TwitterUser(long userID, String screenName, String name, String description, String location, 
-			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected) {
+			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate) {
 
 		this.userID = userID;
 		this.screenName = screenName;
@@ -52,6 +55,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.statusesCount = statusesCount;
 		this.createdAt = createdAt;
 		this.isProtected = isProtected;
+		this.englishRate = englishRate;
 		this.tweets = new ArrayList<Tweet>();
 		this.userOntology = new UserOntology();
 	}
@@ -134,6 +138,14 @@ public class TwitterUser implements Comparable<TwitterUser> {
 
 	public void setProtected(boolean isProtected) {
 		this.isProtected = isProtected;
+	}
+	
+	public double getEnglishRate() {
+		return this.englishRate;
+	}
+	
+	public void setEnglishRate(double englishRate) {
+		this.englishRate = englishRate;
 	}
 
 	public List<Tweet> getTweets() {

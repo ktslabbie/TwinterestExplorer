@@ -84,6 +84,8 @@ public class UserMiner {
 				}
 			}
 		}
+		
+		this.saveEnglishRate();
 	}
 	
 	private void processStatuses(List<Status> statuses) {
@@ -145,7 +147,11 @@ public class UserMiner {
 		}
 	}
 	
-	public double getEnglishRate() {
-		return (double)englishCount / (double)tweetCount;
+	public void saveEnglishRate() {
+		if(twitterUser.getEnglishRate() == -1.0) {
+			double englishRate = (double)englishCount / (double)tweetCount;
+			twitterUser.setEnglishRate(englishRate);
+			TweetBase.getInstance().updateUserEnglishRate(twitterUser.getUserID(), englishRate);
+		}
 	}
 }

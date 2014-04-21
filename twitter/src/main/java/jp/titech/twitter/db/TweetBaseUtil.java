@@ -9,6 +9,7 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.User;
+import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.util.Log;
 
@@ -139,5 +140,23 @@ public class TweetBaseUtil {
 		}
 
 		return tweetBase.getUserFollowers(userID);
+	}
+	
+	public static void initEnglishRate(TwitterUser user) {
+		Log.getLogger().info("Initializing English rates for users already in DB...");
+		
+		List<Tweet> tweets = user.getTweets();
+		int englishCount = 0;
+		int tweetCount = 0;
+		
+		for (Tweet tweet : tweets) {
+			tweetCount++;
+			if(tweet.getLanguage().equals("en")) englishCount++;
+		}
+		double englishRate = (double)englishCount / (double)tweetCount;
+		
+		Log.getLogger().info("English rate for user @" + user.getScreenName() + ": " + englishRate);
+		
+		tweetBase.updateUserEnglishRate(user.getUserID(), englishRate);
 	}
 }

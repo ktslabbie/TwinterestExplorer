@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 
 import jp.titech.twitter.config.Configuration;
-import jp.titech.twitter.ontology.repository.DBpediaOntologyRepository;
+import jp.titech.twitter.ontology.dbpedia.DBpediaOntologyRepository;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;

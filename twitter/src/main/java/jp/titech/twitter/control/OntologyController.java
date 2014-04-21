@@ -28,7 +28,7 @@ import jp.titech.twitter.util.Vars;
 public class OntologyController {
 
 	private static OntologyController controller;
-	
+	private UserOntology fullUserOntology, prunedUserOntology;
 
 	private OntologyController() {}
 
@@ -41,44 +41,49 @@ public class OntologyController {
 		
 		OntologyBuilder ob = new OntologyBuilder(user);
 		ob.build();
-		UserOntology ontology = ob.getUserOntology();
-		user.setUserOntology(ontology);
-		Util.writeToFile(ontology.toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.txt"));
+		fullUserOntology = ob.getUserOntology();
+		user.setUserOntology(fullUserOntology);
 
 		this.applyPruning(user);
 	}
 	
 	private void applyPruning(TwitterUser user) {
 		
-		UserOntology prunedOntology = user.getUserOntology();
 		Pruner pruner = null;
+		prunedUserOntology = user.getUserOntology();
 		
 		if(!Vars.PRUNING_MODE.equals("NONE")) {
 			if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("LOW")) {
 				Log.getLogger().info("Applying low-occurrence pruning.");
 				
-				pruner = new LowOccurrencePruner(user.getUserOntology());
+				pruner = new LowOccurrencePruner(fullUserOntology);
 				pruner.prune();
-				prunedOntology = pruner.getPrunedUserOntology();
-				Util.writeToFile(prunedOntology.toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/LOP_pruned_ontology.txt"));
+				prunedUserOntology = pruner.getPrunedUserOntology();
 			}
 			
 			if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("HIGH")) {
 				Log.getLogger().info("Applying high-generality pruning.");
 				
 				if(Vars.PRUNING_MODE.equals("BOTH")) {
-					pruner = new HighGeneralityPruner(user.getUserOntology(), prunedOntology);
+					pruner = new HighGeneralityPruner(fullUserOntology, prunedUserOntology);
 				} else if(Vars.PRUNING_MODE.equals("HIGH")) {
-					pruner = new HighGeneralityPruner(user.getUserOntology());
+					pruner = new HighGeneralityPruner(fullUserOntology);
 				}
 				pruner.prune();
-				prunedOntology = pruner.getPrunedUserOntology();
-				Util.writeToFile(prunedOntology.toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/HGP_pruned_ontology.txt"));
+				prunedUserOntology = pruner.getPrunedUserOntology();
 			}
 		}
 		
-		user.setUserOntology(prunedOntology);
+		user.setUserOntology(prunedUserOntology);
  	}
+	
+	public void writeUserOntology(TwitterUser user) {
+		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.txt"));
+		if(!Vars.PRUNING_MODE.equals("NONE")) {
+			Util.writeToFile(user.getUserOntology().toString(), 
+					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.txt"));
+		}
+	}
 	
 	/**
 	 * Retrieve the Controller singleton instance.

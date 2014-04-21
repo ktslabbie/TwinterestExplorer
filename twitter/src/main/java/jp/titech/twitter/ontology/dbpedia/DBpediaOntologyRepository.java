@@ -3,14 +3,13 @@
  * @version		1.0
  * @since		1 nov. 2012
  */
-package jp.titech.twitter.ontology.repository;
+package jp.titech.twitter.ontology.dbpedia;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.titech.twitter.ontology.DBpediaQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
