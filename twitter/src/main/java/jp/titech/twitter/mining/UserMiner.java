@@ -98,7 +98,7 @@ public class UserMiner {
 		for(Status status : statuses) {
 			tweetCount++;
 			
-			if(status.getIsoLanguageCode().equals("en")) {
+			if(status.getLang().equals("en")) {
 				englishCount++;
 			}
 			
@@ -114,20 +114,20 @@ public class UserMiner {
 					hashtagEntities = retweetedStatus.getHashtagEntities();
 					urlEntities = retweetedStatus.getURLEntities();
 					mediaEntities = retweetedStatus.getMediaEntities();
-					Log.getLogger().info("Retweeted on: " + status.getCreatedAt() + ", Language: " + status.getIsoLanguageCode() + ", Content: " + tweetText);
+					Log.getLogger().info("Retweeted on: " + status.getCreatedAt() + ", Language: " + status.getLang() + ", Content: " + tweetText);
 				} else {
 					tweetText = status.getText();
 					userMentionEntities = status.getUserMentionEntities();
 					hashtagEntities = status.getHashtagEntities();
 					urlEntities = status.getURLEntities();
 					mediaEntities = status.getMediaEntities();
-					Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + ", Language: " + status.getIsoLanguageCode() + ", Content: " + tweetText);
+					Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + ", Language: " + status.getLang() + ", Content: " + tweetText);
 				}
 				
 				tweet.setContent(tweetText);
 				tweet.setRetweet(status.isRetweet());
 				if(status.getPlace() != null) tweet.setLocationName(status.getPlace().getFullName());
-				tweet.setLanguage(status.getIsoLanguageCode());
+				tweet.setLanguage(status.getLang());
 				
 				for(UserMentionEntity entity : userMentionEntities) tweet.addUserMention(entity.getText());
 				for(HashtagEntity entity : hashtagEntities) tweet.addHashtag(entity.getText());

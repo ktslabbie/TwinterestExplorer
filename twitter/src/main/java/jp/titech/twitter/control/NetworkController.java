@@ -7,11 +7,11 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.data.UserSimilarity;
 import jp.titech.twitter.data.WeightedEdge;
 import jp.titech.twitter.db.TweetBaseUtil;
 import jp.titech.twitter.network.NetworkBuilder;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
-import jp.titech.twitter.ontology.similarity.UserSimilarity;
 import jp.titech.twitter.util.Log;
 
 import org.jgraph.JGraph;

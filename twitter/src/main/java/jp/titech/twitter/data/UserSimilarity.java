@@ -1,6 +1,5 @@
-package jp.titech.twitter.ontology.similarity;
+package jp.titech.twitter.data;
 
-import jp.titech.twitter.data.TwitterUser;
 
 public class UserSimilarity implements Comparable<UserSimilarity> {
 

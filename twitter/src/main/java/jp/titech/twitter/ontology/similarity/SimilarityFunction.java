@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.data.UserSimilarity;
 
 public abstract class SimilarityFunction {
 

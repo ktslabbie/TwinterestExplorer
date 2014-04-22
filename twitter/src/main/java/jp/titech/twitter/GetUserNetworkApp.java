@@ -17,11 +17,11 @@ import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.control.NetworkController;
 import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.data.UserSimilarity;
 import jp.titech.twitter.ontology.similarity.CFIUF;
 import jp.titech.twitter.ontology.similarity.CosineSimilarity;
 import jp.titech.twitter.ontology.similarity.OccurrenceSimilarity;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
-import jp.titech.twitter.ontology.similarity.UserSimilarity;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
@@ -39,6 +39,7 @@ import org.jgrapht.graph.SimpleGraph;
 public class GetUserNetworkApp {
 
 	final static long SEED_USER_ID = 55569628; //@mikegroner: 55569628
+	final static String TARGET_USER_SCREEN_NAME = "bnmuller";
 
 	public static void main( String[] args ) throws InterruptedException {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
@@ -73,13 +74,15 @@ public class GetUserNetworkApp {
 		
 		SimilarityFunction cs = new CosineSimilarity(userSet);
 		cs.calculate();
-		Util.writeToFile(cs.userSimilarityString("bnmuller"), new File(Vars.DATA_DIRECTORY + "bnmuller_cosine_similarity.txt"));
+		Util.writeToFile(cs.userSimilarityString(TARGET_USER_SCREEN_NAME), new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + "_cosine_similarity.txt"));
 		
 		SimilarityFunction os = new OccurrenceSimilarity(userSet);
 		os.calculate();
-		Util.writeToFile(os.userSimilarityString("bnmuller"), new File(Vars.DATA_DIRECTORY + "bnmuller_occurrence_similarity.txt"));
+		Util.writeToFile(os.userSimilarityString(TARGET_USER_SCREEN_NAME), new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + "_occurrence_similarity.txt"));
 		
 		SimpleGraph<TwitterUser, DefaultWeightedEdge> twitterUserSimilarityGraph  = networkController.getSimilarityGraph(cs, 0.3);
 		networkController.drawSimilarityGraph(twitterUserSimilarityGraph);
+		
+		
 	}
 }

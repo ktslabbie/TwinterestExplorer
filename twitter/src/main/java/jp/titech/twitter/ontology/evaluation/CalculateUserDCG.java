@@ -3,7 +3,7 @@
  * @version		1.0
  * @since		16 dec. 2012
  */
-package jp.titech.twitter.tools;
+package jp.titech.twitter.ontology.evaluation;
 
 import java.io.File;
 import java.util.ArrayList;

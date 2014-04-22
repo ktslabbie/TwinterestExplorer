@@ -8,6 +8,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.data.UserSimilarity;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 
