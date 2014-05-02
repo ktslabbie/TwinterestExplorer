@@ -54,6 +54,11 @@ public class UserSimilarity implements Comparable<UserSimilarity> {
 		this.similarity = similarity;
 	}
 	
+	public boolean contains(String screenName) {
+		if(this.userA.getScreenName().equals(screenName) || this.userB.getScreenName().equals(screenName)) return true;
+		else return false;
+	}
+	
 	@Override
 	public String toString() {
 		return userA.getScreenName() + "\t" + userB.getScreenName() + "\t" + similarity;

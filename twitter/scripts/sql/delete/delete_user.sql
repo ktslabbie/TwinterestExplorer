@@ -1,1 +1,2 @@
-DELETE FROM TweetBase.Tweets WHERE screen_name = 'techl0g'
+DELETE FROM TweetBase.Users WHERE screen_name = 'BRGemborys';
+DELETE FROM TweetBase.Tweets WHERE screen_name = 'BRGemborys';

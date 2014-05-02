@@ -77,14 +77,6 @@ public class OntologyController {
 		user.setUserOntology(prunedUserOntology);
  	}
 	
-	public void writeUserOntology(TwitterUser user) {
-		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.txt"));
-		if(!Vars.PRUNING_MODE.equals("NONE")) {
-			Util.writeToFile(user.getUserOntology().toString(), 
-					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.txt"));
-		}
-	}
-	
 	/**
 	 * Retrieve the Controller singleton instance.
 	 * 

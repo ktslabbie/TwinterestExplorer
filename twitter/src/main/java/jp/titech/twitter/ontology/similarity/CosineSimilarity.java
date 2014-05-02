@@ -15,12 +15,12 @@ import jp.titech.twitter.util.Log;
 
 public class CosineSimilarity extends SimilarityFunction {
 	
-	public CosineSimilarity(Set<TwitterUser> users) {
-		super(users);
+	public CosineSimilarity(WeightingScheme tWeigthingScheme) {
+		super(tWeigthingScheme);
 	}
 	
 	/**
-	 * Normalize the DF-IUF map of each user and compare cosine similarities between each user.
+	 * Normalize the CF-IUF map of each user and compare cosine similarities between each user.
 	 * Complexity: O(3n)
 	 */
 	public SortedSet<UserSimilarity> calculate() {
@@ -29,10 +29,10 @@ public class CosineSimilarity extends SimilarityFunction {
 		userSimilaritySet = new TreeSet<UserSimilarity>();
 		List<TwitterUser> userList = new ArrayList<TwitterUser>();
 		
-		for (TwitterUser user : users) {
-			Map<YAGOType, Double> userTypeMap = user.getUserOntology().getYagoCFIUFMap();
-			user.getUserOntology().setYagoCFIUFMap(this.normalize(userTypeMap));
-			userList.add(user);
+		for (TwitterUser user : weightingScheme.getUsers()) {
+			Map<?, Double> weightMap = this.normalize(weightingScheme.getWeightMapByUser(user));
+			weightingScheme.getUserWeightingMaps().put(user, weightMap);
+			userList.add(user);			
 		}
 		
 		for(int i = 0; i < userList.size(); i++) {
@@ -40,7 +40,7 @@ public class CosineSimilarity extends SimilarityFunction {
 			for(int j = i + 1; j < userList.size(); j++) {
 				TwitterUser userB = userList.get(j);
 				
-				double cosineSimilarity = this.calculateCosineSimilarity(userA, userB);
+				double cosineSimilarity = this.calculateCosineSimilarity(weightingScheme.getWeightMapByUser(userA), weightingScheme.getWeightMapByUser(userB));
 				if(cosineSimilarity > 0.0) 
 					userSimilaritySet.add(new UserSimilarity(userA, userB, cosineSimilarity));
 			}
@@ -52,16 +52,14 @@ public class CosineSimilarity extends SimilarityFunction {
 	 * Calculate cosine similarity between two users.
 	 * Complexity: O(n)
 	 * 
-	 * @param userA
-	 * @param userB
+	 * @param map
+	 * @param map2
 	 * @return
 	 */
-	private double calculateCosineSimilarity(TwitterUser userA, TwitterUser userB) {
-		Map<YAGOType, Double> userAMap = userA.getUserOntology().getYagoCFIUFMap();
-		Map<YAGOType, Double> userBMap = userB.getUserOntology().getYagoCFIUFMap();
+	private double calculateCosineSimilarity(Map<?, Double> userAMap, Map<?, Double> userBMap) {
 		double similarity = 0.0;
 		
-		for(YAGOType type : userAMap.keySet()) {
+		for(Object type : userAMap.keySet()) {
 			Double bValue = userBMap.get(type);
 			if(bValue != null) similarity += userAMap.get(type) * bValue;
 		}
@@ -76,18 +74,22 @@ public class CosineSimilarity extends SimilarityFunction {
 	 * @param userTypeMap
 	 * @return
 	 */
-	private Map<YAGOType, Double> normalize(Map<YAGOType, Double> userTypeMap) {
-		Map<YAGOType, Double> normalizedUserTypeMap = new HashMap<YAGOType, Double>();
+	private Map<Object, Double> normalize(Map<?, Double> userTypeMap) {
+		Map<Object, Double> normalizedUserTypeMap = new HashMap<Object, Double>();
 		int cfSum = 0;
 		
-		for(YAGOType type : userTypeMap.keySet())
+		for(Object type : userTypeMap.keySet())
 			cfSum += Math.pow(userTypeMap.get(type), 2);
 		
 		double euclidLength = Math.sqrt(cfSum);
 		
-		for(YAGOType type : userTypeMap.keySet())
+		for(Object type : userTypeMap.keySet())
 			normalizedUserTypeMap.put(type, (double) userTypeMap.get(type) / euclidLength);
 		
 		return normalizedUserTypeMap;
+	}
+	
+	public String getName() {
+		return weightingScheme.getWeightingName() + ".cosine";
 	}
 }

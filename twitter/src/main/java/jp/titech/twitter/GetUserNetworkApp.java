@@ -11,17 +11,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 import jp.titech.twitter.config.Configuration;
+import jp.titech.twitter.control.EvaluationController;
 import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.control.NetworkController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserSimilarity;
+import jp.titech.twitter.ontology.evaluation.DCGEvaluation;
 import jp.titech.twitter.ontology.similarity.CFIUF;
 import jp.titech.twitter.ontology.similarity.CosineSimilarity;
 import jp.titech.twitter.ontology.similarity.OccurrenceSimilarity;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
+import jp.titech.twitter.ontology.similarity.TFIDF;
+import jp.titech.twitter.ontology.similarity.WeightingScheme;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
@@ -45,11 +50,12 @@ public class GetUserNetworkApp {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
 		
-		NetworkController networkController 	= NetworkController.getInstance();
-		MiningController miningController 		= MiningController.getInstance();
-		OntologyController ontologyController 	= OntologyController.getInstance();
+		NetworkController networkController 		= NetworkController.getInstance();
+		MiningController miningController 			= MiningController.getInstance();
+		OntologyController ontologyController 		= OntologyController.getInstance();
+		EvaluationController evaluationController 	= EvaluationController.getInstance();
 
-		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = networkController.createNetworkFromSeedUser(SEED_USER_ID, 107);
+		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = networkController.createNetworkFromSeedUser(SEED_USER_ID, 105);
 
 		Set<TwitterUser> userSet = twitterUserGraph.vertexSet();
 
@@ -64,24 +70,26 @@ public class GetUserNetworkApp {
 			}
 		}
 		
-		Log.getLogger().info("Calculating the CF-IUF scores for the ontologies. We have " + userSet.size() + " users in our list.");
+		Log.getLogger().info("Calculating the TF-IDF and CF-IUF weights for the terms and classes. We have " + userSet.size() + " users in our list.");
 		
-		CFIUF cfiuf = new CFIUF(userSet);
+		WeightingScheme tfidf = new TFIDF(userSet);
+		tfidf.calculate();
+		
+		WeightingScheme cfiuf = new CFIUF(userSet);
 		cfiuf.calculate();
 		
-		for (TwitterUser user : userSet)
-			ontologyController.writeUserOntology(user);
+		for (TwitterUser user : userSet) {
+			Util.writeUserTFIDFMap(user);
+			Util.writeUserOntology(user);
+		}
 		
-		SimilarityFunction cs = new CosineSimilarity(userSet);
-		cs.calculate();
-		Util.writeToFile(cs.userSimilarityString(TARGET_USER_SCREEN_NAME), new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + "_cosine_similarity.txt"));
+		evaluationController.evaluate(new CosineSimilarity(tfidf), TARGET_USER_SCREEN_NAME);
+		evaluationController.evaluate(new CosineSimilarity(cfiuf), TARGET_USER_SCREEN_NAME);
+		evaluationController.evaluate(new OccurrenceSimilarity(tfidf), TARGET_USER_SCREEN_NAME);
+		evaluationController.evaluate(new OccurrenceSimilarity(cfiuf), TARGET_USER_SCREEN_NAME);
 		
-		SimilarityFunction os = new OccurrenceSimilarity(userSet);
-		os.calculate();
-		Util.writeToFile(os.userSimilarityString(TARGET_USER_SCREEN_NAME), new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + "_occurrence_similarity.txt"));
-		
-		SimpleGraph<TwitterUser, DefaultWeightedEdge> twitterUserSimilarityGraph  = networkController.getSimilarityGraph(cs, 0.3);
-		networkController.drawSimilarityGraph(twitterUserSimilarityGraph);
+		//SimpleGraph<TwitterUser, DefaultWeightedEdge> twitterUserSimilarityGraph  = networkController.getSimilarityGraph(cosineSimilarity, 0.3);
+		//networkController.drawSimilarityGraph(twitterUserSimilarityGraph);
 		
 		
 	}

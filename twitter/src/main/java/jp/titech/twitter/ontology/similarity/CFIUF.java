@@ -7,14 +7,10 @@ import java.util.Set;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ontology.types.YAGOType;
 
-public class CFIUF {
-
-	private Set<TwitterUser> users;
-	private double maxCFScore = 0.0;
-	private double maxCFIUFScore = 0.0;
+public class CFIUF extends WeightingScheme {
 
 	public CFIUF(Set<TwitterUser> users) {
-		this.users = users;
+		super(users, "CF-IUF");
 	}
 
 	public void calculate() {
@@ -28,18 +24,15 @@ public class CFIUF {
 
 			for (YAGOType yagoType : cfMap.keySet()) {
 				double cf = cfMap.get(yagoType);
-				
-				if(cf > maxCFScore) maxCFScore = cf;
 
 				double iuf = Math.log((double)N / (double)dfMap.get(yagoType));
 				double cfIuf = (Math.pow(cf, 1))*(Math.pow(iuf, 1));
-
-				if(cfIuf > maxCFIUFScore) maxCFIUFScore = cfIuf;
 
 				userCFIDFMap.put(yagoType, cfIuf);
 			}
 			
 			user.getUserOntology().setYagoCFIUFMap(userCFIDFMap);
+			this.userWeightingMaps.put(user, userCFIDFMap);
 		}
 	}
 
@@ -56,13 +49,5 @@ public class CFIUF {
 		}
 		
 		return dfMap;
-	}
-	
-	public double getMaxCFScore() {
-		return maxCFScore;
-	}
-
-	public double getMaxCFIUFScore() {
-		return maxCFIUFScore;
 	}
 }

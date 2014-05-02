@@ -34,6 +34,7 @@ public class Vars {
 	
 	public static final String	DATA_DIRECTORY					= c.getProperty("data.dataDirectory");
 	public static final String	USER_DIRECTORY					= c.getProperty("data.userDirectory");
+	public static final String	EVALUATION_DIRECTORY			= c.getProperty("data.evaluationDirectory");
 	public static final String	OUTPUT_DIRECTORY				= c.getProperty("data.outputDirectory");
 	
 	public static final String	STOPWORDS_FILE					= c.getProperty("data.stopwordsFile");

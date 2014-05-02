@@ -70,6 +70,8 @@ public class UserMiner {
 				if(finished) break;
 			}
 			
+			this.saveEnglishRate();
+			
 		} catch (TwitterException e) {
 			Log.getLogger().error(e.getMessage());
 			
@@ -84,8 +86,6 @@ public class UserMiner {
 				}
 			}
 		}
-		
-		this.saveEnglishRate();
 	}
 	
 	private void processStatuses(List<Status> statuses) {

@@ -19,13 +19,14 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.SortedMap;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
@@ -83,7 +84,7 @@ public class Util {
 	public static String readFile(File file) {
 		BufferedReader br = null;
 		String out = "";
-		 
+
 		try {
 			String currentLine;
 			br = new BufferedReader(new FileReader(file));
@@ -244,7 +245,7 @@ public class Util {
 		}
 		return returnTypes;
 	}
-	
+
 	/**
 	 * Create an OntologyType object from a type URI.
 	 * 
@@ -269,27 +270,6 @@ public class Util {
 			return null;
 		}
 	}
-
-	/**
-	 * @param annotatedTweets
-	 * @return 
-	 *//*
-	public static Map<OntologyType, Integer> mergeOntologyTypeMaps(List<AnnotatedTweet> annotatedTweets) {
-		Map<OntologyType, Integer> fullMap = new HashMap<OntologyType, Integer>();
-
-		for (AnnotatedTweet tempTweet : annotatedTweets) {
-			Map<OntologyType, Integer> map = tempTweet.getAllTypes();
-			for(Iterator<OntologyType> it = map.keySet().iterator(); it.hasNext();){
-				OntologyType currentType = it.next();
-				if(fullMap.get(currentType) != null) {
-					fullMap.put(currentType, fullMap.get(currentType) + map.get(currentType));
-				} else {
-					fullMap.put(currentType, map.get(currentType));
-				}
-			}
-		}
-		return fullMap;
-	}*/
 
 	/**
 	 * Returns the file name without extension.
@@ -321,16 +301,16 @@ public class Util {
 	 */
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
 		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
-		
+
 		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
 				return (o2.getValue()).compareTo(o1.getValue());
 			}
 		});
-		
+
 		Map<K, V> result = new LinkedHashMap<K, V>();
 		for (Map.Entry<K, V> entry : list) result.put(entry.getKey(), entry.getValue());
-		
+
 		return result;
 	}
 
@@ -396,196 +376,6 @@ public class Util {
 		return apl;
 	}
 
-	public static double calculateYAGOOntologySimilarity(File fileOne, File fileTwo, double confidence, int support, int topK) {
-
-		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
-		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
-				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
-		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
-		int count = 0;
-
-		String log = "";
-
-		try {
-			Scanner sc = new Scanner(new FileReader(fileOne));
-			while(sc.hasNextLine()){
-				String line = sc.nextLine();
-				if(line.startsWith("YAGO:")){
-					String[] split = line.split("\t");
-					int number = Integer.parseInt(split[1]);
-					if(number >= support && !split[0].contains("LivingPeople")){
-						//if(!split[0].contains("LivingPeople")){
-						mapOne.put(split[0], number);
-						totalOne += number;
-						count++;
-						if(count == topK) {
-							count = 0;
-							break;
-						}
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		try {
-			Scanner sc = new Scanner(new FileReader(fileTwo));
-			while(sc.hasNextLine()){
-				String line = sc.nextLine();
-				if(line.startsWith("YAGO:")){
-					String[] split = line.split("\t");
-					int number = Integer.parseInt(split[1]);
-					if(number >= support && !split[0].contains("LivingPeople")){
-						//if(!split[0].contains("LivingPeople")){
-						mapTwo.put(split[0], number);
-						totalTwo += number;
-						count++;
-						if(count == topK) {
-							count = 0;
-							break;
-						}
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		if(totalOne > totalTwo) {
-			biggestMap = mapOne;
-			smallestMap = mapTwo;
-			totalBiggest = totalOne;
-			totalSmallest = totalTwo;
-		} else {
-			biggestMap = mapTwo;
-			smallestMap = mapOne;
-			totalBiggest = totalTwo;
-			totalSmallest = totalOne;
-		}
-
-		double similarity = 0.0;
-		int included = totalSmallest;
-
-		for (String type : smallestMap.keySet()) {
-
-			Integer numberBig = biggestMap.get(type);
-			int remaining = smallestMap.get(type);
-			//log += type + " - " + remaining + " vs. " + numberBig + " occurrences.\n";
-
-			if(numberBig != null){
-				remaining -= numberBig;
-				if(remaining < 0) remaining = 0;
-			}
-			included -= remaining;
-		}
-
-		similarity = ((double)included/(double)totalSmallest);
-
-		if(similarity >= confidence || Double.isNaN(similarity)) {
-			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
-		} else {
-			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
-		}
-
-		return similarity;
-	}
-
-	public static double calculateYAGOOntologyTFIDFSimilarity(File fileOne, File fileTwo, double confidence, int support, int topK, Map<YAGOType, Double> tfIdfMap) {
-
-		Log.getLogger().info("Calculating YAGO ontology similarity for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
-		HashMap<String, Integer> mapOne = new HashMap<String, Integer>(), mapTwo = new HashMap<String, Integer>(),
-				biggestMap = new HashMap<String, Integer>(), smallestMap = new HashMap<String, Integer>();
-		int totalOne = 0, totalTwo = 0, totalBiggest = 0, totalSmallest = 0;
-		int count = 0;
-
-		String log = "";
-
-		try {
-			Scanner sc = new Scanner(new FileReader(fileOne));
-			while(sc.hasNextLine()){
-				String line = sc.nextLine();
-				if(line.startsWith("YAGO:")){
-					String[] split = line.split("\t");
-					int number = Integer.parseInt(split[1]);
-					if(number >= support && !split[0].contains("LivingPeople")){
-						//if(!split[0].contains("LivingPeople")){
-						mapOne.put(split[0], number);
-						totalOne += number;
-						count++;
-						if(count == topK) {
-							count = 0;
-							break;
-						}
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		try {
-			Scanner sc = new Scanner(new FileReader(fileTwo));
-			while(sc.hasNextLine()){
-				String line = sc.nextLine();
-				if(line.startsWith("YAGO:")){
-					String[] split = line.split("\t");
-					int number = Integer.parseInt(split[1]);
-					if(number >= support && !split[0].contains("LivingPeople")){
-						//if(!split[0].contains("LivingPeople")){
-						mapTwo.put(split[0], number);
-						totalTwo += number;
-						count++;
-						if(count == topK) {
-							count = 0;
-							break;
-						}
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		if(totalOne > totalTwo) {
-			biggestMap = mapOne;
-			smallestMap = mapTwo;
-			totalBiggest = totalOne;
-			totalSmallest = totalTwo;
-		} else {
-			biggestMap = mapTwo;
-			smallestMap = mapOne;
-			totalBiggest = totalTwo;
-			totalSmallest = totalOne;
-		}
-
-		double similarity = 0.0;
-		int included = totalSmallest;
-
-		for (String type : smallestMap.keySet()) {
-
-			Integer numberBig = biggestMap.get(type);
-			int remaining = smallestMap.get(type);
-			//log += type + " - " + remaining + " vs. " + numberBig + " occurrences.\n";
-
-			if(numberBig != null){
-				remaining -= numberBig;
-				if(remaining < 0) remaining = 0;
-			}
-			included -= remaining;
-		}
-
-		similarity = ((double)included/(double)totalSmallest);
-
-		if(similarity >= confidence || Double.isNaN(similarity)) {
-			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
-		} else {
-			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
-		}
-
-		return similarity;
-	}
-
 	/**
 	 * Formats a number to a given amount of decimal places.
 	 * 
@@ -623,10 +413,48 @@ public class Util {
 	 */
 	public static Date getDate(int year, int month, int day) {
 		Calendar cal = Calendar.getInstance();
-	    cal.set(Calendar.YEAR, year);
-	    cal.set(Calendar.MONTH, month-1);
-	    cal.set(Calendar.DAY_OF_MONTH, day);
-	    
-	    return cal.getTime();
+		cal.set(Calendar.YEAR, year);
+		cal.set(Calendar.MONTH, month-1);
+		cal.set(Calendar.DAY_OF_MONTH, day);
+
+		return cal.getTime();
+	}
+
+	public static Map<String, Integer> stringToRelevanceMap(String text) {
+		Map<String, Integer> map = new HashMap<String, Integer>();
+		String lines[] = text.split("\n");
+
+		for (int i = 0; i < lines.length; i++) {
+			String line = lines[i];
+			String[] parts = line.split("\t");
+			map.put(parts[0], Integer.parseInt(parts[1]));
+		}
+
+		return map;
+	}
+
+	public static List<Entry<String, Double>> sortSimilarityMapByValue(SortedMap<String, Double> temp) {
+		Set<Entry<String, Double>> entryOfMap = temp.entrySet();
+
+		List<Entry<String, Double>> entries = new ArrayList<Entry<String, Double>>(entryOfMap);
+		Collections.sort(entries, new Comparator<Entry<String, Double>>() {
+			@Override
+			public int compare(Entry<String, Double> o1, Entry<String, Double> o2) {
+				return o2.getValue().compareTo(o1.getValue());
+			}
+		});
+		return entries;
+	}
+	
+	public static void writeUserTFIDFMap(TwitterUser user) {
+		Util.writeToFile(user.tfidfMapString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/TF-IDF.txt"));
+	}
+	
+	public static void writeUserOntology(TwitterUser user) {
+		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.txt"));
+		if(!Vars.PRUNING_MODE.equals("NONE")) {
+			Util.writeToFile(user.getUserOntology().toString(), 
+					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.txt"));
+		}
 	}
 }

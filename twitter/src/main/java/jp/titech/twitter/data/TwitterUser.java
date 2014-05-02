@@ -2,13 +2,16 @@ package jp.titech.twitter.data;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Util;
 
 /**
  * Class to represent a Twitter user.
@@ -19,14 +22,16 @@ import jp.titech.twitter.util.Log;
  */
 public class TwitterUser implements Comparable<TwitterUser> {
 
-	private long 			userID;
-	private String 			screenName, name, description, location;
-	private int 			followersCount, friendsCount, statusesCount;
-	private Date 			createdAt;
-	private boolean 		isProtected;
-	private double			englishRate;
-	private List<Tweet>		tweets;
-	private UserOntology	userOntology;
+	private long 					userID;
+	private String 					screenName, name, description, location;
+	private int 					followersCount, friendsCount, statusesCount;
+	private Date 					createdAt;
+	private boolean 				isProtected;
+	private double					englishRate;
+	private List<Tweet>				tweets;
+	private UserOntology			userOntology;
+	private Map<String, Integer>	termFrequencyMap;
+	private Map<String, Double>		tfidfMap;
 
 	/**
 	 * Construct a TwitterUser with the given parameters.
@@ -58,6 +63,8 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.englishRate = englishRate;
 		this.tweets = new ArrayList<Tweet>();
 		this.userOntology = new UserOntology();
+		this.termFrequencyMap = new HashMap<String, Integer>();
+		this.tfidfMap = new HashMap<String, Double>();
 	}
 
 	public long getUserID() {
@@ -149,7 +156,12 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	}
 
 	public List<Tweet> getTweets() {
-		return tweets;
+		if(!this.hasTweets()) {
+			Log.getLogger().info("Gathering tweets of user " + this.toString() + " from DB...");
+			this.tweets = TweetBase.getInstance().getTweets(this.userID);
+		}	
+		
+		return this.tweets;
 	}
 
 	public void setTweets(List<Tweet> tweets) {
@@ -231,5 +243,37 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	        return false;
 	    }
 	    return true;
+	}
+
+	public Map<String, Integer> getTermFrequencyMap() {
+		if(this.tfidfMap.isEmpty()) {
+			for (Tweet tweet : this.tweets) {
+				for (String term : tweet.getContent().split("\\s+")) {
+					if(this.termFrequencyMap.get(term) != null) this.termFrequencyMap.put(term, this.termFrequencyMap.get(term)+1);
+					else this.termFrequencyMap.put(term, 1);
+				}
+			}
+		}
+		
+		return this.termFrequencyMap;
+	}
+	
+	public Map<String, Double> getTFIDFMap() {
+		return this.tfidfMap;
+	}
+
+	public void setTFIDFMap(Map<String, Double> userTFIDFMap) {
+		this.tfidfMap = userTFIDFMap;
+	}
+
+	public String tfidfMapString() {
+		Map<String, Double> tfidfSortedMap = Util.sortByValue(this.tfidfMap);
+		String out = "Term\tTF-IDF\n";
+		
+		for (String term : tfidfSortedMap.keySet()) {
+			out += term + "\t" + tfidfSortedMap.get(term) + "\n";
+		}
+		
+		return out;
 	}
 }

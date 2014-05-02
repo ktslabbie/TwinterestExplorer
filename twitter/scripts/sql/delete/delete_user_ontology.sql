@@ -1,1 +1,1 @@
-DELETE FROM TweetBase.Ontology WHERE user_id = 87475235 AND concatenation_window = 2 AND confidence = 0.3 AND support = 0
+DELETE FROM TweetBase.Ontology WHERE user_id = 8525422

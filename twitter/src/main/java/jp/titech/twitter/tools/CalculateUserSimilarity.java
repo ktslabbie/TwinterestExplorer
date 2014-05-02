@@ -2,7 +2,7 @@
  * @author		Kristian Slabbekoorn
  * @version		1.0
  * @since		16 dec. 2012
- */
+ *//*
 package jp.titech.twitter.tools;
 
 import java.io.File;
@@ -17,10 +17,10 @@ import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
-/**
+*//**
  * @author Kristian Slabbekoorn
  *
- */
+ *//*
 public class CalculateUserSimilarity {
 
 	public static final String KEYWORD = "malware";
@@ -69,3 +69,4 @@ public class CalculateUserSimilarity {
 
 	}
 }
+*/

@@ -14,8 +14,8 @@ import jp.titech.twitter.util.Log;
 
 public class OccurrenceSimilarity extends SimilarityFunction {
 
-	public OccurrenceSimilarity(Set<TwitterUser> users) {
-		super(users);
+	public OccurrenceSimilarity(WeightingScheme tWeigthingScheme) {
+		super(tWeigthingScheme);
 	}
 
 	public SortedSet<UserSimilarity> calculate() {
@@ -24,7 +24,7 @@ public class OccurrenceSimilarity extends SimilarityFunction {
 		userSimilaritySet = new TreeSet<UserSimilarity>();
 		List<TwitterUser> userList = new ArrayList<TwitterUser>();
 
-		for (TwitterUser user : users) {
+		for (TwitterUser user : weightingScheme.getUsers()) {
 			userList.add(user);
 		}
 
@@ -89,5 +89,9 @@ public class OccurrenceSimilarity extends SimilarityFunction {
 		}*/
 
 		return similarity;
+	}
+	
+	public String getName() {
+		return weightingScheme.getWeightingName() + ".occurrence";
 	}
 }
