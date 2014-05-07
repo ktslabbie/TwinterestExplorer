@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 
 /**
@@ -332,12 +333,37 @@ public class Tweet {
 	/**
 	 *  Strips user mentions, hashtags, URLs and media from tweet text.
 	 */
-	public void stripEverything() {
+	public String stripElements() {
 		this.stripUserMentions();
 		this.stripHashtags();
 		this.stripURLs();
 		this.stripMedia();
 		this.stripStopwords();
 		setContent(getContent().trim());
+		
+		return this.getContent();
+	}
+	
+	/**
+	 *  Strips user mentions, hashtags, URLs and media from tweet text.
+	 *  Additionally punctuation is stripped.
+	 */
+	public String tokenize() {
+		
+		String content = this.stripElements().toLowerCase();
+		String newContent = "";
+		
+		for(String token : content.split("\\s+")) {
+			if(token.startsWith("@")) {
+				token = "";
+			} else if(token.startsWith("http://")) {
+				token = "";
+			}
+			newContent += token + " ";
+		}
+		
+		setContent(newContent.replaceAll("[,.:;<>“”()\"'’*!?]", "").trim());
+		
+		return this.getContent();
 	}
 }

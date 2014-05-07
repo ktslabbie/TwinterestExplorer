@@ -23,7 +23,7 @@ public class PRFEvaluation {
 	
 	public double THRESH_START = 0.01;
 	public double THRESH_END = 0.801;
-	public double THRESH_STEP = 0.01;
+	public double THRESH_STEP = 0.005;
 
 	public PRFEvaluation(String targetUser, SortedMap<String, Double> userSimilarityMap) {
 		this.targetUser = targetUser;

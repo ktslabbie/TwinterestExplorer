@@ -129,10 +129,21 @@ public class UserMiner {
 				if(status.getPlace() != null) tweet.setLocationName(status.getPlace().getFullName());
 				tweet.setLanguage(status.getLang());
 				
-				for(UserMentionEntity entity : userMentionEntities) tweet.addUserMention(entity.getText());
-				for(HashtagEntity entity : hashtagEntities) tweet.addHashtag(entity.getText());
-				for(URLEntity entity : urlEntities) tweet.addURL(entity.getText());
-				for(MediaEntity entity : mediaEntities) tweet.addMedia(entity.getText());
+				for(UserMentionEntity entity : userMentionEntities) {
+					tweet.addUserMention(entity.getText());
+				}
+				
+				for(HashtagEntity entity : hashtagEntities) {
+					tweet.addHashtag(entity.getText());
+				}
+				
+				for(URLEntity entity : urlEntities) {
+					tweet.addURL(entity.getText());
+				}
+				
+				for(MediaEntity entity : mediaEntities) {
+					tweet.addMedia(entity.getText());
+				}
 				
 				twitterUser.addTweet(tweet);
 				TweetBase.getInstance().addTweet(tweet);

@@ -140,7 +140,7 @@ public class Util {
 		String next = "";
 		while(scanner.hasNext()){
 			if(!(next = scanner.nextLine()).isEmpty()){
-				String[] strs = next.split("[., ]");
+				String[] strs = next.split("\\s+");
 				for (int i = 0; i < strs.length; i++) {
 					if(!stopWords.contains(strs[i].toLowerCase())){
 						builder.append(strs[i] + " ");

@@ -24,7 +24,7 @@ public class DCGEvaluation {
 	private String targetUser;
 	private SortedMap<String, Double> userSimilarityMap;
 	private int[] topK;
-	private String evaluationString = "Top-k\tnDCG\n";
+	private String evaluationString = "Top-k\tnDCG\tBinDCG\n";
 	
 	public DCGEvaluation(String targetUser, SortedMap<String, Double> userSimilarityMap, int[] topK) {
 		this.targetUser = targetUser;
@@ -51,7 +51,9 @@ public class DCGEvaluation {
 			}
 
 			double reli = 0.0;
+			double binreli = 0.0;
 			double dcg = relevanceMap.get(currentUser);
+			double binDCG = (relevanceMap.get(currentUser) > 0) ? 2 : 0;
 			double idcg = 2;
 			int i = 1;
 
@@ -62,19 +64,24 @@ public class DCGEvaluation {
 				Log.getLogger().info("currentUser: " + currentUser);
 				Log.getLogger().info("currentSimilarity: " + userSimilarityMap.get(currentUser));
 				reli = relevanceMap.get(currentUser);
+				binreli = (relevanceMap.get(currentUser) > 0) ? 2 : 0;
 				
 				dcg 	+= reli * 	Math.log(2) / Math.log(i+1);
+				binDCG 	+= binreli * 	Math.log(2) / Math.log(i+1);
 				idcg 	+= 2 	* 	Math.log(2) / Math.log(i+1);
 				i++;
 
 				Log.getLogger().info("Current DCG: " + dcg);
+				Log.getLogger().info("Current binDCG: " + binDCG);
 				Log.getLogger().info("Current iDCG: " + idcg);
 			}
 			
 			double nDCG = dcg / idcg;
+			double binnDCG = binDCG / idcg;
 			Log.getLogger().info("nDCG: " + nDCG);
+			Log.getLogger().info("bin nDCG: " + binnDCG);
 			
-			evaluationString += "Top-" + k + "\t" + nDCG + "\n";
+			evaluationString += "Top-" + k + "\t" + nDCG + "\t" + binnDCG + "\n";
 		}
 	}
 

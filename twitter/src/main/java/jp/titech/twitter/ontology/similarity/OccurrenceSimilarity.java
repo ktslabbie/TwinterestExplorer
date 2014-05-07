@@ -92,6 +92,6 @@ public class OccurrenceSimilarity extends SimilarityFunction {
 	}
 	
 	public String getName() {
-		return weightingScheme.getWeightingName() + ".occurrence";
+		return "occurrence";
 	}
 }

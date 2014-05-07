@@ -54,6 +54,7 @@ public class NetworkBuilder {
 	public void build() {
 
 		int userCount = 1;
+		boolean seedUser = true;
 		TwitterUser currentUser, follower;
 		List<Long> ids;
 
@@ -61,7 +62,9 @@ public class NetworkBuilder {
 
 			currentUser = processQueue.poll();
 
-			if(isValidUser(currentUser)) {
+			if(seedUser || isValidUser(currentUser)) {
+				
+				seedUser = false;
 				
 				if(!processed.contains(currentUser.getUserID())) {
 					Log.getLogger().info("Adding user # " + userCount + " (@" + currentUser.getScreenName() + ") to graph.");

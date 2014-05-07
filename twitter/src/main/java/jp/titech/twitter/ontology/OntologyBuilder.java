@@ -71,7 +71,7 @@ public class OntologyBuilder {
 					}
 				}
 				
-				tweet.stripEverything();
+				tweet.stripElements();
 				concatenatedContent += tweet.getContent() + " ";
 				tweetsConcatenatedCount++;
 

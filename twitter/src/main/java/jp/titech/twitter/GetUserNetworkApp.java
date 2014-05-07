@@ -43,7 +43,8 @@ import org.jgrapht.graph.SimpleGraph;
  */
 public class GetUserNetworkApp {
 
-	final static long SEED_USER_ID = 55569628; //@mikegroner: 55569628
+	final static long SEED_USER_ID = 55569628; //@mikegroner: 55569628 @bnmuller: 55569628   @BBC_TopGear 52344859
+	//final static String TARGET_USER_SCREEN_NAME = "bnmuller";
 	final static String TARGET_USER_SCREEN_NAME = "bnmuller";
 
 	public static void main( String[] args ) throws InterruptedException {
@@ -85,7 +86,6 @@ public class GetUserNetworkApp {
 		
 		evaluationController.evaluate(new CosineSimilarity(tfidf), TARGET_USER_SCREEN_NAME);
 		evaluationController.evaluate(new CosineSimilarity(cfiuf), TARGET_USER_SCREEN_NAME);
-		evaluationController.evaluate(new OccurrenceSimilarity(tfidf), TARGET_USER_SCREEN_NAME);
 		evaluationController.evaluate(new OccurrenceSimilarity(cfiuf), TARGET_USER_SCREEN_NAME);
 		
 		//SimpleGraph<TwitterUser, DefaultWeightedEdge> twitterUserSimilarityGraph  = networkController.getSimilarityGraph(cosineSimilarity, 0.3);

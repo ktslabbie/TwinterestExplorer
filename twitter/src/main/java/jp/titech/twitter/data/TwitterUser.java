@@ -246,9 +246,10 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	}
 
 	public Map<String, Integer> getTermFrequencyMap() {
-		if(this.tfidfMap.isEmpty()) {
+		if(this.termFrequencyMap.isEmpty()) {
 			for (Tweet tweet : this.tweets) {
-				for (String term : tweet.getContent().split("\\s+")) {
+				for (String term : tweet.tokenize().split("\\s+")) {
+					//Log.getLogger().info("Current term: " + term);
 					if(this.termFrequencyMap.get(term) != null) this.termFrequencyMap.put(term, this.termFrequencyMap.get(term)+1);
 					else this.termFrequencyMap.put(term, 1);
 				}
