@@ -38,6 +38,8 @@ import org.dbpedia.spotlight.model.DBpediaType;
 import org.dbpedia.spotlight.model.OntologyType;
 import org.dbpedia.spotlight.model.SchemaOrgType;
 
+import ch.qos.logback.core.status.WarnStatus;
+
 public class Util {
 
 	private static Set<String> stopWords = new HashSet<String>();
@@ -427,7 +429,11 @@ public class Util {
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i];
 			String[] parts = line.split("\t");
-			map.put(parts[0], Integer.parseInt(parts[1]));
+			if(parts.length < 2) {
+				Log.getLogger().warn("Relevance map is missing a score. Assigning a default of 0.");
+				map.put(parts[0], 0);
+			} else 
+				map.put(parts[0], Integer.parseInt(parts[1]));
 		}
 
 		return map;
@@ -451,10 +457,10 @@ public class Util {
 	}
 	
 	public static void writeUserOntology(TwitterUser user) {
-		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.txt"));
+		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.gb=[" + Vars.GENERALITY_BIAS + "].txt"));
 		if(!Vars.PRUNING_MODE.equals("NONE")) {
 			Util.writeToFile(user.getUserOntology().toString(), 
-					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.txt"));
+					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.gb=[" + Vars.GENERALITY_BIAS + "].txt"));
 		}
 	}
 }

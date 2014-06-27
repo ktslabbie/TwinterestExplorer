@@ -23,7 +23,7 @@ public class PRFEvaluation {
 	
 	public double THRESH_START = 0.01;
 	public double THRESH_END = 0.801;
-	public double THRESH_STEP = 0.005;
+	public double THRESH_STEP = 0.001;
 
 	public PRFEvaluation(String targetUser, SortedMap<String, Double> userSimilarityMap) {
 		this.targetUser = targetUser;
@@ -54,7 +54,7 @@ public class PRFEvaluation {
 			double recall = tp / (tp + fn);
 			double fScore = 2*((precision*recall)/(precision+recall));
 			
-			evaluationString += Util.round(2, thresh) + "\t" + precision + "\t" + recall + "\t" + fScore + "\n";
+			evaluationString += Util.round(3, thresh) + "\t" + precision + "\t" + recall + "\t" + fScore + "\n";
 		}
 	}
 	

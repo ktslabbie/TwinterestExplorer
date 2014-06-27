@@ -11,6 +11,7 @@ import java.util.SortedMap;
 import jp.titech.twitter.ontology.evaluation.DCGEvaluation;
 import jp.titech.twitter.ontology.evaluation.PRFEvaluation;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
+import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
@@ -28,7 +29,7 @@ public class EvaluationController {
 
 	private EvaluationController() {}
 
-	public void evaluate(SimilarityFunction similarityFunction, String targetUser) {
+	public void evaluateUserSimilarity(SimilarityFunction similarityFunction, String targetUser) {
 		
 		similarityFunction.calculate();
 		Util.writeToFile(similarityFunction.getUserSimilarityString(targetUser), 
@@ -36,7 +37,7 @@ public class EvaluationController {
 		
 		SortedMap<String, Double> singleUserSimilarityMap = similarityFunction.getSingleUserSimilarityMap(targetUser);
 		
-		int[] topK = {3, 5, 10, 15, 20, 25};
+		int[] topK = {3, 5, 10, 15, 20, 25, 30, 40, 50};
 		DCGEvaluation dcgEvaluation = new DCGEvaluation(targetUser, singleUserSimilarityMap, topK);
 		dcgEvaluation.calculate();
 		Util.writeToFile(dcgEvaluation.getEvaluationString(), 
@@ -44,9 +45,10 @@ public class EvaluationController {
 		
 		PRFEvaluation prfEvaluation = new PRFEvaluation(targetUser, singleUserSimilarityMap);
 		
-		if(similarityFunction.getName().contains("TF-IDF")) {
-			prfEvaluation.THRESH_START /= 10;
-			prfEvaluation.THRESH_END /= 10;
+		if(similarityFunction.getName().contains("CF-IUF") ||
+				similarityFunction.getName().contains("TF-IDF")) {
+			prfEvaluation.THRESH_START = 0.0;
+			prfEvaluation.THRESH_END = 0.1;
 			prfEvaluation.THRESH_STEP /= 10;
 		}
 		

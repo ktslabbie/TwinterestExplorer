@@ -45,9 +45,12 @@ public class Vars {
 	public static final String	SPARQL_SCRIPT_DIRECTORY			= c.getProperty("sparql.scriptDirectory");
 	
 	public static final boolean	SPOTLIGHT_REMOTE				= Boolean.valueOf(c.getProperty("spotlight.remote"));			// Remote Spotlight querying yes/no
+	public static final String 	SPOTLIGHT_URL					= c.getProperty("spotlight.url");
 	public static double 		SPOTLIGHT_CONFIDENCE			= Double.parseDouble(c.getProperty("spotlight.confidence"));
 	public static int 			SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
 	public static final boolean INCLUDE_EMPTY_SURFACE_FORMS 	= Boolean.valueOf(c.getProperty("spotlight.includeEmptySurfaceForms"));
+
+	public static final double  GENERALITY_BIAS 				=  Double.parseDouble(c.getProperty("similarity.generalityBias"));
 
 	public static String		PRUNING_MODE							= c.getProperty("pruning.pruningMode");
 	

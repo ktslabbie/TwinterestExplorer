@@ -1,11 +1,11 @@
 package jp.titech.twitter.ontology.similarity;
 
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import jp.titech.twitter.data.TwitterUser;
+
 import jp.titech.twitter.data.UserSimilarity;
+import jp.titech.twitter.util.Log;
 
 public abstract class SimilarityFunction {
 
@@ -29,6 +29,8 @@ public abstract class SimilarityFunction {
 				ret += sim.getUserA().getScreenName() + "\t" + sim.getSimilarity() + "\n";
 			}
 		}
+		
+		Log.getLogger().info("Ret: " + ret);
 		
 		return ret;
 	}

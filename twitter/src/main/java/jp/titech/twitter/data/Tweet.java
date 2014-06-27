@@ -284,7 +284,7 @@ public class Tweet {
 		//setContent(getContent().replaceAll("@([A-Za-z0-9_]+)", ""));
 		if(!getUserMentions().isEmpty()) {
 			for (String userMention : getUserMentions()) {
-				setContent(getContent().replaceAll("@"+userMention, ""));
+				setContent(getContent().replaceAll("(?i)@"+userMention, ""));
 			}
 		}
 	}
@@ -297,6 +297,15 @@ public class Tweet {
 			for (String hashtag : getHashtags()) {
 				setContent(getContent().replaceAll("#"+hashtag, ""));
 			}
+		}
+	}
+	
+	/**
+	 * Strips the hashtags from tweet text.
+	 */
+	public void stripHashtagTags() {
+		if(!getHashtags().isEmpty()) {
+			setContent(getContent().replaceAll("#", ""));
 		}
 	}
 
@@ -345,12 +354,26 @@ public class Tweet {
 	}
 	
 	/**
+	 *  Strips user mentions, hashtag tags (#), URLs and media from tweet text.
+	 */
+	public String stripNonHashtagElements() {
+		this.stripUserMentions();
+		this.stripHashtagTags();
+		this.stripURLs();
+		this.stripMedia();
+		this.stripStopwords();
+		setContent(getContent().trim());
+		
+		return this.getContent();
+	}
+	
+	/**
 	 *  Strips user mentions, hashtags, URLs and media from tweet text.
 	 *  Additionally punctuation is stripped.
 	 */
 	public String tokenize() {
 		
-		String content = this.stripElements().toLowerCase();
+		String content = this.stripNonHashtagElements().toLowerCase();
 		String newContent = "";
 		
 		for(String token : content.split("\\s+")) {
@@ -362,7 +385,7 @@ public class Tweet {
 			newContent += token + " ";
 		}
 		
-		setContent(newContent.replaceAll("[,.:;<>“”()\"'’*!?]", "").trim());
+		setContent(newContent.replaceAll("[@,—.:;<>“”{}\\[\\]()\"'’*!?]", "").trim());
 		
 		return this.getContent();
 	}

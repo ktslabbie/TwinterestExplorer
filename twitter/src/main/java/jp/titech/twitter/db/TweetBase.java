@@ -415,8 +415,8 @@ public class TweetBase {
 				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
 						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11));
 
-				user.setTweets(getTweets(resultSet.getLong(1)));
-				user.setUserOntology(getUserOntology(resultSet.getLong(1)));
+				//user.setTweets(getTweets(resultSet.getLong(1)));
+				//user.setUserOntology(getUserOntology(resultSet.getLong(1)));
 			}
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 

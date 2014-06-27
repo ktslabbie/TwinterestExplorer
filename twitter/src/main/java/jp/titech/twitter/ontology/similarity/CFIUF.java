@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ontology.types.YAGOType;
+import jp.titech.twitter.util.Vars;
 
 public class CFIUF extends WeightingScheme {
 
@@ -26,7 +27,7 @@ public class CFIUF extends WeightingScheme {
 				double cf = cfMap.get(yagoType);
 
 				double iuf = Math.log((double)N / (double)dfMap.get(yagoType));
-				double cfIuf = (Math.pow(cf, 1))*(Math.pow(iuf, 1));
+				double cfIuf = (Math.pow(cf, 1 + Vars.GENERALITY_BIAS))*(Math.pow(iuf, 1 - Vars.GENERALITY_BIAS));
 
 				userCFIDFMap.put(yagoType, cfIuf);
 			}

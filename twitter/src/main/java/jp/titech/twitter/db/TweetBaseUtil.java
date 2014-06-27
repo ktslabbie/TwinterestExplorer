@@ -84,6 +84,8 @@ public class TweetBaseUtil {
 		TwitterUser twitterUser = null;
 
 		if((twitterUser = tweetBase.getUser(screenName)) == null) {
+			
+			Log.getLogger().info("User @" + screenName + " not in DB! Try to get from Twitter API...");
 			User user = null;
 
 			try {

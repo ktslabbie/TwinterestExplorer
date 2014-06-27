@@ -42,7 +42,8 @@ public class OntologyBuilder {
 		//Log.getLogger().info("Building ontology for user @" + user.getScreenName() + " based on the " + totalTweetCount + " most recent tweets, "
 		//						+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
 		
-		if(ontologyExists && startDate == null) {
+		//if(ontologyExists && startDate == null) {
+		if(false) {
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
 			userOntology = TweetBase.getInstance().getUserOntology(user.getUserID());
 			
@@ -71,7 +72,10 @@ public class OntologyBuilder {
 					}
 				}
 				
-				tweet.stripElements();
+				//Log.getLogger().info("Unstripped content: " + tweet.getContent());
+				tweet.stripNonHashtagElements();
+				//Log.getLogger().info("Stripped content: " + tweet.getContent());
+				
 				concatenatedContent += tweet.getContent() + " ";
 				tweetsConcatenatedCount++;
 

@@ -32,7 +32,8 @@ public class CosineSimilarity extends SimilarityFunction {
 		for (TwitterUser user : weightingScheme.getUsers()) {
 			Map<?, Double> weightMap = this.normalize(weightingScheme.getWeightMapByUser(user));
 			weightingScheme.getUserWeightingMaps().put(user, weightMap);
-			userList.add(user);			
+			userList.add(user);
+			
 		}
 		
 		for(int i = 0; i < userList.size(); i++) {
@@ -41,10 +42,14 @@ public class CosineSimilarity extends SimilarityFunction {
 				TwitterUser userB = userList.get(j);
 				
 				double cosineSimilarity = this.calculateCosineSimilarity(weightingScheme.getWeightMapByUser(userA), weightingScheme.getWeightMapByUser(userB));
-				if(cosineSimilarity > 0.0) 
+				//Log.getLogger().info("Cosine similarity between user " + userA.getScreenName() + " and user " + userB.getScreenName() + ": " + cosineSimilarity);
+				
+				if(cosineSimilarity > 0.0) {
 					userSimilaritySet.add(new UserSimilarity(userA, userB, cosineSimilarity));
+				}
 			}
 		}
+		
 		return userSimilaritySet;
 	}
 

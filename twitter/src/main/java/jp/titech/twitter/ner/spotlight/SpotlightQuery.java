@@ -78,7 +78,7 @@ public class SpotlightQuery {
 				"&policy=&types=";
 
 		try {
-			URI uri = new URI("http", "spotlight.dbpedia.org", "/rest/candidates", query, null);
+			URI uri = new URI("http", Vars.SPOTLIGHT_URL, "/rest/candidates", query, null);
 			URL url = new URL(uri.toASCIIString());
 			
 			//Log.getLogger().info(url.getQuery());

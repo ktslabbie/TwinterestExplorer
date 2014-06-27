@@ -45,7 +45,7 @@ public class UserMiner {
 		this.miningMode = miningMode;
 		
 		if(!user.hasTweets()) {
-			Log.getLogger().info("Gathering user @" + user.getScreenName() + "'s tweets from DB (if present)...");
+			//Log.getLogger().info("Gathering user @" + user.getScreenName() + "'s tweets from DB (if present)...");
 			user.setTweets(TweetBase.getInstance().getTweets(user.getUserID()));
 		}
 	}

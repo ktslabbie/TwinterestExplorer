@@ -1,6 +1,9 @@
 package jp.titech.twitter.control;
 
+import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.SortedSet;
 
 import javax.swing.JFrame;
@@ -13,10 +16,12 @@ import jp.titech.twitter.db.TweetBaseUtil;
 import jp.titech.twitter.network.NetworkBuilder;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
 import jp.titech.twitter.util.Log;
+import jp.titech.twitter.util.Util;
 
 import org.jgraph.JGraph;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
+import org.jgrapht.UndirectedGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
@@ -50,6 +55,34 @@ public class NetworkController {
 
 		return twitterUserGraph;
 	}
+	
+	/**
+	 * Entry point to gather a network of users around some seed user with users determined in DCG relevance file.
+	 * 
+	 * @param userID
+	 * @param depth
+	 * @param maxCount
+	 * @param dcgRelevanceFile
+	 * @return a directed graph of users and edges
+	 */
+	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromTargetUser(String targetUserScreenName, int maxCount, File dcgRelevanceFile) {
+		
+		TwitterUser targetUser = TweetBaseUtil.getTwitterUserWithScreenName(targetUserScreenName);
+		Set<TwitterUser> otherUsers = new HashSet<TwitterUser>();
+		String fileString = Util.readFile(dcgRelevanceFile);
+		String[] lines = fileString.split("\n");
+		
+		for (String line : lines)
+			otherUsers.add(TweetBaseUtil.getTwitterUserWithScreenName(line.split("\t")[0]));
+
+		Log.getLogger().info("Constructing network from seed user @" + targetUser.getScreenName() + " using users contained in the relevance file...");
+
+		NetworkBuilder networkBuilder = new NetworkBuilder(targetUser, maxCount, otherUsers);
+		networkBuilder.build();
+		twitterUserGraph = networkBuilder.getGraph();
+
+		return twitterUserGraph;
+	}
 
 	public void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
 
@@ -74,13 +107,12 @@ public class NetworkController {
 		frame.setVisible(true);
 	}
 
-	public SimpleGraph<TwitterUser, DefaultWeightedEdge> getSimilarityGraph(SimilarityFunction similarityFunction, double threshold) {
+	public UndirectedGraph<TwitterUser, DefaultWeightedEdge> createSimilarityGraph(SimilarityFunction similarityFunction, double threshold) {
 		
-		SimpleGraph<TwitterUser, DefaultWeightedEdge> similarityGraph = new SimpleWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		SortedSet<UserSimilarity> similaritySet = similarityFunction.getUserSimilaritySet();
+		SimpleWeightedGraph<TwitterUser, DefaultWeightedEdge> similarityGraph = new SimpleWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		Set<UserSimilarity> similaritySet = similarityFunction.getUserSimilaritySet();
 		
-		for (Iterator<UserSimilarity> iterator = similaritySet.iterator(); iterator.hasNext();) {
-			UserSimilarity userSimilarity = iterator.next();
+		for (UserSimilarity userSimilarity : similaritySet) {
 			if(userSimilarity.getSimilarity() < threshold) {
 				return similarityGraph;
 			} else {

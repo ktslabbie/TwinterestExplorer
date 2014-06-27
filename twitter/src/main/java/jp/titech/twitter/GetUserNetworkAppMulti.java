@@ -51,11 +51,11 @@ import org.xml.sax.SAXException;
  * @author Kristian Slabbekoorn
  *
  */
-public class GetUserNetworkApp {
+public class GetUserNetworkAppMulti {
 
-	final static long SEED_USER_ID = 55569628; //@mikegroner: 55569628 @bnmuller: 55569628   @BBC_TopGear 52344859 @CCCManhattan
-	//final static String TARGET_USER_SCREEN_NAME = "CCCManhattan";
-	final static String TARGET_USER_SCREEN_NAME = "bnmuller";
+	final static long SEED_USER_ID = 52344859; //@mikegroner: 55569628 @bnmuller: 55569628   @BBC_TopGear 52344859 @CCCManhattan
+	final static String TARGET_USER_SCREEN_NAME = "CCCManhattan";
+	final static String TARGET_USER_SCREEN_NAME2 = "bnmuller";
 
 	public static void main( String[] args ) throws InterruptedException {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
@@ -68,14 +68,21 @@ public class GetUserNetworkApp {
 
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = 
 				networkController.createNetworkFromTargetUser(TARGET_USER_SCREEN_NAME, 104, new File(Vars.EVALUATION_DIRECTORY + TARGET_USER_SCREEN_NAME + "/dcg.relevance.txt"));
+		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph2 = 
+				networkController.createNetworkFromTargetUser(TARGET_USER_SCREEN_NAME2, 104, new File(Vars.EVALUATION_DIRECTORY + TARGET_USER_SCREEN_NAME2 + "/dcg.relevance.txt"));
 
 		Set<TwitterUser> userSet = twitterUserGraph.vertexSet();
+		Set<TwitterUser> userSet2 = twitterUserGraph2.vertexSet();
 		
 		Set<TwitterUser> englishUserSet = new HashSet<TwitterUser>();
 		
 		TwitterUser targetUser = TweetBaseUtil.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME);
 		ontologyController.createUserOntology(targetUser);
 		englishUserSet.add(targetUser);
+		
+		TwitterUser targetUser2 = TweetBaseUtil.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME2);
+		ontologyController.createUserOntology(targetUser2);
+		englishUserSet.add(targetUser2);
 		
 		String users = "\n";
 
@@ -93,12 +100,26 @@ public class GetUserNetworkApp {
 			}
 		}
 		
+		for (TwitterUser user : userSet2) {
+			//users += user.getScreenName();
+			//users += "\n";
+			miningController.mineUser(user);
+			
+			if(user.getEnglishRate() > Vars.MIN_ENGLISH_RATE) {
+				Log.getLogger().info("Enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + "), so create ontology...");
+				ontologyController.createUserOntology(user);
+				englishUserSet.add(user);
+			} else {
+				Log.getLogger().info("Not enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + ")! Skipping.");
+			}
+		}
+		
 		//System.out.println(users);
 		
 		Log.getLogger().info("Calculating the TF-IDF and CF-IUF weights for the terms and classes. We have " + englishUserSet.size() + " users in our list.");
 		
-		WeightingScheme tfidf = new TFIDF(englishUserSet);
-		tfidf.calculate();
+		//WeightingScheme tfidf = new TFIDF(englishUserSet);
+		//tfidf.calculate();
 		
 		WeightingScheme cfiuf = new CFIUF(englishUserSet);
 		cfiuf.calculate();
@@ -108,38 +129,38 @@ public class GetUserNetworkApp {
 			Util.writeUserOntology(user);
 		}
 		
-		SimilarityFunction occurrenceSimilarity = new OccurrenceSimilarity(cfiuf);
-		SimilarityFunction tfidfCosineSimilarity = new CosineSimilarity(tfidf);
+		//SimilarityFunction occurrenceSimilarity = new OccurrenceSimilarity(cfiuf);
+		//SimilarityFunction tfidfCosineSimilarity = new CosineSimilarity(tfidf);
 		SimilarityFunction cfiufCosineSimilarity = new CosineSimilarity(cfiuf);
 		
-		evaluationController.evaluateUserSimilarity(occurrenceSimilarity, TARGET_USER_SCREEN_NAME);
-		evaluationController.evaluateUserSimilarity(tfidfCosineSimilarity, TARGET_USER_SCREEN_NAME);
+		//evaluationController.evaluateUserSimilarity(occurrenceSimilarity, TARGET_USER_SCREEN_NAME);
+		//evaluationController.evaluateUserSimilarity(tfidfCosineSimilarity, TARGET_USER_SCREEN_NAME);
 		evaluationController.evaluateUserSimilarity(cfiufCosineSimilarity, TARGET_USER_SCREEN_NAME);
 		
 		Log.getLogger().info("Creating similarity graphs.");
-		final UndirectedGraph<TwitterUser, DefaultWeightedEdge> occurrenceSimilarityGraph = networkController.createSimilarityGraph(occurrenceSimilarity, 0.707);
-		final UndirectedGraph<TwitterUser, DefaultWeightedEdge> tfidfSimilarityGraph = networkController.createSimilarityGraph(tfidfCosineSimilarity, 0.0502);
+		//final UndirectedGraph<TwitterUser, DefaultWeightedEdge> occurrenceSimilarityGraph = networkController.createSimilarityGraph(occurrenceSimilarity, 0.707);
+		//final UndirectedGraph<TwitterUser, DefaultWeightedEdge> tfidfSimilarityGraph = networkController.createSimilarityGraph(tfidfCosineSimilarity, 0.0502);
 		final UndirectedGraph<TwitterUser, DefaultWeightedEdge> cfiufSimilarityGraph = networkController.createSimilarityGraph(cfiufCosineSimilarity, 0.105);
 		
 		//Log.getLogger().info("Similarity graph: " + cfiufSimilarityGraph);
 		
 		Log.getLogger().info("Clustering similarity graph occurrence style.");
-		NetworkClusterer occurrenceClusterer = new NetworkClusterer(new HCS(occurrenceSimilarityGraph));
-		occurrenceClusterer.cluster();
+		//NetworkClusterer occurrenceClusterer = new NetworkClusterer(new HCS(occurrenceSimilarityGraph));
+		//occurrenceClusterer.cluster();
 		
 		Log.getLogger().info("Clustering similarity graph TF-IDF style.");
-		NetworkClusterer tfidfClusterer = new NetworkClusterer(new HCS(tfidfSimilarityGraph));
-		tfidfClusterer.cluster();
+		//NetworkClusterer tfidfClusterer = new NetworkClusterer(new HCS(tfidfSimilarityGraph));
+		//tfidfClusterer.cluster();
 		
 		Log.getLogger().info("Clustering similarity graph CF-IUF style.");
 		NetworkClusterer cfiufClusterer = new NetworkClusterer(new HCS(cfiufSimilarityGraph));
 		cfiufClusterer.cluster();
 		
-		Log.getLogger().info("Printing clusters for Occurrence weighting.");
-		Log.getLogger().info(occurrenceClusterer.printClusters());
+		//Log.getLogger().info("Printing clusters for Occurrence weighting.");
+		//Log.getLogger().info(occurrenceClusterer.printClusters());
 		
-		Log.getLogger().info("Printing clusters for TF-IDF weighting.");
-		Log.getLogger().info(tfidfClusterer.printClusters());
+		//Log.getLogger().info("Printing clusters for TF-IDF weighting.");
+		//Log.getLogger().info(tfidfClusterer.printClusters());
 		
 		Log.getLogger().info("Printing clusters for CF-IUF weighting.");
 		Log.getLogger().info(cfiufClusterer.printClusters());
@@ -163,8 +184,8 @@ public class GetUserNetworkApp {
 		
 		try {
 			exp.export(new FileWriter(new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + ".cf-iuf.graphml")), cfiufSimilarityGraph);
-			exp.export(new FileWriter(new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + ".tf-idf.graphml")), tfidfSimilarityGraph);
-			exp.export(new FileWriter(new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + ".occurrence.graphml")), occurrenceSimilarityGraph);
+			//exp.export(new FileWriter(new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + ".tf-idf.graphml")), tfidfSimilarityGraph);
+			//exp.export(new FileWriter(new File(Vars.DATA_DIRECTORY + TARGET_USER_SCREEN_NAME + ".occurrence.graphml")), occurrenceSimilarityGraph);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (TransformerConfigurationException e) {
@@ -177,5 +198,3 @@ public class GetUserNetworkApp {
 		
 	}
 }
-
-
