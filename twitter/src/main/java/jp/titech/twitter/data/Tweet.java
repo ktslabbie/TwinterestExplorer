@@ -335,8 +335,8 @@ public class Tweet {
 	/**
 	 * Strips the stopwords and netslang from tweet text.
 	 */
-	public void stripStopwords() {
-		setContent(Util.removeStopwords(getContent()));
+	public void stripNetslang() {
+		setContent(Util.removeNetslang(getContent()));
 	}
 
 	/**
@@ -347,7 +347,7 @@ public class Tweet {
 		this.stripHashtags();
 		this.stripURLs();
 		this.stripMedia();
-		this.stripStopwords();
+		this.stripNetslang();
 		setContent(getContent().trim());
 		
 		return this.getContent();
@@ -361,7 +361,7 @@ public class Tweet {
 		this.stripHashtagTags();
 		this.stripURLs();
 		this.stripMedia();
-		this.stripStopwords();
+		this.stripNetslang();
 		setContent(getContent().trim());
 		
 		return this.getContent();
@@ -385,7 +385,7 @@ public class Tweet {
 			newContent += token + " ";
 		}
 		
-		setContent(newContent.replaceAll("[@,—.:;<>“”{}\\[\\]()\"'’*!?]", "").trim());
+		setContent(Util.removeSymbols(newContent));
 		
 		return this.getContent();
 	}

@@ -136,22 +136,41 @@ public class Util {
 	 * @param text The String
 	 * @return The String with stopwords removed
 	 */
-	public static String removeStopwords(String text) {
-		StringBuilder builder = new StringBuilder();
-		Scanner scanner = new Scanner(text);
-		String next = "";
-		while(scanner.hasNext()){
-			if(!(next = scanner.nextLine()).isEmpty()){
-				String[] strs = next.split("\\s+");
-				for (int i = 0; i < strs.length; i++) {
-					if(!stopWords.contains(strs[i].toLowerCase())){
-						builder.append(strs[i] + " ");
+	public static String removeNetslang(String text) {
+		// Load the stopwords file if it hasn't been loaded yet
+		if(stopWords.isEmpty()) loadStopwords(Vars.STOPWORDS_FILE);
+		
+		// If there are stopwords, strip them.
+		if(!stopWords.isEmpty()) {
+			StringBuilder builder = new StringBuilder();
+			Scanner scanner = new Scanner(text);
+			String next = "";
+			while(scanner.hasNext()){
+				if(!(next = scanner.nextLine()).isEmpty()){
+					String[] strs = next.split("\\s+");
+					for (int i = 0; i < strs.length; i++) {
+						if(!stopWords.contains(removeSymbols(strs[i]).toLowerCase())) {
+							builder.append(strs[i] + " ");
+						}
 					}
 				}
+				builder.append("\n");
 			}
-			builder.append("\n");
+			return builder.toString();
 		}
-		return builder.toString();
+		
+		// If not, just return the text.
+		return text;
+	}
+	
+	/**
+	 * Strip symbols and return the clean text.
+	 * 
+	 * @param text
+	 * @return the clean string
+	 */
+	public static String removeSymbols(String text) {
+		return text.replaceAll("[@,—.:;<>“”{}\\[\\]()\"'’*!?]", "").trim();
 	}
 
 	/**
