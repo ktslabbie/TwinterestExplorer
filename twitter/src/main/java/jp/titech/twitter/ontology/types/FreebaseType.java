@@ -7,7 +7,6 @@ package jp.titech.twitter.ontology.types;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.dbpedia.spotlight.model.OntologyType;
 
 /**
  * @author Kristian Slabbekoorn
@@ -18,7 +17,7 @@ public class FreebaseType implements OntologyType {
 	private final String baseURI = "http://rdf.freebase.com/ns/";
 	private String fullURI, typeID;
 	
-	public FreebaseType(String domain)	{
+	public FreebaseType(String domain) {
 		fullURI = baseURI + domain;
 		typeID = "Freebase:/" + domain;
 	}

@@ -3,14 +3,8 @@ package jp.titech.twitter.data;
 import java.util.HashMap;
 import java.util.Map;
 
-import jp.titech.twitter.ontology.types.Category;
-import jp.titech.twitter.ontology.types.FreebaseType;
-import jp.titech.twitter.ontology.types.YAGOType;
+import jp.titech.twitter.ontology.types.*;
 import jp.titech.twitter.util.Util;
-
-import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.OntologyType;
-import org.dbpedia.spotlight.model.SchemaOrgType;
 
 /**
  * Data class to store user ontologies (ontology types with their occurrence numbers).

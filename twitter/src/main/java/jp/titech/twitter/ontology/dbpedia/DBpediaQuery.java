@@ -12,13 +12,13 @@ import java.util.Set;
 
 import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.ontology.types.Category;
+import jp.titech.twitter.ontology.types.DBpediaType;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
+import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
 
-import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
-import org.dbpedia.spotlight.model.DBpediaType;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
 
@@ -41,7 +41,7 @@ public class DBpediaQuery {
 	public void collectClasses(List<DBpediaResourceOccurrence> occs, UserOntology userOntology) {
 		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();) {
 			DBpediaResourceOccurrence occ = occIt.next();
-			String resourceURI = occ.resource().getFullUri();
+			String resourceURI = occ.getResource().getFullUri();
 
 			String yagoQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
 			String categoryQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);

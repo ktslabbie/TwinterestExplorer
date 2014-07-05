@@ -14,15 +14,12 @@ import java.util.Set;
 import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.ontology.types.Category;
+import jp.titech.twitter.ontology.types.DBpediaType;
 import jp.titech.twitter.ontology.types.FreebaseType;
 import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
-
-import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.OntologyType;
-import org.dbpedia.spotlight.model.SchemaOrgType;
 
 /**
  * @author Kristian Slabbekoorn

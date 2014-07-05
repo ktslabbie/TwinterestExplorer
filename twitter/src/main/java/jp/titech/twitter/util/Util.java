@@ -30,13 +30,7 @@ import java.util.SortedMap;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
-import jp.titech.twitter.ontology.types.Category;
-import jp.titech.twitter.ontology.types.FreebaseType;
-import jp.titech.twitter.ontology.types.YAGOType;
-
-import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.OntologyType;
-import org.dbpedia.spotlight.model.SchemaOrgType;
+import jp.titech.twitter.ontology.types.*;
 
 import ch.qos.logback.core.status.WarnStatus;
 
@@ -257,7 +251,7 @@ public class Util {
 	 * @param types
 	 * @return returnTypes The Java list.
 	 */
-	public static List<OntologyType> convertScalaList(scala.collection.immutable.List<OntologyType> types) {
+/*	public static List<OntologyType> convertScalaList(scala.collection.immutable.List<OntologyType> types) {
 		List<OntologyType> returnTypes = new ArrayList<OntologyType>();
 		scala.collection.Iterator<OntologyType> it = types.iterator();
 		while(it.hasNext()) {
@@ -265,7 +259,7 @@ public class Util {
 			returnTypes.add(type);
 		}
 		return returnTypes;
-	}
+	}*/
 
 	/**
 	 * Create an OntologyType object from a type URI.

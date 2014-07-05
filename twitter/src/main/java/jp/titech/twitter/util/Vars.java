@@ -28,6 +28,7 @@ public class Vars {
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	
+	public static final String  DBPEDIA_NAMESPACE				= c.getProperty("dbpedia.namespace");
 	public static final String 	DBPEDIA_RDF_DIRECTORY 			= c.getProperty("dbpedia.rdfDirectory");
 	public static final String 	DBPEDIA_REPOSITORY_DIRECTORY 	= c.getProperty("dbpedia.repositoryDirectory");
 	public static final boolean	DBPEDIA_REMOTE					= Boolean.valueOf(c.getProperty("dbpedia.remote"));				// Remote DBpedia querying yes/no

@@ -10,18 +10,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jp.titech.twitter.ontology.types.DBpediaType;
 import jp.titech.twitter.ontology.types.FreebaseType;
+import jp.titech.twitter.ontology.types.OntologyType;
+import jp.titech.twitter.ontology.types.SchemaOrgType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
+import jp.titech.twitter.ontology.dbpedia.DBpediaResource;
+import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
 
-import org.dbpedia.spotlight.model.DBpediaResource;
-import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
-import org.dbpedia.spotlight.model.DBpediaType;
-import org.dbpedia.spotlight.model.OntologyType;
-import org.dbpedia.spotlight.model.SchemaOrgType;
-import org.dbpedia.spotlight.model.SurfaceForm;
-import org.dbpedia.spotlight.model.Text;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,7 +39,8 @@ public class SpotlightUtil {
 
 			JSONObject jsonMain = json.getJSONObject("annotation");
 
-			Text context = new Text(jsonMain.getString("@text"));
+			//Text context = new Text(jsonMain.getString("@text"));
+			String context = jsonMain.getString("@text");
 			
 			Object object = jsonMain.opt("surfaceForm");
 			JSONArray surfaceForms = new JSONArray();
@@ -58,7 +57,8 @@ public class SpotlightUtil {
 				List<DBpediaResourceOccurrence> resourceOccurrences = new ArrayList<DBpediaResourceOccurrence>();
 				
 				JSONObject jsonSurfaceForm = surfaceForms.getJSONObject(i);
-				SurfaceForm surfaceForm = new SurfaceForm(jsonSurfaceForm.getString("@name"));
+				//SurfaceForm surfaceForm = new SurfaceForm(jsonSurfaceForm.getString("@name"));
+				String surfaceForm = jsonSurfaceForm.getString("@name");
 				int textOffset = jsonSurfaceForm.getInt("@offset");
 
 				JSONObject jsonResourceTemp = jsonSurfaceForm.optJSONObject("resource");
@@ -81,10 +81,10 @@ public class SpotlightUtil {
 						resourceOccurrences.add(occurrence);
 					}
 					if(!Vars.INCLUDE_EMPTY_SURFACE_FORMS)
-						resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
+						resourceOccurrenceMap.put(surfaceForm, resourceOccurrences);
 				}
 				if(Vars.INCLUDE_EMPTY_SURFACE_FORMS)
-					resourceOccurrenceMap.put(surfaceForm.name(), resourceOccurrences);
+					resourceOccurrenceMap.put(surfaceForm, resourceOccurrences);
 			}
 			
 		} catch (JSONException e) {

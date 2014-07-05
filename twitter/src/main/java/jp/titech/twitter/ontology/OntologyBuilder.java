@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.dbpedia.spotlight.model.DBpediaResourceOccurrence;
+import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
 
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;

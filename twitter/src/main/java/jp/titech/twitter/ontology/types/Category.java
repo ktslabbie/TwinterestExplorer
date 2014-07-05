@@ -7,7 +7,6 @@ package jp.titech.twitter.ontology.types;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.dbpedia.spotlight.model.OntologyType;
 
 /**
  * @author Kristian Slabbekoorn
@@ -18,7 +17,7 @@ public class Category implements OntologyType {
 	private final String baseURI = "http://dbpedia.org/resource/Category:";
 	private String fullURI, typeID;
 	
-	public Category(String type)	{
+	public Category(String type) {
 		fullURI = baseURI + type;
 		typeID = "Category:" + type;
 	}
