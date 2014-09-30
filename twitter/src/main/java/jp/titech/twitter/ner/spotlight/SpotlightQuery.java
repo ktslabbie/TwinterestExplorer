@@ -109,15 +109,15 @@ public class SpotlightQuery {
 					queried = true;
 				} catch (Exception e) {
 					Log.getLogger().error(e.getMessage());
-					Log.getLogger().info("Retrying in " + Vars.QUERY_RETRY / 1000 + " seconds...");
+					Log.getLogger().info("Returning empty occurrence map.");
+					return new HashMap<String, List<DBpediaResourceOccurrence>>();
+					
 					//queried = true;
-					synchronized(this){
-						this.wait(Vars.QUERY_RETRY);
-					}
+//					synchronized(this){
+//						this.wait(Vars.QUERY_RETRY);
+//					}
 				}
 			}
-		} catch (InterruptedException e){
-			Log.getLogger().error(e.getMessage());
 		} catch (URISyntaxException e) {
 			Log.getLogger().error(e.getMessage());
 		} catch (MalformedURLException e) {

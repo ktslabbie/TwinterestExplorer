@@ -1,5 +1,7 @@
 package jp.titech.twitter.data;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,7 +25,7 @@ import jp.titech.twitter.util.Util;
 public class TwitterUser implements Comparable<TwitterUser> {
 
 	private long 					userID;
-	private String 					screenName, name, description, location;
+	private String 					screenName, name, description, location, profileImageURL;
 	private int 					followersCount, friendsCount, statusesCount;
 	private Date 					createdAt;
 	private boolean 				isProtected;
@@ -48,7 +50,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	 * @param isProtected
 	 */
 	public TwitterUser(long userID, String screenName, String name, String description, String location, 
-			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate) {
+			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate, String profileImageURL) {
 
 		this.userID = userID;
 		this.screenName = screenName;
@@ -61,6 +63,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.createdAt = createdAt;
 		this.isProtected = isProtected;
 		this.englishRate = englishRate;
+		this.profileImageURL = profileImageURL;
 		this.tweets = new ArrayList<Tweet>();
 		this.userOntology = new UserOntology();
 		this.termFrequencyMap = new HashMap<String, Integer>();
@@ -154,6 +157,20 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	public void setEnglishRate(double englishRate) {
 		this.englishRate = englishRate;
 	}
+	
+	/**
+	 * @return the profileImageURL
+	 */
+	public String getProfileImageURL() {
+		return profileImageURL;
+	}
+
+	/**
+	 * @param profileImageURL the profileImageURL to set
+	 */
+	public void setProfileImageURL(String profileImageURL) {
+		this.profileImageURL = profileImageURL;
+	}
 
 	public List<Tweet> getTweets() {
 		if(!this.hasTweets()) {
@@ -244,8 +261,12 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	    }
 	    return true;
 	}
-
+	
 	public Map<String, Integer> getTermFrequencyMap() {
+		return this.termFrequencyMap;
+	}
+
+	public Map<String, Integer> computeAndGetTermFrequencyMap() {
 		if(this.termFrequencyMap.isEmpty()) {
 			for (Tweet tweet : this.getTweets()) {
 				for (String term : tweet.tokenize().split("\\s+")) {

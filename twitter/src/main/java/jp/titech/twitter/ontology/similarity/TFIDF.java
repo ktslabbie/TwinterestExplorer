@@ -21,7 +21,7 @@ public class TFIDF extends WeightingScheme {
 
 		for (TwitterUser user : users) {
 			Map<String, Double> userTFIDFMap	= new HashMap<String, Double>();
-			Map<String, Integer> tfMap			= user.getTermFrequencyMap();
+			Map<String, Integer> tfMap			= user.computeAndGetTermFrequencyMap();
 
 			for (String term : tfMap.keySet()) {
 				double tf = tfMap.get(term);

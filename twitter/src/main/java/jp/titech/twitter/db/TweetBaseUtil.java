@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.IDs;
+import twitter4j.PagableResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -22,6 +23,7 @@ import jp.titech.twitter.util.Log;
 public class TweetBaseUtil {
 
 	private static TweetBase tweetBase = TweetBase.getInstance();
+	private static long nextCursor = -1;
 
 	/**
 	 * Get a list of TwitterUsers from a directory with files in the format {identifier}#{username}-{parameters}.
@@ -59,7 +61,7 @@ public class TweetBaseUtil {
 
 				if(user != null) // Can a user be null here?
 					twitterUser = tweetBase.addUser(user);
-				
+
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
 					Log.getLogger().error("Error getting user (suspended account). Skip this user.");
@@ -84,7 +86,7 @@ public class TweetBaseUtil {
 		TwitterUser twitterUser = null;
 
 		if((twitterUser = tweetBase.getUser(screenName)) == null) {
-			
+
 			Log.getLogger().info("User @" + screenName + " not in DB! Try to get from Twitter API...");
 			User user = null;
 
@@ -94,7 +96,7 @@ public class TweetBaseUtil {
 
 				if(user != null) // Can a user be null here?
 					twitterUser = tweetBase.addUser(user);
-				
+
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
 					Log.getLogger().error("Error getting user (suspended account). Skip this user.");
@@ -114,51 +116,91 @@ public class TweetBaseUtil {
 		return twitterUser;
 	}
 
+	public static List<TwitterUser> getFollowersList(long userID, long cursor) {
+		PagableResponseList<User> followers = null;
+		List<TwitterUser> users = new ArrayList<TwitterUser>();
 
-	public static List<Long> getFollowersIDs(long userID, int cursor) {
-		IDs ids = null;
 		Twitter twitter = new TwitterFactory().getInstance();
 
-		if(!tweetBase.isUserFollowersContained(userID)) {
+		try {
+			followers = twitter.getFollowersList(userID, cursor, 200);
+			nextCursor = followers.getNextCursor();
+			
+			for (User follower: followers) {
+				users.add(TweetBase.getInstance().addUser(follower));
+				TweetBase.getInstance().addUserFollower(userID, follower.getId());
+			}
 
-			try {
-				ids = twitter.getFollowersIDs(userID, -1);
-				for (long id : ids.getIDs()) {
-					tweetBase.addUserFollower(userID, id);
-				}
-
-			} catch (TwitterException e) {
-				if(e.getErrorCode() == 88){
-					int secondsUntil =  e.getRateLimitStatus().getSecondsUntilReset();
-					Log.getLogger().error("Error getting followers (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
-					try {
-						Thread.sleep(secondsUntil*1000);
-						return getFollowersIDs(userID, cursor);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
+		} catch (TwitterException e) {
+			if(e.getErrorCode() == 88){
+				int secondsUntil =  e.getRateLimitStatus().getSecondsUntilReset();
+				Log.getLogger().error("Error getting followers (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
+				try {
+					Thread.sleep(secondsUntil*1000);
+					return getFollowersList(userID, cursor);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
 				}
 			}
 		}
 
-		return tweetBase.getUserFollowers(userID);
+		return users;
 	}
 	
+	public static void resetNextCursor() {
+		nextCursor = -1;
+	}
+	
+	public static long getNextCursor() {
+		return nextCursor;
+	}
+
+
+	//	public static List<Long> getFollowersIDs(long userID, long cursor) {
+	//		IDs ids = null;
+	//		Twitter twitter = new TwitterFactory().getInstance();
+	//
+	//		if(!tweetBase.isUserFollowersContained(userID)) {
+	//
+	//			try {
+	//				ids = twitter.getFollowersIDs(userID, cursor);
+	//
+	//				for (long id : ids.getIDs()) {
+	//					tweetBase.addUserFollower(userID, id);
+	//				}
+	//
+	//			} catch (TwitterException e) {
+	//				if(e.getErrorCode() == 88){
+	//					int secondsUntil =  e.getRateLimitStatus().getSecondsUntilReset();
+	//					Log.getLogger().error("Error getting followers (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
+	//					try {
+	//						Thread.sleep(secondsUntil*1000);
+	//						return getFollowersIDs(userID, cursor);
+	//					} catch (InterruptedException e1) {
+	//						e1.printStackTrace();
+	//					}
+	//				}
+	//			}
+	//		}
+	//
+	//		return tweetBase.getUserFollowers(userID);
+	//	}
+
 	public static void initEnglishRate(TwitterUser user) {
 		Log.getLogger().info("Initializing English rates for users already in DB...");
-		
+
 		List<Tweet> tweets = user.getTweets();
 		int englishCount = 0;
 		int tweetCount = 0;
-		
+
 		for (Tweet tweet : tweets) {
 			tweetCount++;
 			if(tweet.getLanguage().equals("en")) englishCount++;
 		}
 		double englishRate = (double)englishCount / (double)tweetCount;
-		
+
 		Log.getLogger().info("English rate for user @" + user.getScreenName() + ": " + englishRate);
-		
+
 		tweetBase.updateUserEnglishRate(user.getUserID(), englishRate);
 	}
 }

@@ -61,6 +61,8 @@ public class GetUserNetworkApp {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
 		Log.getLogger().info("Starting program.");
 		
+		
+		
 		NetworkController networkController 		= NetworkController.getInstance();
 		MiningController miningController 			= MiningController.getInstance();
 		OntologyController ontologyController 		= OntologyController.getInstance();
@@ -174,7 +176,6 @@ public class GetUserNetworkApp {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
 }
 

@@ -29,6 +29,7 @@ import org.openrdf.query.BindingSet;
 public class DBpediaQuery {
 
 	private static DBpediaQuery instance;
+	private String yagoQueryFile = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql");
 
 	private boolean remote;
 	private DBpediaOntologyRepository dbpediaOntologyRepository;
@@ -42,12 +43,18 @@ public class DBpediaQuery {
 		for(Iterator<DBpediaResourceOccurrence> occIt = occs.iterator(); occIt.hasNext();) {
 			DBpediaResourceOccurrence occ = occIt.next();
 			String resourceURI = occ.getResource().getFullUri();
-
-			String yagoQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql").replaceAll("%URI%", resourceURI);
-			String categoryQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
+			String yagoQuery = "";
+			try {
+				yagoQuery = yagoQueryFile.replaceAll("%URI%", resourceURI);
+			} catch(IndexOutOfBoundsException e) {
+				resourceURI = resourceURI.replaceAll("\\$", "|");
+				yagoQuery = yagoQueryFile.replaceAll("%URI%", resourceURI);
+				yagoQuery = yagoQuery.replaceAll("|", "\\$");
+			}
+			//String categoryQuery = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_categories.sparql").replaceAll("%URI%", resourceURI);
 
 			this.collectYAGOTypes(yagoQuery, userOntology);
-			this.collectCategories(categoryQuery, userOntology);
+			//this.collectCategories(categoryQuery, userOntology);
 		}
 	}
 

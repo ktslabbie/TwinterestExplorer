@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
-
+import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.db.TweetBase;
+import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.ner.spotlight.SpotlightQuery;
 import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
 import jp.titech.twitter.util.Log;
@@ -42,8 +43,8 @@ public class OntologyBuilder {
 		//Log.getLogger().info("Building ontology for user @" + user.getScreenName() + " based on the " + totalTweetCount + " most recent tweets, "
 		//						+ "concatenating groups of " + Vars.CONCATENATION_WINDOW + " tweets.");
 		
-		//if(ontologyExists && startDate == null) {
-		if(false) {
+		if(ontologyExists && startDate == null) {
+		//if(false) {
 			Log.getLogger().info("Ontology already exists in database. Retrieving directly.");
 			userOntology = TweetBase.getInstance().getUserOntology(user.getUserID());
 			
@@ -52,6 +53,12 @@ public class OntologyBuilder {
 			
 			userOntology = new UserOntology();
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(user.getUserID());
+			if(tweets.isEmpty()) {
+				Log.getLogger().info("No tweets yet for this user! Try to mine...");
+				MiningController mc = MiningController.getInstance();
+				mc.mineUser(user);
+				tweets = user.getTweets();
+			}
 			
 			int processedTweetCount = 0;
 			Util.loadStopwords(Vars.STOPWORDS_FILE);
@@ -80,6 +87,9 @@ public class OntologyBuilder {
 				tweetsConcatenatedCount++;
 
 				if(tweetsConcatenatedCount >= Vars.CONCATENATION_WINDOW || processedTweetCount >= totalTweetCount - 1) {
+					if(concatenatedContent.startsWith("'")) {
+						concatenatedContent = concatenatedContent.substring(1);
+					}
 					Log.getLogger().info("Stripped (and concatenated) tweet content: " + concatenatedContent);
 					
 					if(concatenatedContent.isEmpty() || concatenatedContent.equals(" ")) continue;

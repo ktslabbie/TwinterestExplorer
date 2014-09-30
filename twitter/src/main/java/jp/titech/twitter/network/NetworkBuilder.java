@@ -13,8 +13,11 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import twitter4j.PagableResponseList;
+import twitter4j.User;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.WeightedEdge;
+import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.db.TweetBaseUtil;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
@@ -33,6 +36,7 @@ public class NetworkBuilder {
 	private int					maxUsers;					// Maximum number of users to collect
 	private Set<Long>			processed;					// Set of IDs already processed (to speed things up)
 	private boolean				restrictToLocal = false;	// Set true to disable contacting the Twitter API
+	private int					userCount;
 
 	DirectedGraph<TwitterUser, DefaultWeightedEdge> graph;
 
@@ -42,6 +46,7 @@ public class NetworkBuilder {
 		processQueue = new PriorityQueue<TwitterUser>();
 		processQueue.add(this.seedUser);
 		processed = new HashSet<Long>();
+		userCount = 0;
 	}
 
 	public NetworkBuilder(TwitterUser seedUser, int maxSize) {
@@ -51,6 +56,7 @@ public class NetworkBuilder {
 		processQueue.add(this.seedUser);
 		this.maxUsers = maxSize;
 		processed = new HashSet<Long>();
+		userCount = 0;
 	}
 	
 	public NetworkBuilder(TwitterUser seedUser, int maxSize, Set<TwitterUser> otherUsers) {
@@ -66,13 +72,13 @@ public class NetworkBuilder {
 		this.maxUsers = maxSize;
 		this.restrictToLocal = true;
 		processed = new HashSet<Long>();
+		userCount = 0;
 	}
 
 	public void build() {
-		int userCount = 1;
+		userCount = 1;
 		boolean seedUser = true;
-		TwitterUser currentUser, follower;
-		List<Long> ids;
+		TwitterUser currentUser;
 
 		while(!processQueue.isEmpty()) {
 
@@ -90,33 +96,71 @@ public class NetworkBuilder {
 
 				if(userCount > maxUsers) break;
 				
+				Log.getLogger().info("Getting followers of @" + currentUser.getScreenName() + "...");
+				
 				if(!restrictToLocal) {
-					Log.getLogger().info("Getting followers of @" + currentUser.getScreenName() + "...");
-	
-					ids = TweetBaseUtil.getFollowersIDs(currentUser.getUserID(), -1);
-	
-					for (long id : ids) {
-						if(!processed.contains(id)) {
-							follower = TweetBaseUtil.getTwitterUserWithID(id);
-	
-							if(isValidUser(follower) && !follower.equals(currentUser)) {
-								Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
-								processQueue.add(follower);
-								graph.addVertex(follower);
-								userCount++;
-	
-								if(graph.addEdge(follower, currentUser) != null)
-									Log.getLogger().info("Adding new edge: (" + follower.getScreenName() + ") -> (" + currentUser.getScreenName() + ").");
-	
-								if(userCount > maxUsers) break;
-							}
-							processed.add(id);
-						}
+					processLocalUsers(currentUser);
+					
+					if(userCount <= maxUsers) {
+						processRemoteUsers(currentUser, -1);
 					}
+				} else {
+					processLocalUsers(currentUser);
 				}
 			}
 		}
-		connectAllUsers();
+		//connectAllUsers();
+	}
+	
+	private void processLocalUsers(TwitterUser currentUser) {
+		List<Long> followerIDs = TweetBase.getInstance().getUserFollowers(currentUser.getUserID());
+		TwitterUser follower;
+		for (long id : followerIDs) {
+			if(!processed.contains(id)) {
+				follower = TweetBaseUtil.getTwitterUserWithID(id);
+
+				if(isValidUser(follower) && !follower.equals(currentUser)) {
+					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
+					processQueue.add(follower);
+					graph.addVertex(follower);
+					userCount++;
+
+					if(graph.addEdge(follower, currentUser) != null)
+						Log.getLogger().info("Adding new edge: (" + follower.getScreenName() + ") -> (" + currentUser.getScreenName() + ").");
+
+					if(userCount > maxUsers) break;
+				}
+				if(follower != null) processed.add(follower.getUserID());
+			}
+		}
+	}
+	
+	private void processRemoteUsers(TwitterUser currentUser, long cursor) {
+		List<TwitterUser> followers = TweetBaseUtil.getFollowersList(currentUser.getUserID(), cursor);
+		
+		for (TwitterUser follower : followers) {
+			if(!processed.contains(follower.getUserID())) {
+
+				if(isValidUser(follower) && !follower.equals(currentUser)) {
+					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
+					processQueue.add(follower);
+					graph.addVertex(follower);
+					userCount++;
+
+					if(graph.addEdge(follower, currentUser) != null)
+						Log.getLogger().info("Adding new edge: (" + follower.getScreenName() + ") -> (" + currentUser.getScreenName() + ").");
+
+					if(userCount > maxUsers) break;
+				}
+				if(follower != null) processed.add(follower.getUserID());
+			}
+		}
+		
+		cursor = TweetBaseUtil.getNextCursor();
+		
+		if(userCount <= maxUsers && cursor != 0) {
+			processRemoteUsers(currentUser, cursor);
+		}
 	}
 
 	/**
@@ -125,20 +169,20 @@ public class NetworkBuilder {
 	 * @param graph
 	 * @return the updated graph
 	 */
-	private void connectAllUsers() {
-
-		Log.getLogger().info("Finishing up the graph by connecting all users by follow relation...");
-
-		Set<TwitterUser> users = graph.vertexSet();
-
-		for (TwitterUser user : users) {
-			List<Long> ids = TweetBaseUtil.getFollowersIDs(user.getUserID(), -1);
-			for (long id : ids)
-				for (TwitterUser follower : users)
-					if(id == follower.getUserID() && !user.equals(follower))
-						graph.addEdge(follower, user);
-		}
-	}
+//	private void connectAllUsers() {
+//
+//		Log.getLogger().info("Finishing up the graph by connecting all users by follow relation...");
+//
+//		Set<TwitterUser> users = graph.vertexSet();
+//
+//		for (TwitterUser user : users) {
+//			List<Long> ids = TweetBaseUtil.getFollowersIDs(user.getUserID(), -1);
+//			for (long id : ids)
+//				for (TwitterUser follower : users)
+//					if(id == follower.getUserID() && !user.equals(follower))
+//						graph.addEdge(follower, user);
+//		}
+//	}
 
 	public SimpleGraph<String, DefaultWeightedEdge> buildSimilarityGraphFromFile(String filePath) {
 

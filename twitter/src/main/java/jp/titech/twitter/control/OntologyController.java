@@ -6,6 +6,7 @@
 package jp.titech.twitter.control;
 
 import java.io.File;
+import java.util.HashMap;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserOntology;
@@ -13,6 +14,7 @@ import jp.titech.twitter.ontology.OntologyBuilder;
 import jp.titech.twitter.ontology.pruning.HighGeneralityPruner;
 import jp.titech.twitter.ontology.pruning.LowOccurrencePruner;
 import jp.titech.twitter.ontology.pruning.Pruner;
+import jp.titech.twitter.ontology.types.OntologyType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -42,6 +44,7 @@ public class OntologyController {
 		OntologyBuilder ob = new OntologyBuilder(user);
 		ob.build();
 		fullUserOntology = ob.getUserOntology();
+		fullUserOntology.setOntology(new HashMap<OntologyType, Integer>()); // TODO: change back
 		user.setUserOntology(fullUserOntology);
 
 		this.applyPruning(user);

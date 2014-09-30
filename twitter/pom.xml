@@ -26,7 +26,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<dropwizard.version>0.7.0</dropwizard.version>
+		<dropwizard.version>0.7.1</dropwizard.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -113,6 +113,11 @@
 		<dependency>
 			<groupId>io.dropwizard</groupId>
 			<artifactId>dropwizard-core</artifactId>
+			<version>${dropwizard.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.dropwizard</groupId>
+			<artifactId>dropwizard-assets</artifactId>
 			<version>${dropwizard.version}</version>
 		</dependency>
 	</dependencies>

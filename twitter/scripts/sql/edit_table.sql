@@ -1,3 +1,6 @@
-ALTER TABLE TWEETBASE.USERS ADD english_rate DOUBLE NOT NULL DEFAULT -1.0;
+--ALTER TABLE TWEETBASE.USERS ADD profile_image_url VARCHAR(255) DEFAULT 'http://abs.twimg.com/sticky/default_profile_images/default_profile_4_200x200.png';
 
-UPDATE TWEETBASE.ONTOLOGY SET concatenation_window = cardinality, cardinality = concatenation_window
+
+CREATE INDEX i_screen_name ON TWEETBASE.USERS (screen_name);
+CREATE INDEX i_user_id ON TWEETBASE.TWEETS (user_id);
+ALTER TABLE TWEETBASE.ONTOLOGY DROP PRIMARY KEY;

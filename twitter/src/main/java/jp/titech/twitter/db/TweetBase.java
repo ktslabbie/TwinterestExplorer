@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class TweetBase {
 			addTweetStatement.clearParameters();
 			addTweetStatement.setLong(1, tweetID);
 			addTweetStatement.setLong(2, tweet.getUserID());
-			addTweetStatement.setString(3, tweet.getScreenName());
+			addTweetStatement.setString(3, tweet.getScreenName().toLowerCase());
 			addTweetStatement.setDate(4, new java.sql.Date(tweet.getCreatedAt().getTime()));
 			addTweetStatement.setString(5, tweet.getContent());
 			addTweetStatement.setBoolean(6, tweet.isRetweet());
@@ -192,7 +193,7 @@ public class TweetBase {
 	 */
 	public TwitterUser addUser(User user) {
 		return addUser(user.getId(), user.getScreenName(), user.getName(), user.getDescription(), user.getLocation(),
-				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected(), -1.0);
+				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt(), user.isProtected(), -1.0, user.getProfileImageURL());
 	}
 
 	/**
@@ -212,17 +213,17 @@ public class TweetBase {
 	 * @return the user just added in TwitterUser object form
 	 */
 	public TwitterUser addUser(long userID, String screenName, String name, String description, String location, 
-			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate) {
+			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate, String profileImageURL) {
 
-		if(this.isContained(userID)) {
+		if(this.isUserContained(userID)) {
 			Log.getLogger().warn("User " + screenName + " with ID " + userID + " already contained in DB! Skipping.");
-			return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate);
+			return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate, profileImageURL);
 		}
 
 		try {
 			addUserStatement.clearParameters();
 			addUserStatement.setLong(1, userID);
-			addUserStatement.setString(2, screenName);
+			addUserStatement.setString(2, screenName.toLowerCase());
 			addUserStatement.setString(3, name);
 			addUserStatement.setString(4, description);
 			addUserStatement.setString(5, location);
@@ -232,6 +233,7 @@ public class TweetBase {
 			addUserStatement.setDate(9, new java.sql.Date(createdAt.getTime()));
 			addUserStatement.setBoolean(10, isProtected);
 			addUserStatement.setDouble(11, englishRate);
+			addUserStatement.setString(12, profileImageURL);
 			addUserStatement.executeUpdate();
 			Log.getLogger().info("Successfully added user to DB!");
 
@@ -239,7 +241,7 @@ public class TweetBase {
 			sqle.printStackTrace();
 		}
 
-		return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate);
+		return new TwitterUser(userID, screenName, name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, englishRate, profileImageURL);
 	}
 	
 	public void updateUserEnglishRate(long userID, double englishRate) {
@@ -299,6 +301,22 @@ public class TweetBase {
 			getUserFollowersStatement.setLong(1, userID);
 			ResultSet resultSet = getUserFollowersStatement.executeQuery();
 			if(resultSet.next()) return true;
+		} catch (SQLException sqle) { sqle.printStackTrace(); }
+		return false;
+	}
+	
+	/**
+	 * Check if a user's followers are already in the database.
+	 * 
+	 * @param userID
+	 * @return true if contained, false otherwise
+	 */
+	public boolean enoughUserFollowersContained(long userID, int size) {
+		try {
+			Statement stmt3 = dbConnection.createStatement();
+			ResultSet rs3 = stmt3.executeQuery("SELECT COUNT(*) AS count FROM TweetBase.Followers WHERE user_id = " + userID + ";");
+			int count = rs3.getInt("count");
+			if(count >= size) return true;
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 		return false;
 	}
@@ -407,12 +425,12 @@ public class TweetBase {
 
 		try {
 			getUserByNameStatement.clearParameters();
-			getUserByNameStatement.setString(1, userName);
+			getUserByNameStatement.setString(1, userName.toLowerCase());
 			ResultSet resultSet = getUserByNameStatement.executeQuery();
 
 			if(resultSet.next()) {
 				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11));
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11), resultSet.getString(12));
 
 				//user.setTweets(getTweets(resultSet.getLong(1)));
 				//user.setUserOntology(getUserOntology(resultSet.getLong(1)));
@@ -439,7 +457,7 @@ public class TweetBase {
 
 			if(resultSet.next())
 				user = new TwitterUser(userID, resultSet.getString(2), resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
-						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11));
+						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11), resultSet.getString(12));
 
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 

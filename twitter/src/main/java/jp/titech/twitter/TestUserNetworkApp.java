@@ -50,7 +50,7 @@ public class TestUserNetworkApp {
 		OntologyController ontologyController 		= OntologyController.getInstance();
 		EvaluationController evaluationController 	= EvaluationController.getInstance();
 
-		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = networkController.createNetworkFromSeedUser(SEED_USER_ID, 105);
+		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = networkController.createNetworkFromSeedUser(TARGET_USER_SCREEN_NAME, 105);
 
 		Set<TwitterUser> userSet = twitterUserGraph.vertexSet();
 		Set<TwitterUser> englishUserSet = new HashSet<TwitterUser>();

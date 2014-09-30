@@ -1,2 +1,12 @@
+server:
+  idleThreadTimeout: 2 minutes
+  shutdownGracePeriod: 10 seconds
+  applicationConnectors:
+  - type: http
+    port: 8080
+    idleTimeout: 120 seconds
+  adminConnectors:
+  - type: http
+    port: 8081
 template: Hello, %s!
-defaultName: Stranger
+defaultName: BarackObama

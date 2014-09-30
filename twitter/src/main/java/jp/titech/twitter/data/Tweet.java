@@ -348,6 +348,7 @@ public class Tweet {
 		this.stripURLs();
 		this.stripMedia();
 		this.stripNetslang();
+		this.removeStrangeChars();
 		setContent(getContent().trim());
 		
 		return this.getContent();
@@ -362,8 +363,17 @@ public class Tweet {
 		this.stripURLs();
 		this.stripMedia();
 		this.stripNetslang();
+		this.removeStrangeChars();
 		setContent(getContent().trim());
 		
+		return this.getContent();
+	}
+	
+	/**
+	 *  Strips JSON-breaking characters.
+	 */
+	public String removeStrangeChars() {
+		setContent(getContent().replaceAll("[@,—.:;<>“”{}\\[\\]()’‘]", "").trim());
 		return this.getContent();
 	}
 	

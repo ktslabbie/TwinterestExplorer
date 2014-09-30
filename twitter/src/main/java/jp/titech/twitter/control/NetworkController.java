@@ -43,9 +43,9 @@ public class NetworkController {
 	 * @param maxCount
 	 * @return a directed graph of users and edges
 	 */
-	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromSeedUser(long userID, int maxCount) {
+	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromSeedUser(String screenName, int maxCount) {
 
-		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithID(userID);
+		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(screenName);
 
 		Log.getLogger().info("Constructing network from seed user @" + seedUser.getScreenName() + "...");
 

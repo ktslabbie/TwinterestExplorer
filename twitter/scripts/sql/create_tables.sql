@@ -73,5 +73,6 @@ CREATE TABLE TWEETBASE.USERS (
 		created_at DATE NOT NULL,
 		protected SMALLINT NOT NULL,
 		english_rate DOUBLE NOT NULL,
+		profile_image_url VARCHAR(255),
 			PRIMARY KEY (user_id)
 );
