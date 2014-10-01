@@ -29,7 +29,7 @@ import org.openrdf.query.BindingSet;
 public class DBpediaQuery {
 
 	private static DBpediaQuery instance;
-	private String yagoQueryFile = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago_lite.sparql");
+	private String yagoQueryFile = Vars.SPARQL_PREFIXES + Util.readFile(Vars.SPARQL_SCRIPT_DIRECTORY + "collect_yago.sparql");
 
 	private boolean remote;
 	private DBpediaOntologyRepository dbpediaOntologyRepository;

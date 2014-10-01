@@ -29,6 +29,7 @@ public class TwitterUserSimple {
 	private int 					followersCount, friendsCount, statusesCount;
 	private double					englishRate;
 	private Date 					createdAt;
+	private boolean					imageVisible;
 
 	
 	/**
@@ -56,8 +57,8 @@ public class TwitterUserSimple {
 		this.statusesCount = user.getStatusesCount();
 		this.createdAt = user.getCreatedAt();
 		this.englishRate = user.getEnglishRate();
-		this.profileImageURL = user.getProfileImageURL();
-		
+		this.profileImageURL = user.getProfileImageURL().replace("normal", "200x200");
+		this.imageVisible = true;
 	}
 	
 	/**
@@ -86,7 +87,8 @@ public class TwitterUserSimple {
 		this.statusesCount = statusesCount;
 		this.createdAt = createdAt;
 		this.setEnglishRate(englishRate);
-		this.profileImageURL = profileImageURL;
+		this.profileImageURL = profileImageURL.replace("normal", "200x200");
+		this.imageVisible = true;
 	}
 
 	public long getUserID() {
@@ -180,6 +182,22 @@ public class TwitterUserSimple {
 	 * @param profileImageURL the profileImageURL to set
 	 */
 	public void setProfileImageURL(String profileImageURL) {
-		this.profileImageURL = profileImageURL;
+		this.profileImageURL = profileImageURL.replace("normal", "200x200");
+	}
+
+	/**
+	 * @return the imageVisible
+	 */
+	public boolean isImageVisible() {
+		return imageVisible;
+	}
+
+	/**
+	 * @param imageVisible the imageVisible to set
+	 */
+	public void setImageVisible(boolean imageVisible) {
+		this.imageVisible = imageVisible;
 	}	
+	
+	
 }

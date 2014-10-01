@@ -63,7 +63,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.createdAt = createdAt;
 		this.isProtected = isProtected;
 		this.englishRate = englishRate;
-		this.profileImageURL = profileImageURL;
+		this.profileImageURL = profileImageURL.replace("normal", "200x200");
 		this.tweets = new ArrayList<Tweet>();
 		this.userOntology = new UserOntology();
 		this.termFrequencyMap = new HashMap<String, Integer>();
@@ -169,7 +169,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	 * @param profileImageURL the profileImageURL to set
 	 */
 	public void setProfileImageURL(String profileImageURL) {
-		this.profileImageURL = profileImageURL;
+		this.profileImageURL = profileImageURL.replace("normal", "200x200");
 	}
 
 	public List<Tweet> getTweets() {

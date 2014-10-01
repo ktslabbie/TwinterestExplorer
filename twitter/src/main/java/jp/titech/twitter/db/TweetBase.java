@@ -270,7 +270,7 @@ public class TweetBase {
 			addUserFollowerStatement.setLong(1, userID);
 			addUserFollowerStatement.setLong(2, followerID);
 			addUserFollowerStatement.executeUpdate();
-		} catch (SQLException sqle) { sqle.printStackTrace(); }
+		} catch (SQLException sqle) { }
 	}
 
 	/**

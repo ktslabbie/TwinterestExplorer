@@ -136,6 +136,8 @@ public class TweetBaseUtil {
 				int secondsUntil =  e.getRateLimitStatus().getSecondsUntilReset();
 				Log.getLogger().error("Error getting followers (rate limit exceeded). Retry in " + secondsUntil + " seconds...");
 				try {
+					
+					
 					Thread.sleep(secondsUntil*1000);
 					return getFollowersList(userID, cursor);
 				} catch (InterruptedException e1) {
