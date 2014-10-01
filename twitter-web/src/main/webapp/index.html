@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Twitter Community Builder</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+		<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+    </head>
+    <body ng-app="twitterWeb.app">
+    	<!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <div class="row-fluid page-title">
+    			<h1 class="text-center text-title"><img class="icon-twit" src="img/twitter-256.png" height="48"> Twitter Interest-Community Builder</h1>
+    	</div>
+    	
+    	<div class="container" id="header" ng-controller="TwitterController">
+    		
+    		<h3>Seed user:</h3>
+    		<div class="row">
+	    		<form class="form-target-user" ng-submit="getUser()">
+				    <div class="input-group input-group-lg text-muted">
+				    	<span class="input-group-addon">@</span>
+						<input ng-model="screenName" type="text" class="form-control" init="BarackObama">
+						<span class="input-group-btn">
+							<button class="btn btn-default" ng-click="getUser()" type="button">Go!</button>
+						</span>
+				    </div><!-- /input-group -->
+			    </form>
+			</div>
+			
+		    <div class="row text-center" style="margin-top: 80px;" ng-show="loadingUser" ng-cloak>
+		    	<div class="col-md-12"><i class="fa fa-spinner fa-spin text-loading-large"></i></div>
+		    </div>
+		    
+		    <div class="row panel-target-user animate-show-hide" ng-show="targetUser.screenName"
+		    			ng-include="'templates/user-panel.html'" ng-cloak></div>
+
+	    	<div class="row text-center" ng-show="targetUser.ontology.sortedYagotypes.length > 0 && !targetUser.network" ng-cloak>
+	    		<div class="col-md-12">
+			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getTargetUserNetwork(targetUser.screenName)" href="#">
+ 						<i class="fa fa-2x pull-left"></i>Build network from @<span ng-bind="targetUser.screenName"></span>'s followers</a>
+		    	</div>
+	    	</div>
+	    	
+	    	<div class="row text-center" style="margin-top: 32px;" ng-show="loadingNetwork" ng-cloak>
+	    		<i class="fa fa-spinner fa-spin text-loading-large"></i>
+			</div>
+	    	
+	    	<div class="row text-center" ng-show="targetUser.network.length > 0" ng-cloak>
+	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="processNetwork(0)" href="#">
+							<i class="fa fa-2x pull-left"></i>Process network</a>
+			</div>
+			
+			<div ng-show="targetUser.network.length > 0" ng-cloak>
+				<h3>Follower network:</h3>
+			</div>
+
+    		<div infinite-scroll="loadMore()" infinite-scroll-disabled="pageSize >= 100" infinite-scroll-distance='1' ng-cloak>
+    				<div class="row panel-target-user" ng-include="'templates/user-panel.html'" ng-repeat="targetUser in targetUser.network | limitTo:pageSize"></div>
+    		</div>
+    	</div>
+		
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-resource.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-animate.min.js"></script>
+        <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+        
+        <script src="js/vendor/ng-infinite-scroll.min.js"></script>
+        <script src="js/plugins.js"></script>
+        <script src="js/angular/apps.js"></script>
+        <script src="js/angular/controllers.js"></script>
+        <script src="js/angular/services.js"></script>
+        <script src="js/main.js"></script>
+
+        <script>
+            (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+            function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+            e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+            e.src='//www.google-analytics.com/analytics.js';
+            r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+            ga('create','UA-XXXXX-X');ga('send','pageview');
+        </script>
+    </body>
+</html>
