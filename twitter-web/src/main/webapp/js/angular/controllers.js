@@ -2,7 +2,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 
 .controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork) {
 	
-	
 	$scope.loadingUser = false;
 	$scope.loadingTweets = false;
 	$scope.loadingOntology = false;
@@ -11,95 +10,168 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.screenName = "BarackObama";
 	$scope.pageSize = 0;
 	$scope.N = 0;
+	$scope.processing = false;
+	$scope.finished = false;
+	$scope.showSimilarityGraph = false;
+	$scope.loadingSimilarityGraph = false;
+	$scope.finishedSimilarityGraph = false;
+	$scope.clusteringNetwork = false;
+	$scope.legend = {};
 	
+	var vertices = [];
+	var edges = [];
+	
+	$scope.groups = {};
 	$scope.cfMap = {};
-	$scope.minimumSimilarity = 0.1;
-	$scope.similarities = [];
+	$scope.groupCFMap = {};
+	$scope.minimumSimilarity = 0.2;
+	//$scope.nodes = [];
+	//$scope.similarities = [];
 	
 	$scope.yagoTypeBlackList = ["Abstraction", "Group", "YagoLegalActorGeo", "YagoPermanentlyLocatedEntity", 
-	                            "PhysicalEntity", "Object", "YagoGeoEntity", "YagoLegalActor", "Whole",]
+	                            "PhysicalEntity", "Object", "YagoGeoEntity", "YagoLegalActor", "Whole"];
 	
-
-	var nodes = {};
-
-	// Compute the distinct nodes from the links.
-	$scope.similarities.forEach(function(link) {
-	  link.a = nodes[link.a] || (nodes[link.a] = {name: link.a});
-	  link.b = nodes[link.b] || (nodes[link.b] = {name: link.b});
-	});
-
-	var width = 960,
-	    height = 500;
-
+	
+	var width = 1280,
+	height = 680;
+	
+	var color = d3.scale.category10();
+	
+	var nodes = [];
+	var links = [];
+	
 	var force = d3.layout.force()
-	    .nodes(d3.values(nodes))
-	    .links($scope.similarities)
-	    .size([width, height])
-	    .linkDistance(60)
-	    .charge(-300)
-	    .on("tick", tick)
-	    .start();
+		.nodes(nodes)
+		.links(links)
+		.charge(-180)
+		.linkDistance(180)
+		.size([width, height])
+		.on("tick", tick);
+	
+	var svg = d3.select("#graph").append("svg")
+		.attr("width", width)
+		.attr("height", height)
+		//.attr("viewBox", "0 0 500 500");
+	
+	var node = svg.selectAll(".node");
+	var link = svg.selectAll(".link");
+	var text = svg.selectAll(".node-text");
+	var legend = svg.selectAll(".legend");
+	
+	function hasNode(node) {
+		//console.log(node.name + " contained?");
+		for(var i = 0; i < nodes.length; i++) {
+			if(node.name == nodes[i].name) {
+				//console.log("Yes. index: " + i);
+				return i;
+			}
+		}
+		//console.log("nope");
+		return -1;
+	}
+	
+	function addNode(pNode) {
+		nodes.push(pNode);
+		return nodes.length-1;
+	}
+	
+	var addLink = function(pLink) {
+		//console.log("adding link: " + pLink.source + "-" + pLink.target + ": " + pLink.value);
+		links.push(pLink);
+	}
+	
+	function setGroup(index, group) {
+		nodes[index].group = group;
+	}
+	
+	function removeNodeByIndex(index) {
+		nodes.splice(index, 1);
+		return nodes.length-1;
+	}
+	
+	function removeNodeLinks(nodeIndex) {
+		for(var i = links.length-1; i >= 0; i--) {
+			//console.log("hello is" + JSON.stringify(links[i].source) + " ni" + nodeIndex);
+			
+			if(links[i].source.index == nodeIndex || links[i].target.index == nodeIndex) {
+				
+				links.splice(i, 1);
+			}
+		}
+	}
+	
+	function start() {
+		//console.log("link: " + link);
+		link = link.data(force.links(), function(d) { return d.value; });
+		link.enter().insert("line", ".node").attr("class", "link");
+		link.exit().remove();
+		link.style("stroke-width", function(d) { return (Math.pow(d.value*3.5, 2)); });
+	
+		node = node.data(force.nodes(), function(d) { return d.name;});
+		node.enter().append("circle").attr("class", function(d) { return "node " + d.name; }).attr("r", 8);
+		node.exit().remove();
+		node.style("fill", function(d) { return color(d.group); });
+		node.call(force.drag);
+		
+		text = text.data(force.nodes());
+		text.enter().append("text");
+		text.exit().remove();
+		text.attr("x", 8);
+		text.attr("y", ".31em");
+		text.text(function(d) { return "@" + d.name; });
+		
+		legend = legend.data(color.domain())
+	    .enter().append("g")
+	      .attr("class", "legend")
+	      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
 
-	var svg = d3.select("body").append("svg")
-	    .attr("width", width)
-	    .attr("height", height);
+	  legend.append("rect")
+	      .attr("x", width - 18)
+	      .attr("width", 18)
+	      .attr("height", 18)
+	      .style("fill", color);
 
-	// Per-type markers, as they don't inherit styles.
-	svg.append("defs").selectAll("marker")
-	    .data(["suit"])
-	  .enter().append("marker")
-	    .attr("id", function(d) { return d; })
-	    .attr("viewBox", "0 -5 10 10")
-	    .attr("refX", 15)
-	    .attr("refY", -1.5)
-	    .attr("markerWidth", 6)
-	    .attr("markerHeight", 6)
-	    .attr("orient", "auto")
-	  .append("path")
-	    .attr("d", "M0,-5L10,0L0,5");
-
-	var path = svg.append("g").selectAll("path")
-	    .data(force.links())
-	  .enter().append("path")
-	    .attr("class", function(d) { return "link " + d.similarity; })
-	    .attr("marker-end", function(d) { return "url(#" + d.similarity + ")"; });
-
-	var circle = svg.append("g").selectAll("circle")
-	    .data(force.nodes())
-	  .enter().append("circle")
-	    .attr("r", 6)
-	    .call(force.drag);
-
-	var text = svg.append("g").selectAll("text")
-	    .data(force.nodes())
-	  .enter().append("text")
-	    .attr("x", 8)
-	    .attr("y", ".31em")
-	    .text(function(d) { return d.name; });
-
-
-	// Use elliptical arc path segments to doubly-encode directionality.
+	  legend.append("text")
+	      .attr("x", width - 24)
+	      .attr("y", 9)
+	      .attr("dy", ".35em")
+	      .style("text-anchor", "end")
+	      .text(function(d) { 
+	    	  return $scope.legend[d]; });
+		
+		force.start();
+	}
+	
 	function tick() {
-	  path.attr("d", linkArc);
-	  circle.attr("transform", transform);
-	  text.attr("transform", transform);
-	}
 
-	function linkArc(d) {
-	  var dx = d.target.x - d.source.x,
-	      dy = d.target.y - d.source.y,
-	      dr = Math.sqrt(dx * dx + dy * dy);
-	  return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-	}
+		var k = 0.02;
 
-	function transform(d) {
-	  return "translate(" + d.x + "," + d.y + ")";
-	}
-
-
+		nodes.forEach(function(o, i) {
+			if(o.group % 4 == 0) {
+				o.x += o.group*k;
+			} else if(o.group % 3 == 0) {
+				o.y += o.group*k;
+			} else if(o.group % 2 == 0) {
+				o.x += -o.group*k;
+			} else {
+				o.y += -o.group*k;
+			}
+			
+			
+			//o.x += (o.group % 2 == 0) ? o.group*k : -o.group*k;
+			//o.y += (o.group % 3 == 0) ? o.group*k : -o.group*k;
+		});
+		
+		node.attr("cx", function(d) { return d.x; })
+		.attr("cy", function(d) { return d.y; })
 	
-	
-	
+		link.attr("x1", function(d) { return d.source.x; })
+		.attr("y1", function(d) { return d.source.y; })
+		.attr("x2", function(d) { return d.target.x; })
+		.attr("y2", function(d) { return d.target.y; });
+		
+		text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+	}
 	
 	var getTweetStats = function(user) {
 		var retweets = 0;
@@ -133,31 +205,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		user.userMentions = mList;
 	}
 	
-/*	var sortYagoTypes = function(types) {
-		var tuples = [];
-
-		for (var key in types) {
-			keyStr = key.split(":")[1];
-			var wnCode = keyStr.substr(keyStr.length - 9);
-			if(!isNaN(wnCode)) {
-				keyStr = keyStr.substr(0, keyStr.length - 9);
-			}
-			
-			//if($scope.yagoTypeBlackList.indexOf(keyStr) == -1) tuples.push([keyStr, types[key]]);
-			tuples.push([keyStr, types[key]]);
-		}
-
-		tuples.sort(function(a, b) {
-		    a = a[1];
-		    b = b[1];
-
-		    return a > b ? -1 : (a < b ? 1 : 0);
-		});
-		
-		return tuples;
-	}*/
-	
-	var sortCFIUF = function(index, userCFIUFMap, euclidLength) {
+	var sortCFIUF = function(userCFIUFMap, euclidLength) {
 		var tuples = [];
 
 		for (var key in userCFIUFMap) {
@@ -189,18 +237,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			$scope.cfMap[keyStr] = $scope.cfMap[keyStr] ? $scope.cfMap[keyStr] + 1 : 1;
 			if($scope.cfMap[keyStr] > $scope.N) $scope.cfMap[keyStr] = $scope.N;
 		}
-		
-		/*for(var i = 0; i < user.ontology.sortedYagotypes.length; i++) {
-			var type = user.ontology.sortedYagotypes[i][0];
-			$scope.cfMap[type] = $scope.cfMap[type] ? $scope.cfMap[type]+1 : 1;
-		}*/
 	}
 	
 	var updateCFIUF = function(index, user) {
 		
-		$scope.N = index + 2;
+		//$scope.N = index + 2;
 
-		updateCFMap(user);
 		var userCFIUFMap = {};
 
 		for (var i = -1; i <= index; i++) {
@@ -229,7 +271,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			var euclidLength = Math.sqrt(cfIufSum);
 			
 			if(currentUser.ontology.cfIufMap) {
-				var newMap = sortCFIUF(index, userCFIUFMap, euclidLength);
+				var newMap = sortCFIUF(userCFIUFMap, euclidLength);
 				
 				for(var j = 0; j < newMap.length; j++) {
 					if(currentUser.ontology.cfIufMap[j][0] != newMap[j][0] ) {
@@ -241,43 +283,199 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					}
 				}
 			} else {
-				currentUser.ontology.cfIufMap = sortCFIUF(index, userCFIUFMap, euclidLength);
+				currentUser.ontology.cfIufMap = sortCFIUF(userCFIUFMap, euclidLength);
 			}
 		}
+	}
+	
+	$scope.calculateSimilarityGraph = function() {
 		
-		/* Calculate cosine similarity wrt. all previous users. */
-		for(var i = -1; i < index; i++) {
-			
-			var prevUserMap = (i == -1) ? $scope.targetUser.ontology.cfIufMap : $scope.targetUser.network[i].ontology.cfIufMap;
-			var similarity = 0;
-			//console.log("Previous user map: " + prevUserMap);
-			//console.log("Current user map: " + userCFIUFMap);
-			
-			for(j = 0; j < prevUserMap.length; j++) {
-				var weight = userCFIUFMap[prevUserMap[j][0]] / euclidLength;
+		$scope.showSimilarityGraph = true;
+		$scope.loadingSimilarityGraph = true;
+		
+		var worker = new Worker("js/similarity_worker.js");
+
+		worker.addEventListener('message', function(e) {
+			if(e.data.finished) {
+				$scope.$apply(function () {
+					$scope.loadingSimilarityGraph = false;
+					$scope.finishedSimilarityGraph = true;
+		        });
 				
-				if(weight != null && !isNaN(weight)) similarity += weight*prevUserMap[j][1];
+				console.log("Worker terminating!")
+				worker.terminate();
+			} else {
+				var aName = (e.data.i == -1) ? $scope.targetUser.screenName : $scope.targetUser.network[e.data.i].screenName;
+				var bName = $scope.targetUser.network[e.data.j].screenName;
+
+				var aNode = { name: aName, group: 1, userIndex: e.data.i };
+				var bNode = { name: bName, group: 1, userIndex: e.data.j };
+
+				var aIndex = hasNode(aNode), bIndex = hasNode(bNode); 
+
+				if(aIndex == -1) {
+					aIndex = addNode(aNode);
+					vertices[aIndex] = aNode;
+				}
+
+				if(bIndex == -1) {
+					bIndex = addNode(bNode);
+					vertices[bIndex] = bNode;
+				}
+
+				addLink({ source: aIndex, target: bIndex, value: e.data.similarity});
+				edges.push( { source: aIndex, target: bIndex, value: e.data.similarity} );
 				
-				//console.log(prevUserMap[j][0] + ": cf-iuf: " + prevUserMap[j][1] + " vs. " + weight + ". Total: " + similarity + "   NaN?" + isNaN(weight));
+				start();
+			}		
+		}, false);
+		
+		var ev = {};
+		ev.N = $scope.N;
+		ev.minSim = $scope.minimumSimilarity;
+		ev.targetUser = $scope.targetUser;
+		ev.network = $scope.targetUser.network;
+		
+		worker.postMessage(ev);
+	}
+	
+	$scope.clusterNetwork = function() {
+		$scope.clusteringNetwork = true;
+		
+		var worker = new Worker("js/clustering_worker.js");
+
+		worker.addEventListener('message', function(e) {
+			if(e.data.finished) {
+				$scope.$apply(function () {
+					$scope.clusteringNetwork = false;
+				});
 			}
 			
-			if(similarity >= $scope.minimumSimilarity) {
-				var aName = (i == -1) ? $scope.targetUser.screenName : $scope.targetUser.network[i].screenName;
-				var bName = $scope.targetUser.network[index].screenName;
+			console.log(JSON.stringify(e.data));
+			var includedNodes = {};
+
+			for(var i = 0; i < e.data.clusters.length; i++) {
+				var clusterSplit = e.data.clusters[i].split('-');
+				$scope.groups[i+1] = {};
+				$scope.groups[i+1].users = [];
+				$scope.groups[i+1].sortedYagotypes = [];
+				var group = $scope.groups[i+1];
 				
-				$scope.similarities.push( { a: aName, b: bName, sim: similarity } );
+				for(var j = 0; j < clusterSplit.length; j++) {
+					
+					//console.log("assigning " + j + " to group " + (i+1));
+					includedNodes[clusterSplit[j]] = true;
+					setGroup(clusterSplit[j], i+1);
+					var user;
+					if(nodes[clusterSplit[j]].userIndex == -1) {
+						user = $scope.targetUser;
+					} else {
+						user = $scope.targetUser.network[nodes[clusterSplit[j]].userIndex];
+					}
+					
+					group.users.push(user);
+					
+					//console.log("User: " + user.screenName);
+					
+					for(var k = 0; k < user.ontology.sortedYagotypes.length; k++) {
+						
+						var added = false;
+						
+						for(var l = 0; l < group.sortedYagotypes.length; l++) {
+							if(user.ontology.sortedYagotypes[k][0] == group.sortedYagotypes[l][0]) {
+								group.sortedYagotypes[l][1] += user.ontology.sortedYagotypes[k][1];
+								added = true;
+								break;
+							}
+						}
+						
+						if(!added) {
+							group.sortedYagotypes.push(user.ontology.sortedYagotypes[k]);
+							$scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] = $scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] ? $scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] + 1 : 1;
+						}
+					}
+				}
 			}
-		}
+
+			for(var i = nodes.length-1; i >= 0; i--) {
+				if(!includedNodes[i]) {
+					removeNodeLinks(i);
+					removeNodeByIndex(i);
+				}
+			}
+			
+			var groupCFIUFMap = {};
+
+			//console.log("Group 1: " + JSON.stringify($scope.groups[1]));
+			
+			for(var i = 1; i <= e.data.clusters.length; i++) {
+				var currentGroup = $scope.groups[i];
+				//console.log("currentGroup 1: " + JSON.stringify($scope.groups[(i+1)]);
+				groupCFIUFMap = {};
+				var cfIufSum = 0;
+				//var currentGroup = $scope.groups[i];
+				var types = currentGroup.sortedYagotypes;
+
+				for(var j = 0; j < types.length; j++) {
+					var type = types[j];
+					var cf = type[1];
+					var iuf = Math.log(Object.keys($scope.groups).length / $scope.groupCFMap[type[0]]);
+					var cfIuf = (Math.pow(cf, 1 + 0))*(Math.pow(iuf, 1 - 0));
+					
+					//console.log("N: " + $scope.N + ", global cf: " + $scope.cfMap[type[0]]);
+					
+					
+					cfIufSum += Math.pow(cfIuf, 2);
+					
+					//console.log("cf: " + cf + ", iuf: " + iuf + ", cfiuf: " + cfIuf + ", cfiufSum: " + cfIufSum);
+					
+					groupCFIUFMap[type[0]] = cfIuf;
+					//currentUser.ontology.cfIufMap[type[0]] = cfIuf;
+				}
+				
+				var euclidLength = Math.sqrt(cfIufSum);
+				
+				currentGroup.cfIufMap = sortCFIUF(groupCFIUFMap, euclidLength);
+				var legendText = currentGroup.cfIufMap[0][0];
+				
+				for(var j = 1; j < 5; j++) {
+					legendText += ", " + currentGroup.cfIufMap[j][0];
+				}
+				
+				$scope.legend[i] = legendText;
+				//console.log("Group " + i + " CF-IUF ranking: " + JSON.stringify(currentGroup.cfIufMap));
+			}
+			
+			
+			
+			//force.charge(-60);
+			force.linkDistance(60);
+
+			start();
+
+			console.log("Clustering worker terminating!");
+			worker.terminate();
 		
-		/*console.log("Similarities: ");
+		}, false);
 		
-		for(i = 0; i < $scope.similarities.length; i++) {
-			console.log($scope.similarities[i].a + " - " + $scope.similarities[i].b + ": " + $scope.similarities[i].sim);
-		}*/
+		var message = {};
+		message.nodes = vertices;
+		message.links = edges;
+		
+		worker.postMessage(message);
 	}
 	
 	$scope.getUser = function() {
 		$scope.cfMap = {};
+		$scope.processing = false;
+		$scope.finished = false;
+		$scope.showSimilarityGraph = false;
+		
+		while(nodes.length > 0) nodes.pop();
+		while(links.length > 0) links.pop();
+		
+		start();
+		
 		$scope.targetUser = null;
 		$scope.loadingUser = true;
 
@@ -285,6 +483,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			if($scope.targetUser.user) {
 				$scope.targetUser = $scope.targetUser.user;
 				$scope.targetUser.profileImageURL = $scope.targetUser.profileImageURL;
+				$scope.N = 1;
 				
 				// cancel old timeout
 			    if ($scope.targetUser.timeoutId) {
@@ -331,6 +530,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 
 			//$scope.targetUser.ontology.sortedYagotypes = sortYagoTypes($scope.targetUser.ontology.yagotypes);
 			$scope.targetUser.ontology.sortedYagotypes = [];
+			//$scope.nodes.push( { name: $scope.targetUser.screenName, group: 1 } );
+			//addNode( { name: $scope.targetUser.screenName, group: 1 } );
+			//start();
+			
+			updateCFMap($scope.targetUser);
 			updateCFIUF(-1, $scope.targetUser);
 			
 			$scope.targetUser.loadingOntology = false;
@@ -342,13 +546,14 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.targetUser.network = UserNetwork.network({ name: name }, function() {
 			$scope.targetUser.network = $scope.targetUser.network.network;
 			$scope.loadingNetwork = false;
-			$scope.pageSize = 20;
+			$scope.pageSize = 10;
 			$scope.targetUser.network.shift();
 		});
 	};
 	
 	$scope.processNetwork = function(pIndex) {
 		
+		$scope.processing = true;
 		var index = parseInt(pIndex);
 
 		$scope.targetUser.network[index].loadingTweets = true;
@@ -366,15 +571,27 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				$scope.targetUser.network[index].ontology = $scope.targetUser.network[index].ontology.user.userOntology;
 				//$scope.targetUser.network[index].ontology.sortedYagotypes = sortYagoTypes($scope.targetUser.network[index].ontology.yagotypes);
 				$scope.targetUser.network[index].ontology.sortedYagotypes = [];
+				$scope.N += 1;
 				
 				$scope.targetUser.network[index].loadingOntology = false;
 				
-				updateCFIUF(index, $scope.targetUser.network[index]);
+				//addNode( { name: $scope.targetUser.network[index].screenName, group: 1 } );
+				
+				updateCFMap($scope.targetUser.network[index]);
+				
+				if(index % 5 == 0) {
+					updateCFIUF(index, $scope.targetUser.network[index]);
+				}
 				
 				index += 1;
 				
-				if(index < 99) {
+				if(index < $scope.targetUser.network.length) {
 					$scope.processNetwork(index);
+				} else {
+					if((index-1) % 5 != 0) {
+						updateCFIUF(index-1, $scope.targetUser.network[index-1]);
+					}
+					$scope.finished = true;
 				}
 			});
 			
@@ -382,7 +599,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	$scope.loadMore = function() {
-		$scope.pageSize = $scope.pageSize + 20;
+		$scope.pageSize = $scope.pageSize + 10;
 	}
 }]);
 

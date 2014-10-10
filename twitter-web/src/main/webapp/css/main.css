@@ -97,14 +97,24 @@ textarea {
    Author's custom styles
    ========================================================================== */
 
+html {
+	overflow-y: scroll;
+}
+
 body {
-	background-color: #EAEAEA;
+	background-color: #FBFBFB;
+	/* background-color: #FFFFFF; */
 	font-family: Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif;
 	padding-bottom: 64px;
 }
 
+.modal-open[style] {
+padding-right: 0px !important;
+}
+
 .container {
-	width: 80%;
+	width: 95%;
+	overflow: visible;
 }
 
 div.page-title {
@@ -130,12 +140,33 @@ img.icon-twit {
 	padding-right: 0px;
 }
 
+.row-settings {
+	margin-top: 8px;
+	height: 64px;
+}
+
+.btn-get-network {
+	font-size: 20px;
+	padding: 16px;
+	margin-top: 6px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background-color: #F9F9FD;
+	border-color: #DDDDDD;
+	color: #111111;
+}
+
+.btn-get-network:hover {
+	background-color: #F2F2F9;
+	border-color: #CCCCCC;
+	color: #000000;
+}
+
 div.panel-target-user {
 	margin-top: 16px;
 	line-height: 120%;
 	max-height: 228px;
 	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
-	background-color: #FFF;
+	background-color: #F1F4FF;
 	font-size: 12pt;
 	color: #222;
 	padding: 12px 6px 12px 6px;
@@ -235,20 +266,6 @@ div.col-tweet {
 	
 }
 
-.btn-get-network {
-	font-size: 20px;
-	padding: 20px;
-	margin-top: 20px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	background-color: #111111;
-	border-color: #111111;
-}
-
-.btn-get-network:hover {
-	background-color: #222222;
-	border-color: #222222;
-}
-
 .text-loading {
 	font-size: 56px;
 }
@@ -259,6 +276,29 @@ a:hover {
 
 .text-loading-large {
 	font-size: 96px;
+}
+
+/* Graph */
+.graph {
+    margin-top: 16px;
+	background-color: #FFFFFF;
+	border: solid 1px #999999;
+}
+
+.node-text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+.node {
+	stroke: #fff;
+	stroke-width: 1.5px;
+}
+
+.link {
+	stroke: #999;
+	stroke-opacity: .6;
 }
 
 /* Animation */
@@ -279,6 +319,24 @@ a:hover {
 .animate-show-hide {
   
 }
+
+.animate-show-hide-slow.ng-hide-remove {
+  -webkit-transition:all linear 0.5s;
+  -moz-transition:all linear 0.5s;
+  -o-transition:all linear 0.5s;
+  transition:all linear 0.5s;
+  display:block!important;
+}
+ 
+.animate-show-hide-slow.ng-hide-add.ng-hide-add-active,
+.animate-show-hide-slow.ng-hide-remove {
+  opacity:0;
+}
+ 
+.animate-show-hide-slow.ng-hide-add,
+.animate-show-hide-slow.ng-hide-remove.ng-hide-remove-active {
+  opacity:1;
+}
  
 .animate-show-hide.ng-hide-remove {
   -webkit-transition:all linear 0.2s;
@@ -298,6 +356,34 @@ a:hover {
   opacity:1;
 }
 
+.animate-show-hiding.ng-hide-add {
+  -webkit-transition:all linear 0.2s;
+  -moz-transition:all linear 0.2s;
+  -o-transition:all linear 0.2s;
+  transition:all linear 0.2s;
+  display:block!important;
+}
+
+.animate-show-hiding.ng-hide-remove {
+  -webkit-transition:all linear 0.2s;
+  -moz-transition:all linear 0.2s;
+  -o-transition:all linear 0.2s;
+  transition:all linear 0.2s;
+  display:block!important;
+}
+
+.animate-show-hiding.ng-hide-add.ng-hide-add-active,
+.animate-show-hiding.ng-hide-remove {
+  opacity:0;
+}
+ 
+.animate-show-hiding.ng-hide-add,
+.animate-show-hiding.ng-hide-remove.ng-hide-remove-active {
+  opacity:1;
+}
+
+
+
 .glyphicon-refresh-animate {
     -animation: spin .7s infinite linear;
     -webkit-animation: spin2 .7s infinite linear;
@@ -314,38 +400,6 @@ a:hover {
 }
 
 
-
-/* Graph */
-
-.link {
-  fill: none;
-  stroke: #666;
-  stroke-width: 1.5px;
-}
-
-#licensing {
-  fill: green;
-}
-
-.link.licensing {
-  stroke: green;
-}
-
-.link.resolved {
-  stroke-dasharray: 0,2 1;
-}
-
-circle {
-  fill: #ccc;
-  stroke: #333;
-  stroke-width: 1.5px;
-}
-
-text {
-  font: 10px sans-serif;
-  pointer-events: none;
-  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
-}
 
 
 /* ==========================================================================

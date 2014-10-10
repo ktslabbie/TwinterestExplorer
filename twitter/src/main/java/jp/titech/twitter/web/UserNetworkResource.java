@@ -31,7 +31,7 @@ public class UserNetworkResource {
     public TwitterNetworkJSON getNetwork(@QueryParam("name") Optional<String> name) {
     	DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph;
     	TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
-    	NetworkBuilder networkBuilder = new NetworkBuilder(seedUser, 100);
+    	NetworkBuilder networkBuilder = new NetworkBuilder(seedUser, 99);
 		networkBuilder.build();
 		twitterUserGraph = networkBuilder.getGraph();
 		//twitterUserGraph.vertexSet().remove(seedUser);

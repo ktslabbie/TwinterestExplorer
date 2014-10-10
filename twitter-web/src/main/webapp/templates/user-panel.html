@@ -53,10 +53,11 @@
 	<i class="fa fa-spinner fa-spin text-loading"></i>
 </div>
 
+
 <div class="col-md-3 tweet-panel text-center animate-show-hide" ng-show="targetUser.tweets.length > 0">
 	<div class="row">
-		<a class="text-tweet-number" href="">
-			Got <span ng-bind="targetUser.tweets.length"></span> Tweets 
+		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}">
+			Got <span ng-bind="targetUser.tweets.length"></span> Tweets
 		</a>
 		<br>
 		<span class="text-retweets">(<span ng-bind="targetUser.retweets"></span> retweets)</span>
@@ -93,7 +94,7 @@
 
 <div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.ontology.cfIufMap">
 	<div class="row row-header text-center">
-		<a class="text-tweet-number" href="">
+		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}">
 			Top traits
 		</a>
 	</div>
