@@ -65,7 +65,7 @@ public class NetworkController {
 	 * @param dcgRelevanceFile
 	 * @return a directed graph of users and edges
 	 */
-	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromTargetUser(String targetUserScreenName, int maxCount, File dcgRelevanceFile) {
+	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromTargetUser(String targetUserScreenName, File dcgRelevanceFile) {
 		
 		TwitterUser targetUser = TweetBaseUtil.getTwitterUserWithScreenName(targetUserScreenName);
 		Set<TwitterUser> otherUsers = new HashSet<TwitterUser>();
@@ -77,7 +77,7 @@ public class NetworkController {
 
 		Log.getLogger().info("Constructing network from seed user @" + targetUser.getScreenName() + " using users contained in the relevance file...");
 
-		NetworkBuilder networkBuilder = new NetworkBuilder(targetUser, maxCount, otherUsers);
+		NetworkBuilder networkBuilder = new NetworkBuilder(targetUser, otherUsers);
 		networkBuilder.build();
 		twitterUserGraph = networkBuilder.getGraph();
 

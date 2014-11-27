@@ -1,5 +1,8 @@
 package jp.titech.twitter.web;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.common.base.Optional;
 import com.codahale.metrics.annotation.Timed;
 
@@ -28,14 +31,32 @@ public class UserNetworkResource {
 
     @GET
     @Timed
-    public TwitterNetworkJSON getNetwork(@QueryParam("name") Optional<String> name) {
+    public TwitterNetworkJSON getNetwork(@QueryParam("name") Optional<String> name, @QueryParam("list") String userRelevanceList) {
     	DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph;
-    	TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
-    	NetworkBuilder networkBuilder = new NetworkBuilder(seedUser, 99);
-		networkBuilder.build();
-		twitterUserGraph = networkBuilder.getGraph();
-		//twitterUserGraph.vertexSet().remove(seedUser);
-        
-		return new TwitterNetworkJSON(twitterUserGraph);
+    	NetworkBuilder networkBuilder;
+    	if(userRelevanceList != null && !userRelevanceList.isEmpty()) {
+    		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
+    		Set<TwitterUser> otherUsers = new HashSet<TwitterUser>();
+    		
+    		for(String screenName : userRelevanceList.split(",")) {
+    			otherUsers.add(TweetBaseUtil.getTwitterUserWithScreenName(screenName));
+    		}
+    		
+    		System.out.println("Otherusers: " + otherUsers);
+    		
+        	networkBuilder = new NetworkBuilder(seedUser, otherUsers);
+    		networkBuilder.build();
+    		twitterUserGraph = networkBuilder.getGraph();
+    		
+    		return new TwitterNetworkJSON(twitterUserGraph);
+    		
+    	} else {
+    		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
+        	networkBuilder = new NetworkBuilder(seedUser, 99);
+    		networkBuilder.build();
+    		twitterUserGraph = networkBuilder.getGraph();
+    		
+    		return new TwitterNetworkJSON(twitterUserGraph);
+    	}
     }
 }

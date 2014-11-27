@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.util.Vars;
 
 @Path("/api/get-user-ontology")
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,8 +26,13 @@ public class UserOntologyResource {
 
     @GET
     @Timed
-    public TwitterUserJSON getUser(@QueryParam("id") Optional<Long> id, @QueryParam("name") Optional<String> name) {
+    public TwitterUserJSON getUser(@QueryParam("id") Optional<Long> id, @QueryParam("name") Optional<String> name, @QueryParam("concatenation") Optional<Integer> concatenation) {
     	TwitterUser targetUser;
+    	if(concatenation.isPresent()) {
+    		Vars.CONCATENATION_WINDOW = concatenation.get();
+    	}
+    	
+    	
     	if(id.isPresent()) {
     		targetUser = TweetBaseUtil.getTwitterUserWithID(id.get());
     	} else {

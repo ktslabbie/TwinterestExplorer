@@ -69,7 +69,7 @@ public class GetUserNetworkApp {
 		EvaluationController evaluationController 	= EvaluationController.getInstance();
 
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = 
-				networkController.createNetworkFromTargetUser(TARGET_USER_SCREEN_NAME, 104, new File(Vars.EVALUATION_DIRECTORY + TARGET_USER_SCREEN_NAME + "/dcg.relevance.txt"));
+				networkController.createNetworkFromTargetUser(TARGET_USER_SCREEN_NAME, new File(Vars.EVALUATION_DIRECTORY + TARGET_USER_SCREEN_NAME + "/dcg.relevance.txt"));
 
 		Set<TwitterUser> userSet = twitterUserGraph.vertexSet();
 		

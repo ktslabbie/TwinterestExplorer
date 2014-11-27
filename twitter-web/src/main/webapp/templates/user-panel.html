@@ -2,16 +2,16 @@
 <div class="col-md-2 profile-img-panel">
 	<div class="row row-profile-img">
 		<div class="col-md-12 col-profile-img text-center">
-			<img class="img-responsive img-profile animate-show-hide img-center" ng-show="targetUser.imageVisible" ng-src="{{ targetUser.profileImageURL }}"/>
+			<img class="img-responsive img-profile animate-if img-center" ng-if="targetUser.imageVisible" ng-src="{{ targetUser.profileImageURL }}"/>
 		</div>
 	</div>
 	<div class="row english-rate">
 		<div class="col-md-12 text-center">
 			<span class="text-muted">English rate: </span>
-			<strong ng-if="targetUser.englishRate >= 0.8" class="animate-show-hide"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
-			<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < 0.8" class="animate-show-hide"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+			<strong ng-if="targetUser.englishRate >= 0.8" class="animate-if"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+			<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < 0.8" class="animate-if"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
 			<strong ng-if="targetUser.englishRate == -1"><em>-</em></strong>
-			</div>
+		</div>
 	</div>
 </div>
 
@@ -43,20 +43,16 @@
 </div>
 
 <!-- Tweets -->
-<!-- <div class="col-md-3 text-center" ng-show="!targetUser.tweets.length && !loadingTweets">
-	<a class="btn btn-lg btn-success btn-get-tweets" ng-click="getTweets(targetUser.screenName)" href="#">
-	<i class="fa fa-2x pull-left"></i>Get tweets</a>
-</div> -->
-<div class="col-md-3 tweet-panel text-center" style="margin-top: 28px;" ng-show="targetUser.loadingTweets">
+<div class="col-md-3 tweet-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingTweets">
 	<h3 class="text-muted">Getting tweets...</h3>
 	<br>
 	<i class="fa fa-spinner fa-spin text-loading"></i>
 </div>
 
 
-<div class="col-md-3 tweet-panel text-center animate-show-hide" ng-show="targetUser.tweets.length > 0">
+<div class="col-md-3 tweet-panel text-center animate-if" ng-if="targetUser.tweets.length > 0">
 	<div class="row">
-		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}">
+		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}" ng-click="openModal = $index">
 			Got <span ng-bind="targetUser.tweets.length"></span> Tweets
 		</a>
 		<br>
@@ -80,13 +76,36 @@
 	</div>
 </div>
 
+<div ng-if="openModal == $index" class="modal fade" id="tweetModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" style="width: 70%">
+		<div class="modal-content">
+			<div class="modal-header text-center">
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+				</button>
+				<h4 class="modal-title" id="myModalLabel"><i>All tweets by <span ng-bind="targetUser.name"></span></i></h4>
+			</div>
+			<div class="modal-body">
+				<div class="row" ng-repeat="tweet in targetUser.tweets">
+					<div class="md-col-12" style="padding-left: 16px; padding-right: 16px;">
+						<p><strong><span ng-bind="tweet.createdAt"></span></strong>: <span ng-bind="tweet.content"></span></p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 	<!-- <div class="row" ng-repeat="tweet in targetUser.tweets">
 		<div class="col-md-12 col-tweet"><small><span ng-bind="tweet.content"></span></small></div>
 	</div> -->
 
 <!-- Ontology -->
-<div class="col-md-4 types-panel text-center" style="margin-top: 28px;" ng-show="targetUser.loadingOntology">
+<div class="col-md-4 types-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingOntology">
 	<h3 class="text-muted">Getting interests...</h3>
 	<br>
 	<i class="fa fa-spinner fa-spin text-loading"></i>
@@ -94,8 +113,8 @@
 
 <div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.ontology.cfIufMap">
 	<div class="row row-header text-center">
-		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}">
-			Top traits
+		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}" ng-click="openModal = $index">
+			Top traits (CF-IUF Ranking)
 		</a>
 	</div>
 	<div class="row text-muted">
@@ -105,5 +124,39 @@
 	<div class="row list-types" ng-repeat="entry in targetUser.ontology.cfIufMap | limitTo:5">
 		<div class="col-md-9"><small><span ng-bind="entry[0]"></span></small></div>
 		<div class="col-md-3 col-confidence"><small><span ng-bind="entry[1] | number:2"></small></span></div>
+	</div>
+</div>
+
+<div ng-if="openModal == $index" class="modal fade" id="traitModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" style="width: 60%">
+		<div class="modal-content">
+			<div class="modal-header text-center">
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+				</button>
+				<h4 class="modal-title" id="myModalLabel"><i>All traits of <span ng-bind="targetUser.name"></span></i></h4>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
+						<p><strong>Trait</strong></p>
+					</div>
+					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
+						<p><strong>CF-IUF</strong></p>
+					</div>
+				</div>
+				<div class="row list-types" ng-repeat="trait in targetUser.ontology.cfIufMap">
+					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
+						<p><span ng-bind="trait[0]"></span></p>
+					</div>
+					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
+						<p><span ng-bind="trait[1]"></span></p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
 	</div>
 </div>

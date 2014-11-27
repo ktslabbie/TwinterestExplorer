@@ -36,6 +36,7 @@ public class NetworkBuilder {
 	private int					maxUsers;					// Maximum number of users to collect
 	private Set<Long>			processed;					// Set of IDs already processed (to speed things up)
 	private boolean				restrictToLocal = false;	// Set true to disable contacting the Twitter API
+	private boolean				getFollowers = true;
 	private int					userCount;
 
 	DirectedGraph<TwitterUser, DefaultWeightedEdge> graph;
@@ -59,18 +60,19 @@ public class NetworkBuilder {
 		userCount = 0;
 	}
 	
-	public NetworkBuilder(TwitterUser seedUser, int maxSize, Set<TwitterUser> otherUsers) {
+	public NetworkBuilder(TwitterUser seedUser, Set<TwitterUser> otherUsers) {
 		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		this.seedUser = seedUser;
+		this.getFollowers = false;
 		processQueue = new PriorityQueue<TwitterUser>();
 		processQueue.add(this.seedUser);
 		
 		for (TwitterUser otherUser : otherUsers) {
 			processQueue.add(otherUser);
 		}
-		
-		this.maxUsers = maxSize;
+
 		this.restrictToLocal = true;
+		this.maxUsers = otherUsers.size()+1;
 		processed = new HashSet<Long>();
 		userCount = 0;
 	}
@@ -95,6 +97,7 @@ public class NetworkBuilder {
 				}
 
 				if(userCount > maxUsers) break;
+				if(!getFollowers) continue;
 				
 				Log.getLogger().info("Getting followers of @" + currentUser.getScreenName() + "...");
 				

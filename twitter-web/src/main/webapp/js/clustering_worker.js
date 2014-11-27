@@ -5,7 +5,7 @@ var allNodes = [];
 var allLinks = [];
 var N;
 var L;
-var KARGER_ITERATIONS = 100;
+var KARGER_ITERATIONS = 10;
 
 var contract = function(nodes, links) {
 
@@ -127,7 +127,7 @@ var hcs = function(nodes, links) {
 		}
 	}
 	
-	console.log("DEBUG: MinCutSet: " + JSON.stringify(minCutSet));
+	//console.log("DEBUG: MinCutSet: " + JSON.stringify(minCutSet));
 	
 	var minCut = minCutSet.minCut;
 	var clusters = minCutSet.clusters;
@@ -146,7 +146,7 @@ var hcs = function(nodes, links) {
 			while(j--) {
 				if( (sources.indexOf(allLinks[j].source) > -1 && targets.indexOf(allLinks[j].target)  > -1) ||
 						(sources.indexOf(allLinks[j].target)  > -1 && targets.indexOf(allLinks[j].source)  > -1) ) {
-					console.log("DEBUG: do we even get here? Removing: " + JSON.stringify(allLinks[j]));
+					//console.log("DEBUG: do we even get here? Removing: " + JSON.stringify(allLinks[j]));
 					allLinks.splice(j, 1);
 				}
 			}
@@ -168,7 +168,7 @@ var hcs = function(nodes, links) {
 			}
 		}
 		
-		console.log("DEBUG: subLinks: " + JSON.stringify(subLinks));
+		//console.log("DEBUG: subLinks: " + JSON.stringify(subLinks));
 		
 		// Check for highly-connectedness. If so, we're done with this cluster, else call this function again with the subgraph.
 		if(isHighlyConnected(cluster, subLinks)) {

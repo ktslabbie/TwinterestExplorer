@@ -5,10 +5,10 @@ self.addEventListener('message', function(e) {
 	var ret = { finished: false };
 	
 	/* Calculate cosine similarity wrt. all previous users. */
-	for(var i = -1; i < e.data.N-1; i++) {
+	for(var i = -1; i < e.data.N-2; i++) {
 		var prevUserMap = (i == -1) ? e.data.targetUser.ontology.cfIufMap : e.data.network[i].ontology.cfIufMap;
 
-		for(var j = i+1; j < e.data.N-2; j++) {
+		for(var j = i+1; j < e.data.N-1; j++) {
 			var curUserMap = e.data.network[j].ontology.cfIufMap;
 			var similarity = 0;
 

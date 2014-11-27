@@ -1,13 +1,15 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork) {
+.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork',
+                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork) {
 	
 	$scope.loadingUser = false;
+	$scope.noUserFound = false;
 	$scope.loadingTweets = false;
 	$scope.loadingOntology = false;
 	$scope.loadingNetwork = false;
 	$scope.targetUser = null;
-	$scope.screenName = "BarackObama";
+	$scope.screenName = "bnmuller";
 	$scope.pageSize = 0;
 	$scope.N = 0;
 	$scope.processing = false;
@@ -16,6 +18,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.loadingSimilarityGraph = false;
 	$scope.finishedSimilarityGraph = false;
 	$scope.clusteringNetwork = false;
+	$scope.concatenation = 50;
+	$scope.relevanceScores = {};
 	$scope.legend = {};
 	
 	var vertices = [];
@@ -25,15 +29,19 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.cfMap = {};
 	$scope.groupCFMap = {};
 	$scope.minimumSimilarity = 0.2;
-	//$scope.nodes = [];
-	//$scope.similarities = [];
 	
 	$scope.yagoTypeBlackList = ["Abstraction", "Group", "YagoLegalActorGeo", "YagoPermanentlyLocatedEntity", 
-	                            "PhysicalEntity", "Object", "YagoGeoEntity", "YagoLegalActor", "Whole"];
+	                            "PhysicalEntity", "Object", "YagoGeoEntity", "YagoLegalActor", "Whole", "Region", "Musician"];
 	
+	$scope.userChanged = function() {
+		if(!$scope.screenName || !$scope.targetUser || !$scope.targetUser.screenName) {
+			return false;
+		}
+		return $scope.screenName.toLowerCase() != $scope.targetUser.screenName.toLowerCase();
+	}
 	
 	var width = 1280,
-	height = 680;
+	height = 960;
 	
 	var color = d3.scale.category10();
 	
@@ -59,14 +67,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	var legend = svg.selectAll(".legend");
 	
 	function hasNode(node) {
-		//console.log(node.name + " contained?");
 		for(var i = 0; i < nodes.length; i++) {
 			if(node.name == nodes[i].name) {
-				//console.log("Yes. index: " + i);
 				return i;
 			}
 		}
-		//console.log("nope");
+		
 		return -1;
 	}
 	
@@ -76,7 +82,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	var addLink = function(pLink) {
-		//console.log("adding link: " + pLink.source + "-" + pLink.target + ": " + pLink.value);
 		links.push(pLink);
 	}
 	
@@ -101,7 +106,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	function start() {
-		//console.log("link: " + link);
 		link = link.data(force.links(), function(d) { return d.value; });
 		link.enter().insert("line", ".node").attr("class", "link");
 		link.exit().remove();
@@ -121,23 +125,23 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		text.text(function(d) { return "@" + d.name; });
 		
 		legend = legend.data(color.domain())
-	    .enter().append("g")
-	      .attr("class", "legend")
-	      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+	    	.enter().append("g")
+	    	.attr("class", "legend")
+	    	.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
 
-	  legend.append("rect")
-	      .attr("x", width - 18)
-	      .attr("width", 18)
-	      .attr("height", 18)
-	      .style("fill", color);
+		legend.append("rect")
+			.attr("x", width - 136)
+			.attr("width", 18)
+			.attr("height", 18)
+			.style("fill", color);
 
-	  legend.append("text")
-	      .attr("x", width - 24)
-	      .attr("y", 9)
-	      .attr("dy", ".35em")
-	      .style("text-anchor", "end")
-	      .text(function(d) { 
-	    	  return $scope.legend[d]; });
+	  	legend.append("text")
+			.attr("x", width - 140)
+			.attr("y", 9)
+			.attr("dy", ".35em")
+			.style("text-anchor", "end")
+			.style("font-size","12px")
+			.text(function(d) { return $scope.legend[d]; });
 		
 		force.start();
 	}
@@ -174,25 +178,19 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	var getTweetStats = function(user) {
-		var retweets = 0;
-		var hashtags = {};
-		var mentions = {};
+		var retweets = 0, hashtags = {}, mentions = {};
 		
-		for(var i = 0; i < user.tweets.length; i++) {
-			var tweet = user.tweets[i];
-			
-			for(var j = 0; j < tweet.hashtags.length; j++) {
-				var tag = tweet.hashtags[j];
+		_.each(user.tweets, function(tweet) {
+			_.each(tweet.hashtags, function(tag) {
 				hashtags[tag] = hashtags[tag] ? hashtags[tag]+1 : 1;
-			}
+			});
 			
-			for(var j = 0; j < tweet.userMentions.length; j++) {
-				var men = tweet.userMentions[j];
+			_.each(tweet.userMentions, function(men) {
 				mentions[men] = mentions[men] ? mentions[men]+1 : 1;
-			}
+			});
 			
 			if(tweet.retweet) retweets++;
-		}
+		});
 		
 		var htList = [];
 		mList = [];
@@ -214,9 +212,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		}
 
 		tuples.sort(function(a, b) {
-		    a = a[1];
-		    b = b[1];
-
+		    a = a[1]; b = b[1];
 		    return a > b ? -1 : (a < b ? 1 : 0);
 		});
 
@@ -228,8 +224,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		for(type in user.ontology.yagotypes) {
 			
 			keyStr = type.split(":")[1];
-			var wnCode = keyStr.substr(keyStr.length - 9);
-			if(!isNaN(wnCode)) {
+			var wordnetCode = keyStr.substr(keyStr.length - 9);
+			if(!isNaN(wordnetCode)) {
 				keyStr = keyStr.substr(0, keyStr.length - 9);
 			}
 			
@@ -300,9 +296,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				$scope.$apply(function () {
 					$scope.loadingSimilarityGraph = false;
 					$scope.finishedSimilarityGraph = true;
+					$scope.calculateDCG();
+					$scope.clusterNetwork();
 		        });
 				
-				console.log("Worker terminating!")
+				console.log("Similarity worker terminating!")
 				worker.terminate();
 			} else {
 				var aName = (e.data.i == -1) ? $scope.targetUser.screenName : $scope.targetUser.network[e.data.i].screenName;
@@ -324,7 +322,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				}
 
 				addLink({ source: aIndex, target: bIndex, value: e.data.similarity});
-				edges.push( { source: aIndex, target: bIndex, value: e.data.similarity} );
+				edges.push({ source: aIndex, target: bIndex, value: e.data.similarity});
 				
 				start();
 			}		
@@ -339,10 +337,66 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		worker.postMessage(ev);
 	}
 	
+	$scope.calculateDCG = function() {
+		var dcgEdges = [];
+		_.each(edges, function(edge) {
+			if(edge.source == 0) {
+				dcgEdges.push(edge);
+			}
+		});
+		
+		var sortedDCGEdges = _.map(_.sortBy(dcgEdges, 'value'), _.values);
+		
+		var rankingStr = "Similarity ranking (" + sortedDCGEdges.length + " entries):\n";
+		for(var i = sortedDCGEdges.length; i--;) {
+			rankingStr += vertices[sortedDCGEdges[i][1]].name + "\t" + $scope.relevanceScores[vertices[sortedDCGEdges[i][1]].name] + "\t" + sortedDCGEdges[i][2] + "\n";
+		}
+		
+		console.log(rankingStr);
+		var firstEdge = sortedDCGEdges[sortedDCGEdges.length-1];
+		var topK = [3, 5, 10, 25, 50];
+		var evaluationString = "";
+		
+		_.each(topK, function(k) {
+			if(k <= sortedDCGEdges.length) {
+			
+				var reli = 0.0;
+				var binreli = 0.0;
+				var dcg = parseFloat($scope.relevanceScores[vertices[firstEdge[1]].name]);
+				var binDCG = (parseFloat($scope.relevanceScores[vertices[firstEdge[1]].name]) > 0) ? 2 : 0;
+				var idcg = 2;
+				var index = 1;
+				
+				for(var i = sortedDCGEdges.length-1; i--;) {
+					var edge = sortedDCGEdges[i];
+					
+					if(index < k) {
+						reli = parseFloat($scope.relevanceScores[vertices[edge[1]].name]);
+						binreli = (parseFloat($scope.relevanceScores[vertices[edge[1]].name]) > 0) ? 2 : 0;
+						
+						dcg 	+= reli * 	Math.log(2) / Math.log(index+1);
+						binDCG 	+= binreli * 	Math.log(2) / Math.log(index+1);
+						idcg 	+= 2 	* 	Math.log(2) / Math.log(index+1);
+						index++;
+					}
+				}
+				
+				var nDCG = dcg / idcg;
+				var binnDCG = binDCG / idcg;
+				
+				evaluationString += "Top-" + k + "\t" + nDCG + "\t" + binnDCG + "\n";
+			}
+		});
+		
+		console.log(evaluationString);
+		
+	}
+	
 	$scope.clusterNetwork = function() {
 		$scope.clusteringNetwork = true;
 		
 		var worker = new Worker("js/clustering_worker.js");
+		console.log("Starting clustering worker from controller!");
 
 		worker.addEventListener('message', function(e) {
 			if(e.data.finished) {
@@ -351,7 +405,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				});
 			}
 			
-			console.log(JSON.stringify(e.data));
+			//console.log(JSON.stringify(e.data));
 			var includedNodes = {};
 
 			for(var i = 0; i < e.data.clusters.length; i++) {
@@ -363,7 +417,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				
 				for(var j = 0; j < clusterSplit.length; j++) {
 					
-					//console.log("assigning " + j + " to group " + (i+1));
 					includedNodes[clusterSplit[j]] = true;
 					setGroup(clusterSplit[j], i+1);
 					var user;
@@ -374,8 +427,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					}
 					
 					group.users.push(user);
-					
-					//console.log("User: " + user.screenName);
 					
 					for(var k = 0; k < user.ontology.sortedYagotypes.length; k++) {
 						
@@ -405,15 +456,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			}
 			
 			var groupCFIUFMap = {};
-
-			//console.log("Group 1: " + JSON.stringify($scope.groups[1]));
 			
 			for(var i = 1; i <= e.data.clusters.length; i++) {
 				var currentGroup = $scope.groups[i];
-				//console.log("currentGroup 1: " + JSON.stringify($scope.groups[(i+1)]);
 				groupCFIUFMap = {};
 				var cfIufSum = 0;
-				//var currentGroup = $scope.groups[i];
 				var types = currentGroup.sortedYagotypes;
 
 				for(var j = 0; j < types.length; j++) {
@@ -422,15 +469,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					var iuf = Math.log(Object.keys($scope.groups).length / $scope.groupCFMap[type[0]]);
 					var cfIuf = (Math.pow(cf, 1 + 0))*(Math.pow(iuf, 1 - 0));
 					
-					//console.log("N: " + $scope.N + ", global cf: " + $scope.cfMap[type[0]]);
-					
-					
 					cfIufSum += Math.pow(cfIuf, 2);
 					
-					//console.log("cf: " + cf + ", iuf: " + iuf + ", cfiuf: " + cfIuf + ", cfiufSum: " + cfIufSum);
-					
 					groupCFIUFMap[type[0]] = cfIuf;
-					//currentUser.ontology.cfIufMap[type[0]] = cfIuf;
 				}
 				
 				var euclidLength = Math.sqrt(cfIufSum);
@@ -443,10 +484,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				}
 				
 				$scope.legend[i] = legendText;
-				//console.log("Group " + i + " CF-IUF ranking: " + JSON.stringify(currentGroup.cfIufMap));
 			}
-			
-			
 			
 			//force.charge(-60);
 			force.linkDistance(60);
@@ -471,11 +509,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.finished = false;
 		$scope.showSimilarityGraph = false;
 		
-		while(nodes.length > 0) nodes.pop();
-		while(links.length > 0) links.pop();
+		//while(nodes.length > 0) nodes.pop();
+		//while(links.length > 0) links.pop();
 		
-		start();
+		//start();
 		
+		$scope.noUserFound = false;
 		$scope.targetUser = null;
 		$scope.loadingUser = true;
 
@@ -485,12 +524,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				$scope.targetUser.profileImageURL = $scope.targetUser.profileImageURL;
 				$scope.N = 1;
 				
-				// cancel old timeout
+				// Cancel old timeout.
 			    if ($scope.targetUser.timeoutId) {
 			        $timeout.cancel($scope.targetUser.timeoutId);
 			    }
 
-			    // hide images to start with
+			    // Hide images to start with (to prevent overlap).
 			    $scope.targetUser.imageVisible = false;
 
 			    $scope.targetUser.timeoutId = $timeout(function() {
@@ -500,12 +539,16 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				
 				if($scope.targetUser.tweets.length > 0) {
 					getTweetStats($scope.targetUser);
+					//$scope.targetUser.tweets = null;
 					$scope.getOntology($scope.targetUser.screenName);
 				} else {
 					$scope.getTweets($scope.targetUser.screenName);
 				}
+			} else {
+				$scope.noUserFound = true;
+				$scope.targetUser = null;
 			}
-				
+			
 			$scope.loadingUser = false;
 		});
 	};
@@ -517,6 +560,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			$scope.targetUser.tweets = $scope.targetUser.tweets.tweets;
 			
 			getTweetStats($scope.targetUser);
+			//$scope.targetUser.tweets = null;
 			$scope.getOntology($scope.targetUser.screenName);
 			
 			$scope.targetUser.loadingTweets = false;
@@ -525,7 +569,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	$scope.getOntology = function(name) {
 		$scope.targetUser.loadingOntology = true;
-		$scope.targetUser.ontology = UserOntology.ontology({ name: name }, function() {
+		$scope.targetUser.ontology = UserOntology.ontology({ name: name, concatenation: $scope.concatenation }, function() {
 			$scope.targetUser.ontology = $scope.targetUser.ontology.user.userOntology;
 
 			//$scope.targetUser.ontology.sortedYagotypes = sortYagoTypes($scope.targetUser.ontology.yagotypes);
@@ -551,6 +595,16 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		});
 	};
 	
+	$scope.getDCGNetwork = function(userRelevanceList) {
+		$scope.loadingNetwork = true;
+		$scope.targetUser.network = UserNetwork.network({ list: userRelevanceList }, function() {
+			$scope.targetUser.network = $scope.targetUser.network.network;
+			$scope.loadingNetwork = false;
+			$scope.pageSize = 10;
+			$scope.targetUser.network.shift();
+		});
+	};
+	
 	$scope.processNetwork = function(pIndex) {
 		
 		$scope.processing = true;
@@ -563,6 +617,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			$scope.targetUser.network[index].tweets = $scope.targetUser.network[index].tweets.tweets;
 			
 			getTweetStats($scope.targetUser.network[index]);
+			
+			//$scope.targetUser.network[index].tweets = null;
 			
 			$scope.targetUser.network[index].loadingTweets = false;
 			$scope.targetUser.network[index].loadingOntology = true;
@@ -579,7 +635,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				
 				updateCFMap($scope.targetUser.network[index]);
 				
-				if(index % 5 == 0) {
+				//console.log(JSON.stringify($scope.targetUser.network[index]));
+				
+				if(index % 100 == 0) {
 					updateCFIUF(index, $scope.targetUser.network[index]);
 				}
 				
@@ -588,7 +646,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				if(index < $scope.targetUser.network.length) {
 					$scope.processNetwork(index);
 				} else {
-					if((index-1) % 5 != 0) {
+					if((index-1) % 100 != 0) {
 						updateCFIUF(index-1, $scope.targetUser.network[index-1]);
 					}
 					$scope.finished = true;
@@ -600,6 +658,47 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	$scope.loadMore = function() {
 		$scope.pageSize = $scope.pageSize + 10;
+	}
+	
+	var fileInput = $('#files');
+	var uploadButton = $('#upload');
+
+	// Function to upload a DCG file.
+	uploadButton.on('click', function() {
+	    if (!window.FileReader) {
+	        alert("Your browser is not supported.");
+	        return false;
+	    }
+	    
+	    var input = fileInput.get(0);
+	    var reader = new FileReader();
+	    
+	    if (input.files.length) {
+	        var textFile = input.files[0];
+	        reader.readAsText(textFile);
+	        
+	        $(reader).on('load', processFile);
+	    } else {
+	        alert("Please upload a file before continuing.");
+	    } 
+	});
+
+	function processFile(e) {
+	    var file = e.target.result;
+	    var results;
+	    var csvList = "";
+	    
+	    if (file && file.length) {
+	        results = file.split("\n");
+	        
+	        _.each(results, function(result) {
+	        	var res = result.split("\t");
+	        	csvList += res[0] + ",";
+	        	$scope.relevanceScores[res[0]] = res[1];
+	        });
+	        
+	        $scope.getDCGNetwork(csvList.substring(0, csvList.length - 1));
+	    }
 	}
 }]);
 
