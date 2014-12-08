@@ -88,7 +88,8 @@
 			<div class="modal-body">
 				<div class="row" ng-repeat="tweet in targetUser.tweets">
 					<div class="md-col-12" style="padding-left: 16px; padding-right: 16px;">
-						<p><strong><span ng-bind="tweet.createdAt"></span></strong>: <span ng-bind="tweet.content"></span></p>
+					<!-- <strong><span ng-bind="tweet.createdAt"></span></strong>:  -->
+						<span ng-bind="tweet.content"></span>
 					</div>
 				</div>
 			</div>
@@ -119,15 +120,15 @@
 	</div>
 	<div class="row text-muted">
 		<div class="col-md-9">Trait</div>
-		<div class="col-md-3 col-confidence">Confidence</div>
+		<div class="col-md-3">Confidence</div>
 	</div>
-	<div class="row list-types" ng-repeat="entry in targetUser.ontology.cfIufMap | limitTo:5">
+	<div class="row list-types" ng-repeat="entry in targetUser.topTypes | limitTo:'5'">
 		<div class="col-md-9"><small><span ng-bind="entry[0]"></span></small></div>
 		<div class="col-md-3 col-confidence"><small><span ng-bind="entry[1] | number:2"></small></span></div>
 	</div>
 </div>
 
-<div ng-if="openModal == $index" class="modal fade" id="traitModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<!-- <div ng-if="openModal == $index" class="modal fade" id="traitModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 	<div class="modal-dialog" style="width: 60%">
 		<div class="modal-content">
 			<div class="modal-header text-center">
@@ -145,12 +146,12 @@
 						<p><strong>CF-IUF</strong></p>
 					</div>
 				</div>
-				<div class="row list-types" ng-repeat="trait in targetUser.ontology.cfIufMap">
+				<div class="row list-types" ng-repeat="(key, value) in targetUser.ontology.cfIufMap">
 					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><span ng-bind="trait[0]"></span></p>
+						<p><span ng-bind="key"></span></p>
 					</div>
 					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><span ng-bind="trait[1]"></span></p>
+						<p><span ng-bind="value"></span></p>
 					</div>
 				</div>
 			</div>
@@ -159,4 +160,4 @@
 			</div>
 		</div>
 	</div>
-</div>
+</div> -->

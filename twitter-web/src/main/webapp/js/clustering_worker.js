@@ -5,14 +5,14 @@ var allNodes = [];
 var allLinks = [];
 var N;
 var L;
-var KARGER_ITERATIONS = 10;
+var KARGER_ITERATIONS = 100;
 
 var contract = function(nodes, links) {
 
 	// |V|
 	var numberOfNodes = nodes.length;
 	
-	// Initialize the node set This will represent our clusters at the end.
+	// Initialize the node set. This will represent our clusters at the end.
 	var nodeSet = {};
 	var i = numberOfNodes;
 	while(i--) nodeSet[nodes[i]] = true;
@@ -104,7 +104,7 @@ var isHighlyConnected = function(cluster, links) {
 	}
 	
 	
-	return (k > n/3);
+	return (k > n/4);
 }
 
 var hcs = function(nodes, links) {
@@ -120,10 +120,11 @@ var hcs = function(nodes, links) {
 	for(var i = 0; i < KARGER_ITERATIONS; i++) {
 		var currentMinCutSet = contract(nodes, links);
 		var currentMinCutSize = currentMinCutSet.minCut.length;
-		
+			
 		if(currentMinCutSize < minCutSize) {
 			minCutSet = currentMinCutSet;
 			minCutSize = currentMinCutSize;
+			if(currentMinCutSize == 1) break; // Not going to get smaller than this.
 		}
 	}
 	

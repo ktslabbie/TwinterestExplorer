@@ -48,14 +48,14 @@
 		<div class="row row-settings" ng-cloak>
     		<div class="col-md-12 spinner-large text-center" ng-if="loadingUser"><i class="fa fa-spinner fa-spin"></i></div>
 
-			<div class="animate-if" ng-if="!loadingUser && (!targetUser || userChanged())">
-		    	<div class="col-md-1">
+			<div class="animate-show-hide" ng-show="!loadingUser && (users.length == 0 || userChanged())">
+		    	<div class="col-md-1 animate-show-hide">
 		    		Tweets/user: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="200">
 		    	</div>
-		    	<div class="col-md-2">
+		    	<div class="col-md-2 animate-show-hide">
 		    		Processed in groups of: <input type="text" ng-model="concatenation" class="form-control" placeholder="50">
 		    	</div>
-		    	<div class="col-md-2">
+		    	<div class="col-md-2 animate-show-hide">
 		    		<div>Mining mode:</div> 
 		    		<div class="btn-group" data-toggle="buttons">
 				        <label class="btn btn-default active"><input type="radio" name="year" value="none" checked="">None</label>
@@ -63,13 +63,14 @@
 				        <label class="btn btn-default"><input type="radio" name="year" value="all">All</label>
 				    </div>
 		    	</div>
-		    	<div class="col-md-2">NER confidence: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0.2"></div>
-		    	<div class="col-md-2">NER support: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0"></div>
+		    	<div class="col-md-2 animate-show-hide">NER confidence: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0.2"></div>
+		    	<div class="col-md-2 animate-show-hide">NER support: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0"></div>
+		    	<div class="col-md-2 animate-show-hide">LDA topics: <input type="text" ng-model="ldaTopics" class="form-control"></div>
 		    </div>
 		    
 		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="noUserFound">No user found with that screen name.</h1>
 	    	
-	    	<div class="animate-if" ng-if="targetUser.ontology.sortedYagotypes.length > 0 && !targetUser.network && !userChanged()">
+	    	<div class="animate-show-hide" ng-show="!loadingNetwork && users[0].ontology.sortedYagotypes.length > 0 && users.length <= 1 && !userChanged()">
 		    	<div class="col-md-1">Min. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>
 		    	<div class="col-md-1">Max. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="1000"></div>
 		    	<div class="col-md-1">Min. following: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>
@@ -77,37 +78,44 @@
 		    	<div class="col-md-1">Min. tweets: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="150"></div>
 		    	<div class="col-md-1">Max. tweets: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="10000"></div>
 		    	
-		    	<div class="col-md-2 col-md-push-4 text-right">
-			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getTargetUserNetwork(targetUser.screenName)" href="#">
+		    	<div class="col-md-2">
+				<input type="file" id="files">
+				<button id="upload" class="btn btn-default" type="button">Upload DCG file</button>
+		    </div>
+		    
+		    <div class="col-md-2">
+				<input type="file" id="gtfile">
+				<button id="gtupload" class="btn btn-default" type="button">Upload ground truth file</button>
+		    </div>
+		    	
+		    	<div class="col-md-2 text-right">
+			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getTargetUserNetwork(users[0])" href="#">
 							<i class="fa fa-2x pull-left"></i>Collect followers</a>
 	    		</div>
 	    	</div>
 	    	
-	    	<div class="col-md-2 col-md-pull-2 animate-show-hide" ng-show="targetUser.ontology.sortedYagotypes.length > 0 && !targetUser.network && (screenName | lowercase) == (targetUser.screenName | lowercase)">
-				<input type="file" id="files">
-				<button id="upload" class="btn btn-default" type="button">Upload DCG file</button>
-		    </div>
+	    	
 	    	
 
-			<div class="col-md-2 col-md-push-5 animate-if" ng-if="targetUser.network.length > 0 && !processing && (screenName | lowercase) == (targetUser.screenName | lowercase)">
-	    		Generality bias (0-1): <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0">
+			<div class="col-md-2 animate-show-hide" ng-show="users.length > 1 && !processing && !userChanged()">
+	    		Generality bias (0-1): <input type="text" ng-model="generalityBias" class="form-control">
 	    	</div>
 	    	
-	    	<div class="col-md-10 text-right animate-if" ng-if="targetUser.network.length > 0 && !processing && (screenName | lowercase) == (targetUser.screenName | lowercase)" ng-cloak>
-	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="processNetwork(0)" href="#">
+	    	<div class="col-md-10 text-right animate-if" ng-if="users.length > 1 && !processing && !userChanged()" ng-cloak>
+	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="processNetwork(1)" href="#">
 							<i class="fa fa-2x pull-left"></i>Process network</a>
 			</div>
 			
-			<div class="col-md-1 col-md-push-11 text-center" style="margin-top: 8px;" ng-if="processing && !finished || loadingNetwork || loadingSimilarityGraph  && (screenName | lowercase) == (targetUser.screenName | lowercase)">
+			<div class="col-md-1 col-md-push-11 text-center" style="margin-top: 8px;" ng-if="processing && !finished || loadingNetwork || loadingSimilarityGraph  && !userChanged()">
 	    		<i class="fa fa-spinner fa-spin text-loading"></i>
 			</div>
 			
-			<div class="col-md-2 col-md-push-5 animate-if" ng-if="finished && !loadingSimilarityGraph && (screenName | lowercase) == (targetUser.screenName | lowercase)">
-	    		Similarity threshold: <input type="text" ng-model="minimumSimilarity" class="form-control" placeholder="0.2">
+			<div class="col-md-2 animate-show-hide" ng-show="finished && !loadingSimilarityGraph && !userChanged()">
+	    		Similarity threshold: <input type="text" ng-model="minimumSimilarity" class="form-control">
 	    	</div>
 			
 			
-			<div class="col-md-10 text-right animate-if" ng-if="finished && !loadingSimilarityGraph && !finishedSimilarityGraph && (screenName | lowercase) == (targetUser.screenName | lowercase)" ng-cloak>
+			<div class="col-md-10 text-right animate-if" ng-if="finished && !loadingSimilarityGraph && !finishedSimilarityGraph && !userChanged()" ng-cloak>
 	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="calculateSimilarityGraph()" href="#">
 							<i class="fa fa-2x pull-left"></i>Cluster network</a>
 			</div>
@@ -118,14 +126,14 @@
 	    	<div id="graph" class="graph col-md-12"></div>
 		</div>
 		    
-		<div class="row panel-target-user animate-if" ng-if="targetUser.screenName" ng-include="'templates/user-panel.html'" ng-cloak></div>
+		<div class="row panel-target-user animate-if" ng-if="users[0].screenName" ng-include="'templates/user-panel.html'" ng-init="targetUser = users[0]" ng-cloak></div>
 
-		<div ng-if="targetUser.network.length > 0" ng-cloak>
+		<div ng-if="users.length > 1" ng-cloak>
 			<h3>Follower network:</h3>
 		</div>
 
    		<div infinite-scroll="loadMore()" infinite-scroll-disabled="pageSize >= 300" infinite-scroll-distance='0' ng-cloak>
-   				<div class="row panel-target-user" ng-include="'templates/user-panel.html'" ng-repeat="targetUser in targetUser.network | limitTo:pageSize"></div>
+   				<div class="row panel-target-user" ng-include="'templates/user-panel.html'" ng-repeat="targetUser in users | limitTo:pageSize" ng-show="!$first"></div>
    		</div>
     </div>
     
@@ -134,12 +142,15 @@
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-resource.min.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-animate.min.js"></script>
-	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<!-- <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script> -->
+	
+	<script src="js/vendor/d3.v3.min.js" charset="utf-8"></script>
 	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
        
 	<script src="js/vendor/ng-infinite-scroll.min.js"></script>
 	<script src="js/plugins.js"></script>
 	<script src="js/main.js"></script>
+	<script src="js/graph.js"></script>
 	<script src="js/angular/apps.js"></script>
 	<script src="js/angular/controllers.js"></script>
 	<script src="js/angular/services.js"></script>

@@ -15,6 +15,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import twitter4j.PagableResponseList;
 import twitter4j.User;
+import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.WeightedEdge;
 import jp.titech.twitter.db.TweetBase;
@@ -146,6 +147,9 @@ public class NetworkBuilder {
 
 				if(isValidUser(follower) && !follower.equals(currentUser)) {
 					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
+					
+					
+					
 					processQueue.add(follower);
 					graph.addVertex(follower);
 					userCount++;

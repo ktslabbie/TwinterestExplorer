@@ -16,6 +16,11 @@ public class UserTweetsJSON {
     }
     
     public UserTweetsJSON(List<Tweet> tweets, double englishRate) {
+    	
+    	for (Tweet tweet : tweets) {
+			tweet.stripNonHashtagElements();
+		}
+    	
     	this.tweets = tweets;
     	this.englishRate = englishRate;
     }

@@ -5,19 +5,17 @@ self.addEventListener('message', function(e) {
 	var ret = { finished: false };
 	
 	/* Calculate cosine similarity wrt. all previous users. */
-	for(var i = -1; i < e.data.N-2; i++) {
-		var prevUserMap = (i == -1) ? e.data.targetUser.ontology.cfIufMap : e.data.network[i].ontology.cfIufMap;
+	for(var i = 0; i < e.data.users.length-1; i++) {
+		
+		var prevUserMap = e.data.users[i].ontology.cfIufMap;
 
-		for(var j = i+1; j < e.data.N-1; j++) {
-			var curUserMap = e.data.network[j].ontology.cfIufMap;
+		for(var j = i+1; j < e.data.users.length; j++) {
+			var curUserMap = e.data.users[j].ontology.cfIufMap;
 			var similarity = 0;
 
-			for(k = 0; k < prevUserMap.length; k++) {
-				for(l = 0; l < curUserMap.length; l++) {
-					if(curUserMap[l][0] == prevUserMap[k][0]) {
-						similarity += curUserMap[l][1]*prevUserMap[k][1];
-						break;
-					}
+			for(var key in prevUserMap) {
+				if(curUserMap[key]) {
+					similarity += curUserMap[key]*prevUserMap[key];
 				}
 			}
 

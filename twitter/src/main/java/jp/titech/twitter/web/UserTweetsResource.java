@@ -24,7 +24,9 @@ public class UserTweetsResource {
     	TwitterUser user = TweetBaseUtil.getTwitterUserWithScreenName(name);
     	MiningController mc = MiningController.getInstance();
     	mc.mineUser(user);
-        
-		return new UserTweetsJSON(user.getTweets(), user.getEnglishRate());
+    	
+        //if(user.getEnglishRate() > 0.8)
+			return new UserTweetsJSON(user.getTweets(), user.getEnglishRate());
+        //else return new UserTweetsJSON(null, user.getEnglishRate());
     }
 }
