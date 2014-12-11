@@ -79,14 +79,14 @@
 		    	<div class="col-md-1">Max. tweets: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="10000"></div>
 		    	
 		    	<div class="col-md-2">
-				<input type="file" id="files">
-				<button id="upload" class="btn btn-default" type="button">Upload DCG file</button>
-		    </div>
-		    
-		    <div class="col-md-2">
-				<input type="file" id="gtfile">
-				<button id="gtupload" class="btn btn-default" type="button">Upload ground truth file</button>
-		    </div>
+					<input type="file" id="files">
+					<button id="upload" class="btn btn-default" type="button">Upload DCG file</button>
+			    </div>
+			    
+			    <div class="col-md-2">
+					<input type="file" id="gtfile">
+					<button id="gtupload" class="btn btn-default" type="button">Upload ground truth file</button>
+			    </div>
 		    	
 		    	<div class="col-md-2 text-right">
 			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getTargetUserNetwork(users[0])" href="#">
@@ -153,6 +153,8 @@
 	<script src="js/graph.js"></script>
 	<script src="js/angular/apps.js"></script>
 	<script src="js/angular/controllers.js"></script>
-	<script src="js/angular/services.js"></script>
+	<script src="js/angular/similarity-service.js"></script>
+	<script src="js/angular/clustering-services.js"></script>
+	<script src="js/angular/api-service.js"></script>
 </body>
 </html>

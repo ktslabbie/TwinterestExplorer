@@ -4,6 +4,7 @@ var stopwords={"a":1,"able":1,"about":1,"above":1,"according":1,"accordingly":1,
 var GT_USERS = {};
 var GT_TOPICS = {};
 var GT_SUBTOPICS = {};
+var userCount = 0;
 
 var gtFileInput = $('#gtfile');
 var gtUploadButton = $('#gtupload');
@@ -35,7 +36,10 @@ var utils = {
 						var currentUser = result.split("\t")[0];
 						var currentScore = result.split("\t")[1];
 
-						if(GT_USERS[currentUser] == null) GT_USERS[currentUser] = {};
+						if(GT_USERS[currentUser] == null) {
+							GT_USERS[currentUser] = {};
+							userCount++;
+						}
 						GT_USERS[currentUser][currentTopic] = currentScore;
 						GT_USERS[currentUser][currentSubTopic] = currentScore;
 						GT_TOPICS[currentTopic][currentUser] = currentScore;
@@ -105,13 +109,13 @@ function evaluateClusteringAccuracy(clusters, userCount) {
 
 	var nullCluster = [];
 
-	for(var user in GT_USERS) {
+	/*for(var user in GT_USERS) {
 		if(!(user in clusterUserSet)) {
 			nullCluster.push(user);
 		}
 	}
 
-	clusters.push(nullCluster);
+	clusters.push(nullCluster);*/
 
 	_.each(clusters, function(cluster) {
 		for(var i = 0; i < cluster.length-1; i++) {
@@ -136,7 +140,7 @@ function evaluateClusteringAccuracy(clusters, userCount) {
 	for(var i = 0; i < clusters.length-1; i++) {
 		var clusterA = clusters[i];
 		for(var j = i+1; j < clusters.length; j++) {
-			clusterB = clusters[j];
+			var clusterB = clusters[j];
 			_.each(clusterA, function(userA) {
 				_.each(clusterB, function(userB) {
 					for(var topic in GT_TOPICS) {
@@ -146,8 +150,6 @@ function evaluateClusteringAccuracy(clusters, userCount) {
 							break;
 						}
 					}
-
-
 
 					if(!done) d++;
 					done = false;
@@ -165,14 +167,13 @@ function evaluateClusteringAccuracy(clusters, userCount) {
 	var recall = a / (a+c);
 	var fScore = 2*((precision*recall)/(precision+recall));
 
-	console.log("Precision: " + precision);
-	console.log("Recall: " + recall);
-	console.log("F-score: " + fScore);
-	console.log("MCC: " + mcc);
+	console.log("ClusterUsers / AllUsers: " + clusterUserCount + " / " + userCount);
+	var corr = clusterUserCount / userCount;
+	
+	console.log("Precision: " + precision + ", corrected for user count: " + precision*corr);
+	console.log("Recall: " + recall + ", corrected for user count: " + recall*corr);
+	console.log("F-score: " + fScore + ", corrected for user count: " + fScore*corr);
+	console.log("MCC: " + mcc + ", corrected for user count: " + mcc*corr);
 
 	console.log(output);
-
-	
-
-	
 }

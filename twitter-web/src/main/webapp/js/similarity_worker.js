@@ -1,7 +1,7 @@
-console.log("Worker starting!")
-
+/**
+ * Web Worker for calculating the similarity graph of users.
+ */
 self.addEventListener('message', function(e) {
-
 	var ret = { finished: false };
 	
 	/* Calculate cosine similarity wrt. all previous users. */

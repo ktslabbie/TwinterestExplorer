@@ -1,7 +1,7 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork',
-                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork) {
+.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'SimilarityService', 'HCSService',
+                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, SimilarityService, HCSService) {
 	
 	$scope.loadingUser = false;
 	$scope.noUserFound = false;
@@ -17,6 +17,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.users = [];
 	$scope.screenName = "bnmuller";
 	$scope.pageSize = 0;
+	$scope.refreshCnt = 0;
 	
 	$scope.ldaTopics = 3;
 	$scope.ldaMinimumMembership = 0.5;
@@ -122,8 +123,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			_.each(currentUser.ontology.sortedYagotypes, function(type) {
 				var cf = type[1];
 				var iuf = Math.log($scope.users.length / $scope.cfMap[type[0]]);
-				//console.log((1 + parseFloat($scope.generalityBias)));
-				//console.log((1 - parseFloat($scope.generalityBias)));
 				var cfIuf = (Math.pow(cf, 1 + parseFloat($scope.generalityBias)))*(Math.pow(iuf, 1 - parseFloat($scope.generalityBias)));
 				
 				cfIufSum += Math.pow(cfIuf, 2);
@@ -152,48 +151,53 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		}
 	}
 	
+	/**
+	 * Function to start similarity graph calculation and visualization.
+	 */
 	$scope.calculateSimilarityGraph = function() {
 		
 		$scope.showSimilarityGraph = true;
 		$scope.loadingSimilarityGraph = true;
 		$scope.finishedSimilarityGraph = false;
 		
-		var worker = new Worker("js/similarity_worker.js");
-		var refreshCnt = 0;
-
-		worker.addEventListener('message', function(e) {
-			if(e.data.finished) {
-				$scope.$apply(function () {
-					start();
-					$scope.loadingSimilarityGraph = false;
-					$scope.finishedSimilarityGraph = true;
-					$scope.calculateDCG();
-					$scope.clusterNetwork();
-		        });
-				
-				console.log("Similarity worker terminating!")
-				worker.terminate();
-			} else {
-				var aNode = { name: $scope.users[e.data.i].screenName, group: 1, userIndex: e.data.i };
-				var bNode = { name: $scope.users[e.data.j].screenName, group: 1, userIndex: e.data.j };
-
-				var aIndex = addNode(aNode), bIndex = addNode(bNode); 
-				vertices[aIndex] = aNode; vertices[bIndex] = bNode;
-
-				addLink({ source: aIndex, target: bIndex, value: e.data.similarity});
-				edges.push({ source: aIndex, target: bIndex, value: e.data.similarity});
-				
-				refreshCnt++;
-				if(refreshCnt % 10 == 0) start();
-			}		
-		}, false);
+		$scope.refreshCnt = 0;
 		
 		var ev = {};
 		ev.minSim = $scope.minimumSimilarity;
 		ev.users = $scope.users;
 		
-		worker.postMessage(ev);
+		SimilarityService.doWork(ev).then(function(data) {
+			
+			// We've finished calculating the similarity graph. Render the final version.
+			start();
+			$scope.loadingSimilarityGraph = false;
+			$scope.finishedSimilarityGraph = true;
+			
+			// Calculate the DCG scores for this network (if available).
+			if($scope.relevanceScores) $scope.calculateDCG();
+			
+			// Finally, cluster the similarity graph.
+			$scope.clusterNetwork();
+		});
 	}
+	
+	/**
+	 * Function to catch updates to the similarity graph.
+	 */
+	$scope.$on('simGraphUpdate', function(event, data) {
+		var aNode = { name: $scope.users[data.i].screenName, group: 1, userIndex: data.i };
+		var bNode = { name: $scope.users[data.j].screenName, group: 1, userIndex: data.j };
+	
+		var aIndex = addNode(aNode), bIndex = addNode(bNode);
+		vertices[aIndex] = aNode; vertices[bIndex] = bNode;
+	
+		addLink({ source: aIndex, target: bIndex, value: data.similarity});
+		edges.push({ source: aIndex, target: bIndex, value: data.similarity});
+		
+		// Refresh SVG graph only one in ten updates, to make rendering smoother.
+		$scope.refreshCnt++;
+		if($scope.refreshCnt % 50 == 0) start();
+	});
 	
 	$scope.calculateDCG = function() {
 		var dcgEdges = [];
@@ -247,28 +251,27 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		});
 		
 		console.log(evaluationString);
-		
 	}
 	
 	$scope.clusterNetwork = function() {
 		$scope.clusteringNetwork = true;
 		
-		var worker = new Worker("js/clustering_worker.js");
-		console.log("Starting clustering worker from controller!");
-
-		worker.addEventListener('message', function(e) {
-			if(e.data.finished) {
-				$scope.$apply(function () {
-					$scope.clusteringNetwork = false;
-				});
-			}
+		var message = {};
+		message.nodes = vertices;
+		message.links = edges;
+		
+		HCSService.doWork(message).then(function(data) {
 			
-			//console.log(JSON.stringify(e.data));
+			// We've finished calculating the cluster graph. Render the final version.
+			$scope.clusteringNetwork = false;
+			
 			var includedNodes = {};
 			var evalClusters = [];
+			var includedNodes = {};
 
-			for(var i = 0; i < e.data.clusters.length; i++) {
-				var clusterSplit = e.data.clusters[i].split('-');
+			for(var i = 0; i < data.clusters.length; i++) {
+				//var clusterSplit = data.clusters[i].split('-');
+				var clusterSplit = data.clusters[i];
 				$scope.groups[i+1] = {};
 				$scope.groups[i+1].users = [];
 				$scope.groups[i+1].sortedYagotypes = [];
@@ -276,11 +279,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				var evalGroup = [];
 				
 				for(var j = 0; j < clusterSplit.length; j++) {
+					var node = clusterSplit[j];
+					includedNodes[node] = true;
+					setGroup(node, i+1);
 					
-					includedNodes[clusterSplit[j]] = true;
-					setGroup(clusterSplit[j], i+1);
-					
-					var user = $scope.users[nodes[clusterSplit[j]].userIndex];
+					var user = $scope.users[nodes[node].userIndex];
 					group.users.push(user);
 					evalGroup.push(user.screenName);
 					
@@ -304,6 +307,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					}
 				}
 				
+				
+				
 				evalClusters.push(evalGroup);
 			}
 
@@ -318,7 +323,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			
 			var labelString = "\nTopic labels:\n\n";
 			
-			for(var i = 1; i <= e.data.clusters.length; i++) {
+			for(var i = 1; i <= data.clusters.length; i++) {
 				var currentGroup = $scope.groups[i];
 				groupCFIUFMap = {};
 				var cfIufSum = 0;
@@ -361,20 +366,10 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			//force.charge(-60);
 			force.linkDistance(60);
 
-			start();
+			start($scope.legend);
 			
 			evaluateClusteringAccuracy(evalClusters, $scope.users.length);
-
-			console.log("Clustering worker terminating!");
-			worker.terminate();
-		
-		}, false);
-		
-		var message = {};
-		message.nodes = vertices;
-		message.links = edges;
-		
-		worker.postMessage(message);
+		});
 	}
 	
 	$scope.getUser = function() {
@@ -536,7 +531,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	        var textFile = input.files[0];
 	        reader.readAsText(textFile);
 	        
-	        //$(reader).on('load', convertGTToJSON);
 	        $(reader).on('load', processFile);
 	    } else {
 	        alert("Please upload a file before continuing.");
@@ -666,7 +660,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 
 						}
 						
-						if(topPercent > $scope.ldaMinimumMembership) topicUsers[topTopic].push($scope.users[m].screenName);
+						topicUsers[topTopic].push($scope.users[m].screenName);
+						//if(topPercent > $scope.ldaMinimumMembership) topicUsers[topTopic].push($scope.users[m].screenName);
 						
 						output += '\n';
 					}

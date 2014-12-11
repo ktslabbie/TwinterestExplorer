@@ -1,6 +1,6 @@
 /* D3 graph stuff */
 var width = 1280, height = 960;
-var color = d3.scale.category20();
+var color = d3.scale.category10();
 var nodes = []; // { name: "", group: 0, userIndex: 0 }
 var nodeNameMap = {};
 var links = []; // { source: 0, target: 1, value: 0.00 }
@@ -56,7 +56,7 @@ function removeNodeLinks(nodeIndex) {
 	}
 }
 
-function start() {
+function start(scopeLegend) {
 	link = link.data(force.links(), function(d) { return d.value; });
 	link.enter().insert("line", ".node").attr("class", "link");
 	link.exit().remove();
@@ -86,13 +86,15 @@ function start() {
 		.attr("height", 18)
 		.style("fill", color);
 
-	legend.append("text")
-		.attr("x", width - 140)
-		.attr("y", 9)
-		.attr("dy", ".35em")
-		.style("text-anchor", "end")
-		.style("font-size","12px")
-		.text(function(d) { return $scope.legend[d]; });
+	if(scopeLegend) {
+		legend.append("text")
+			.attr("x", width - 140)
+			.attr("y", 9)
+			.attr("dy", ".35em")
+			.style("text-anchor", "end")
+			.style("font-size","12px")
+			.text(function(d) { return scopeLegend[d]; });
+	}
 
 	force.start();
 }

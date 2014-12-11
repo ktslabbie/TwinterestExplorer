@@ -8,5 +8,4 @@ server:
   adminConnectors:
   - type: http
     port: 8081
-template: Hello, %s!
 defaultName: BarackObama
