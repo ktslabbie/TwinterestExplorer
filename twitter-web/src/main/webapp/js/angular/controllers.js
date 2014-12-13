@@ -1,7 +1,9 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'SimilarityService', 'HCSService',
-                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, SimilarityService, HCSService) {
+.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'SimilarityService', 
+                                  'HCSService', 'EvaluationService', 'LDAService', 'Graph',
+                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, SimilarityService, 
+                                		  	HCSService, EvaluationService, LDAService, Graph) {
 	
 	$scope.loadingUser = false;
 	$scope.noUserFound = false;
@@ -20,16 +22,15 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.refreshCnt = 0;
 	
 	$scope.ldaTopics = 3;
-	$scope.ldaMinimumMembership = 0.5;
 	
 	$scope.generalityBias = 0;
 	$scope.concatenation = 50;
 	$scope.minimumSimilarity = 0.2;
-	$scope.relevanceScores = {};
 	
+	var graph = new Graph(1280, 960, "#graph");
 	$scope.legend = {};
-	var vertices = [];
-	var edges = [];
+	//var vertices = [];
+	//var edges = [];
 	
 	$scope.groups = {};
 	$scope.cfMap = {};
@@ -98,7 +99,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	var updateCFMap = function(user) {
 		
 		for(type in user.ontology.yagotypes) {
-			
+			// TODO: should be a display thing!
 			keyStr = type.split(":")[1];
 			var wordnetCode = keyStr.substr(keyStr.length - 9);
 			if(!isNaN(wordnetCode)) {
@@ -169,12 +170,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		SimilarityService.doWork(ev).then(function(data) {
 			
 			// We've finished calculating the similarity graph. Render the final version.
-			start();
+			graph.start();
 			$scope.loadingSimilarityGraph = false;
 			$scope.finishedSimilarityGraph = true;
 			
 			// Calculate the DCG scores for this network (if available).
-			if($scope.relevanceScores) $scope.calculateDCG();
+			if(EvaluationService.getRelevanceScores()) EvaluationService.dcg(graph.getNodes(), graph.getLinks());
 			
 			// Finally, cluster the similarity graph.
 			$scope.clusterNetwork();
@@ -182,108 +183,98 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	/**
-	 * Function to catch updates to the similarity graph.
+	 * Function to catch updates and push them to the similarity graph.
 	 */
 	$scope.$on('simGraphUpdate', function(event, data) {
-		var aNode = { name: $scope.users[data.i].screenName, group: 1, userIndex: data.i };
-		var bNode = { name: $scope.users[data.j].screenName, group: 1, userIndex: data.j };
-	
-		var aIndex = addNode(aNode), bIndex = addNode(bNode);
-		vertices[aIndex] = aNode; vertices[bIndex] = bNode;
-	
-		addLink({ source: aIndex, target: bIndex, value: data.similarity});
-		edges.push({ source: aIndex, target: bIndex, value: data.similarity});
+		// Create the new, ungrouped nodes.
+		var aNode = { name: $scope.users[data.i].screenName, group: 0, userIndex: data.i };
+		var bNode = { name: $scope.users[data.j].screenName, group: 0, userIndex: data.j };
 		
-		// Refresh SVG graph only one in ten updates, to make rendering smoother.
+		// Add the nodes (if not yet existing) and get their index.
+		var aIndex = graph.addNode(aNode);
+		var bIndex = graph.addNode(bNode);
+	
+		// Add the link between the nodes.
+		graph.addLink({ source: aIndex, target: bIndex, value: data.similarity});
+		
+		// Refresh SVG graph only one in 25 updates, to make rendering smoother.
 		$scope.refreshCnt++;
-		if($scope.refreshCnt % 50 == 0) start();
+		//graph.start();
+		if($scope.refreshCnt % 25 == 0) graph.start();
 	});
-	
-	$scope.calculateDCG = function() {
-		var dcgEdges = [];
-		_.each(edges, function(edge) {
-			if(edge.source == 0) {
-				dcgEdges.push(edge);
-			}
-		});
-		
-		var sortedDCGEdges = _.map(_.sortBy(dcgEdges, 'value'), _.values);
-		
-		var rankingStr = "Similarity ranking (" + sortedDCGEdges.length + " entries):\n";
-		for(var i = sortedDCGEdges.length; i--;) {
-			rankingStr += vertices[sortedDCGEdges[i][1]].name + "\t" + $scope.relevanceScores[vertices[sortedDCGEdges[i][1]].name].trim() + "\t" + sortedDCGEdges[i][2] + "\n";
-		}
-		
-		console.log(rankingStr);
-		var firstEdge = sortedDCGEdges[sortedDCGEdges.length-1];
-		var topK = [3, 5, 10, 25, 50];
-		var evaluationString = "";
-		
-		_.each(topK, function(k) {
-			if(k <= sortedDCGEdges.length) {
-			
-				var reli = 0.0;
-				var binreli = 0.0;
-				var dcg = parseFloat($scope.relevanceScores[vertices[firstEdge[1]].name]);
-				var binDCG = (parseFloat($scope.relevanceScores[vertices[firstEdge[1]].name]) > 0) ? 2 : 0;
-				var idcg = 2;
-				var index = 1;
-				
-				for(var i = sortedDCGEdges.length-1; i--;) {
-					var edge = sortedDCGEdges[i];
-					
-					if(index < k) {
-						reli = parseFloat($scope.relevanceScores[vertices[edge[1]].name]);
-						binreli = (parseFloat($scope.relevanceScores[vertices[edge[1]].name]) > 0) ? 2 : 0;
-						
-						dcg 	+= reli * 	Math.log(2) / Math.log(index+1);
-						binDCG 	+= binreli * 	Math.log(2) / Math.log(index+1);
-						idcg 	+= 2 	* 	Math.log(2) / Math.log(index+1);
-						index++;
-					}
-				}
-				
-				var nDCG = dcg / idcg;
-				var binnDCG = binDCG / idcg;
-				
-				evaluationString += "Top-" + k + "\t" + nDCG + "\t" + binnDCG + "\n";
-			}
-		});
-		
-		console.log(evaluationString);
-	}
 	
 	$scope.clusterNetwork = function() {
 		$scope.clusteringNetwork = true;
 		
-		var message = {};
-		message.nodes = vertices;
-		message.links = edges;
+		var e = {};
+		e.nodes = _.cloneDeep(graph.getNodes());
+		e.links = _.cloneDeep(graph.getLinks());
 		
-		HCSService.doWork(message).then(function(data) {
+		_.each(e.nodes, function(node) {
+			_.pick(node, ['name', 'group', 'userIndex']);
+		});
+		
+		_.each(e.links, function(link) {
+			link.source = _.pick(link.source, ['name', 'group', 'userIndex']);
+			link.target = _.pick(link.target, ['name', 'group', 'userIndex']);
+			_.pick(link, ['source', 'target', 'value']);
+		});
+		
+		HCSService.doWork(e).then(function(data) {
 			
 			// We've finished calculating the cluster graph. Render the final version.
 			$scope.clusteringNetwork = false;
 			
-			var includedNodes = {};
+			// First, clear the graph in its entirety.
+			graph.clearGraph();
+
+			// Add the clusters to the graph and group users accordingly.
+			_.each(data.clusters, function(cluster, i) {
+				var clusterNodes = cluster.nodes;
+				var clusterEdges = cluster.edges;
+				var groupIndex = i+1;
+				
+				var group = $scope.groups[groupIndex];
+				group.users = [];
+				group.sortedYagotypes = [];
+				
+				_.each(clusterNodes, function(node) {
+					var user = $scope.users[node.userIndex];
+					group.users.push(user);
+					group.sortedYagotypes.concat(user.ontology.sortedYagotypes);
+				});
+				
+				
+				graph.addCluster(clusterNodes, clusterEdges, groupIndex);
+			});
+			
+			// Update force settings and refresh.
+			graph.getForce().charge(-120).linkDistance(90);
+			graph.start();
+
+			
+			
+			
+			
+			/*var includedNodes = {};
 			var evalClusters = [];
-			var includedNodes = {};
 
 			for(var i = 0; i < data.clusters.length; i++) {
-				//var clusterSplit = data.clusters[i].split('-');
-				var clusterSplit = data.clusters[i];
+				var clusterNodes = data.clusters[i].cluster;
+				
 				$scope.groups[i+1] = {};
 				$scope.groups[i+1].users = [];
 				$scope.groups[i+1].sortedYagotypes = [];
+				
 				var group = $scope.groups[i+1];
 				var evalGroup = [];
 				
-				for(var j = 0; j < clusterSplit.length; j++) {
-					var node = clusterSplit[j];
+				for(var j = 0; j < clusterNodes.length; j++) {
+					var node = clusterNodes[j];
 					includedNodes[node] = true;
-					setGroup(node, i+1);
+					graph.setGroup(node, i+1);
 					
-					var user = $scope.users[nodes[node].userIndex];
+					var user = $scope.users[graph.getNodes()[node].userIndex];
 					group.users.push(user);
 					evalGroup.push(user.screenName);
 					
@@ -307,15 +298,14 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					}
 				}
 				
-				
-				
 				evalClusters.push(evalGroup);
 			}
-
-			for(var i = nodes.length-1; i >= 0; i--) {
+			
+			var i = graph.getNodes().length;
+			while(i--) {
 				if(!includedNodes[i]) {
-					removeNodeLinks(i);
-					removeNodeByIndex(i);
+					graph.removeNodeLinks(i);
+					graph.removeNodeByIndex(i);
 				}
 			}
 			
@@ -364,11 +354,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			console.log(labelString);
 			
 			//force.charge(-60);
-			force.linkDistance(60);
+			graph.getForce().linkDistance(60);
 
-			start($scope.legend);
+			graph.start($scope.legend);*/
 			
-			evaluateClusteringAccuracy(evalClusters, $scope.users.length);
+			//evaluateClusteringAccuracy(evalClusters, $scope.users.length);
 		});
 	}
 	
@@ -378,8 +368,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.finished = false;
 		$scope.showSimilarityGraph = false;
 		
-		//while(nodes.length > 0) nodes.pop();
-		//while(links.length > 0) links.pop();
+
 		
 		//start();
 		
@@ -544,137 +533,34 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	    
 	    if (file && file.length) {
 	        results = file.split("\n");
+	        var relevanceScores = {};
 	        
 	        _.each(results, function(result) {
 	        	var res = result.split("\t");
 	        	csvList += res[0] + ",";
-	        	$scope.relevanceScores[res[0]] = res[1];
+	        	relevanceScores[res[0]] = res[1];
 	        });
 	        
+	        EvaluationService.setRelevanceScores(relevanceScores);
 	        $scope.getDCGNetwork(csvList.substring(0, csvList.length - 1));
 	    }
 	}
 	
 	function applyLDA() {
-		var ldaWorker = new Worker("js/lda_worker.js");
-
-		//console.log("analysing "+sentences.length+" sentences...");
-		var documents = new Array();
-		var f = {};
-		var vocab = new Array();
-		var docCount = 0;
+		console.log("Applying LDA!");
 		
-		_.each($scope.users, function(user) {
-			var document = "";
-			
-			_.each(user.tweets, function (tweet) {
-				document += tweet.content.replace(/(\r\n|\n|\r)/gm,"") + " ";
-			});
-			
-			var words = document.split(/[\s,\"]+/);
-			if(!words) return;
-			var wordIndices = new Array();
-			for(var wc = 0; wc < words.length; wc++) {
-				var w = words[wc].toLowerCase().replace(/[^a-z\'A-Z0-9 ]+/g, '');
-				//TODO: Add stemming
-				if (w=="" || w.length==1 || stopwords[w] || w.indexOf("http")==0) continue;
-				if (f[w]) {
-					f[w] = f[w]+1;
-				} 
-				else if(w) { 
-					f[w] = 1; 
-					vocab.push(w); 
-				};	
-				wordIndices.push(vocab.indexOf(w));
-			}
-			if (wordIndices && wordIndices.length > 0) {
-				documents[docCount++] = wordIndices;
-			}
-		});
+		// Initialize the LDA vocabulary given the users and number of topics.
+		LDAService.init($scope.users, $scope.ldaTopics);
 		
-		var V = vocab.length;
-		var M = documents.length;
-		var K = $scope.ldaTopics;
-		var alpha = 50 / K;  // per-document distributions over topics (0.1)
-		var beta = 200 / V;  // per-topic distributions over words (0.01)
+		// Remaining configuration parameters, including base values for the Gibbs sampling. These will be divided by K and V, respectively.
+		// alpha: per-document distributions over topics (0.1)
+		// beta: per-topic distributions over words (0.01)
+		config = { iterations: 2000, burnIn: 400, thinInterval: 100, sampleLag: 10, gibbsAlphaNum: 50, gibbsBetaNum: 200 };
 		
-		var ev = {};
-		ev.configure = {docs: documents, v: V, iterations: 2000, burnIn: 400, thinInterval: 100, sampleLag: 10};
-		ev.gibbs = { K: K, alpha: alpha, beta: beta };
-		ldaWorker.postMessage(ev);
-		
-		ldaWorker.addEventListener('message', function(e) {
-			if(e.data.finished) {
-				$scope.$apply(function () {
-					
-					var theta = e.data.theta;
-					var phi = e.data.phi;
-					var output = "";
-					
-					//topics
-					var topTerms = 20;
-					
-					for (var k = 0; k < phi.length; k++) {
-						var tuples = new Array();
-						for (var w = 0; w < phi[k].length; w++) {
-							 tuples.push("" + phi[k][w] + "_" + vocab[w]);
-						}
-						tuples.sort().reverse();
-						if(topTerms > vocab.length) topTerms = vocab.length;
-						
-						for (var t = 0; t < topTerms; t++) {
-							var topicTerm = tuples[t].split("_")[1];
-							var prob = parseFloat(tuples[t].split("_")[0]);
-							
-							if (prob < 0.00000001) continue;
-							output += "topic " + k + ": " + topicTerm + " = " + (prob*100)  + "%\n";
-						}
-					}
-					
-					console.log(output);
-					
-					var output = "Topics/users:\n\n";
-					var topicUsers = new Array();
-					for (var i = 0; i < K; i++)  {
-						topicUsers[i] = new Array();
-					}
-					
-					$scope.ldaMinimumMembership = 1/($scope.ldaTopics - ( $scope.ldaTopics / 3) )
-					
-					for (var m = 0; m < theta.length; m++) {
-						
-						var topTopic = 0;
-						var topPercent = 0;
-						
-						output += $scope.users[m].screenName + " - ";
-						
-						for (var k = 0; k < theta[m].length; k++) {
-							var topicPercent = theta[m][k];
-							
-							output += "topic " + k + ": " + topicPercent + "\t";
-							
-							if(topicPercent > topPercent) {
-								topPercent = topicPercent;
-								topTopic = k;
-							}
-
-						}
-						
-						topicUsers[topTopic].push($scope.users[m].screenName);
-						//if(topPercent > $scope.ldaMinimumMembership) topicUsers[topTopic].push($scope.users[m].screenName);
-						
-						output += '\n';
-					}
-					
-					console.log(output);
-					
-					evaluateClusteringAccuracy(topicUsers, $scope.users.length);
-		        });
-				
-				console.log("LDA worker terminating!")
-				ldaWorker.terminate();
-			}	
-		}, false);
+		// Execute the LDA algorithm, then evaluate the result.
+		LDAService.doWork(config).then(function(topicUsers) {
+			evaluateClusteringAccuracy(topicUsers, $scope.users.length);
+        });
 	}
 }]);
 

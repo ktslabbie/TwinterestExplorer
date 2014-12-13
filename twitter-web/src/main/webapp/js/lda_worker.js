@@ -2,8 +2,6 @@
  * Based on http://www.arbylon.net/projects/LdaGibbsSampler.java
  */
 
-console.log("LDA worker starting!")
-
 function makeArray(x) {
 	var a = new Array();	
 	for (var i=0;i<x;i++)  {
@@ -187,10 +185,13 @@ self.addEventListener('message', function(e) {
 	
 	var ret = { finished: false };
 	
-	if(e.data.configure) {
-		lda.configure(e.data.configure.docs, e.data.configure.v, e.data.configure.iterations, 
-					  e.data.configure.burnIn, e.data.configure.thinInterval, e.data.configure.sampleLag);
-		lda.gibbs(e.data.gibbs.K, e.data.gibbs.alpha, e.data.gibbs.beta);
+	if(e.data) {
+		var alpha = e.data.gibbsAlphaNum / e.data.K;
+		var beta = e.data.gibbsBetaNum / e.data.V;
+		
+		lda.configure(e.data.docs, e.data.V, e.data.iterations, 
+					  e.data.burnIn, e.data.thinInterval, e.data.sampleLag);
+		lda.gibbs(e.data.K, alpha, beta);
 	}
 
 	ret.finished = true;
