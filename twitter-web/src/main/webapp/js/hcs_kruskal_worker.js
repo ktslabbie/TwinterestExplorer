@@ -46,7 +46,7 @@ function isHighlyConnected(nodes, edges) {
 		if(degree < k) k = degree;
 	}
 
-	return (k > n/2);
+	return (k > n/4);
 }
 
 function hcs(nodes, edges) {

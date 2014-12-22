@@ -70,7 +70,7 @@
 		    
 		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="noUserFound">No user found with that screen name.</h1>
 	    	
-	    	<div class="animate-show-hide" ng-show="!loadingNetwork && users[0].ontology.sortedYagotypes.length > 0 && users.length <= 1 && !userChanged()">
+	    	<div class="animate-show-hide" ng-show="!loadingNetwork && users[0].ontology.yagotypes && users.length <= 1 && !userChanged()">
 		    	<div class="col-md-1">Min. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>
 		    	<div class="col-md-1">Max. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="1000"></div>
 		    	<div class="col-md-1">Min. following: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>

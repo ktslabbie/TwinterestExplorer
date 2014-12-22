@@ -11,7 +11,7 @@
         <async-supported>true</async-supported>
         <init-param>
             <param-name>proxyTo</param-name>
-            <param-value>http://localhost:8080/</param-value>
+            <param-value>http://localhost:8090/</param-value>
         </init-param>
         <init-param>
             <param-name>Prefix</param-name>

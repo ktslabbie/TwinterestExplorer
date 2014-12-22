@@ -80,8 +80,8 @@ ldaService.factory("LDAService", ['$q',  function($q) {
 		console.log(output);
 		
 		var output = "Topics/users:\n\n";
-		var topicUsers = new Array();
-		for (var i = 0; i < props.K; i++) topicUsers[i] = new Array();
+		var topicUsers = [];
+		for (var i = 0; i < props.K; i++) topicUsers[i] = { users: new Array() };
 		
 		var minMembership = 1/(props.K - ( props.K / 3) )
 		
@@ -102,13 +102,17 @@ ldaService.factory("LDAService", ['$q',  function($q) {
 				}
 			}
 			
-			//topicUsers[topTopic].push(userScreenNames[m]);
-			if(topPercent > minMembership) topicUsers[topTopic].push(userScreenNames[m]);
+			var user = { screenName: userScreenNames[m] };
+			
+			topicUsers[topTopic].users.push(user);
+			//if(topPercent > minMembership) topicUsers[topTopic].users.push(user);
 			
 			output += '\n';
 		}
 		
 		console.log(output);
+		
+		
 		
 		defer.resolve(topicUsers);
 	}, false);

@@ -95,6 +95,8 @@ public class NetworkBuilder {
 					Log.getLogger().info("Adding user # " + userCount + " (@" + currentUser.getScreenName() + ") to graph.");
 					graph.addVertex(currentUser);
 					userCount++;
+				} else {
+					Log.getLogger().info("User (@" + currentUser.getScreenName() + ") already exists. Skipping.");
 				}
 
 				if(userCount > maxUsers) break;
@@ -111,6 +113,8 @@ public class NetworkBuilder {
 				} else {
 					processLocalUsers(currentUser);
 				}
+			} else {
+				Log.getLogger().info("User (@" + currentUser.getScreenName() + ") not valid. Skipping.");
 			}
 		}
 		//connectAllUsers();
@@ -222,6 +226,7 @@ public class NetworkBuilder {
 	 * @return true if valid
 	 */
 	private boolean isValidUser(TwitterUser currentUser) {
+		if(currentUser.getScreenName().equals("cccmanhattan")) return true;
 		return  currentUser != null &&
 				currentUser.getFollowersCount()	>= Vars.MIN_FOLLOWERS &&
 				currentUser.getFollowersCount()	<= Vars.MAX_FOLLOWERS &&

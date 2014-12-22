@@ -17,6 +17,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.clusteringNetwork = false;
 	
 	$scope.users = [];
+	$scope.groups = [];
 	$scope.screenName = "bnmuller";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
@@ -27,17 +28,41 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.concatenation = 50;
 	$scope.minimumSimilarity = 0.2;
 	
-	var graph = new Graph(1280, 960, "#graph");
-	$scope.legend = {};
-	//var vertices = [];
-	//var edges = [];
+	var graph;
 	
-	$scope.groups = {};
-	$scope.cfMap = {};
-	$scope.groupCFMap = {};
+	$scope.legend = {};
+	$scope.ufMap = {};
+	$scope.gfMap = {};
 	
 	$scope.yagoTypeBlackList = {"Abstraction": true, "Group": true, "YagoLegalActorGeo": true, "YagoPermanentlyLocatedEntity": true, "PhysicalEntity": true,
 								"Object": true, "YagoGeoEntity": true, "YagoLegalActor": true, "Whole": true, "Region": true, "Musician": true };
+	
+	/**
+	 * Initialize the state of the application.
+	 */
+	function init() {
+		$scope.loadingUser = false;
+		$scope.noUserFound = false;
+		$scope.loadingOntology = false;
+		$scope.loadingNetwork = false;
+		$scope.processing = false;
+		$scope.finished = false;
+		$scope.showSimilarityGraph = false;
+		$scope.loadingSimilarityGraph = false;
+		$scope.finishedSimilarityGraph = false;
+		$scope.clusteringNetwork = false;
+		
+		$scope.users = [];
+		$scope.groups = [];
+		$scope.refreshCnt = 0;
+		
+		
+		graph = new Graph(960, 720, "#graph");
+		
+		$scope.legend = {};
+		$scope.ufMap = {};
+		$scope.gfMap = {};
+	}
 	
 	/* Function to check if the active user has changed (exact name no longer in input box). */
 	$scope.userChanged = function() {
@@ -45,110 +70,98 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		return $scope.screenName.toLowerCase() != $scope.users[0].screenName.toLowerCase();
 	}
 	
-	/* Extract retweets, hashtags and mentions from a user's tweets. */
-	var getTweetStats = function(user) {
+	/**
+	 *  Extract retweets, hashtags and mentions from a user's tweets.
+	 */
+	function getTweetStats(user) {
 		var retweets = 0, hashtags = {}, mentions = {};
 		
 		_.each(user.tweets, function(tweet) {
-			_.each(tweet.hashtags, function(tag) {
-				hashtags[tag] = hashtags[tag] ? hashtags[tag]+1 : 1;
-			});
-			
-			_.each(tweet.userMentions, function(men) {
-				mentions[men] = mentions[men] ? mentions[men]+1 : 1;
-			});
-			
+			_.each(tweet.hashtags, function(tag) { hashtags[tag] = hashtags[tag] ? hashtags[tag]+1 : 1; });
+			_.each(tweet.userMentions, function(men) { mentions[men] = mentions[men] ? mentions[men]+1 : 1; });
 			if(tweet.retweet) retweets++;
 		});
 		
-		var htList = [];
-		mList = [];
-		
+		var htList = [], mList = [];
 		for(key in hashtags) htList.push({ tag: key, occ: hashtags[key] });
 		for(key in mentions) mList.push({ mention: key, occ: mentions[key] });
 		
-		user.retweets = retweets;
-		user.hashtags = htList;
-		user.userMentions = mList;
+		user.retweets = retweets; user.hashtags = htList; user.userMentions = mList;
 	}
 	
-	var normalizeCFIUF = function(user, userCFIUFMap, euclidLength) {
-		var map = {};
-		var tuples = [];
-
-		for (var key in userCFIUFMap) {
-			var cfIufNorm = (euclidLength == 0) ? 0 : userCFIUFMap[key] / euclidLength;
-			tuples.push([ key, cfIufNorm ]);
-			map[key] = cfIufNorm;
-		}
-
-		tuples.sort(function(a, b) {
-		    a = a[1]; b = b[1];
-		    return a > b ? -1 : (a < b ? 1 : 0);
-		});
+	/**
+	 * Extracts a more readable name from a YAGO type.
+	 */
+	$scope.getTypeName = function(yagoType) {
+		var typeName = yagoType.split(":")[1];
+		var wordnetCode = typeName.substr(typeName.length - 9);
 		
-		user.topTypes = [];
+		if(!isNaN(wordnetCode))
+			typeName = typeName.substr(0, typeName.length - 9);
 		
-		for(var i = 0; i < 10; i++) {
-			user.topTypes.push(tuples[i]);
-		}
-
-		return map;
+		return typeName;
 	}
 	
-	var updateCFMap = function(user) {
-		
-		for(type in user.ontology.yagotypes) {
-			// TODO: should be a display thing!
-			keyStr = type.split(":")[1];
-			var wordnetCode = keyStr.substr(keyStr.length - 9);
-			if(!isNaN(wordnetCode)) {
-				keyStr = keyStr.substr(0, keyStr.length - 9);
-			}
-			
-			user.ontology.sortedYagotypes.push([keyStr, user.ontology.yagotypes[type]]);
-			$scope.cfMap[keyStr] = $scope.cfMap[keyStr] ? $scope.cfMap[keyStr] + 1 : 1;
-			if($scope.cfMap[keyStr] > $scope.users.length) $scope.cfMap[keyStr] = $scope.users.length;
-		}
+	/**
+	 * Return the top-k types sorted by their value.
+	 */
+	function getTopTypes(map, k) {
+		return _.map(_.first(_.sortBy(_.pairs(map), function(tuple) { return -tuple[1]; }), k), function(type) { type[0] = $scope.getTypeName(type[0]); return type; });
 	}
 	
-	var updateCFIUF = function(index) {
-		var userCFIUFMap = {};
-		
+	/**
+	 * Normalize the CF-IUF map to values between 0 and 1 given the Euclidian length of all CF-IUF scores.
+	 */
+	function normalizeCFIUF(user, userCFIUFMap, euclidLength) {
+		return map = (euclidLength === 0) ? userCFIUFMap : _.mapValues(userCFIUFMap, function(val) { return val/euclidLength; });
+	}
+	
+	/**
+	 * Update the user frequency map with new values.
+	 */
+	function updateUFMap(ufMap, typeMap) {
+		for(type in typeMap) ufMap[type] = ufMap[type] ? ufMap[type] + 1 : 1;
+	}
+	
+	/**
+	 * Update the CF-IUF scores for all entities (can be users or groups of users) up to entities[userIndex].
+	 */
+	function updateCFIUF(entities, ufMap, index) {
 		for(var i = 0; i <= index; i++) {
-			var currentUser = $scope.users[i];
+			var currentEntity = entities[i];
+			var yagoTypes = currentEntity.ontology.yagotypes;
 			
-			userCFIUFMap = {};
+			entityCFIUFMap = {};
 			var cfIufSum = 0;
 			
-			_.each(currentUser.ontology.sortedYagotypes, function(type) {
-				var cf = type[1];
-				var iuf = Math.log($scope.users.length / $scope.cfMap[type[0]]);
+			_.each(_.keys(yagoTypes), function(type) {
+				var cf = yagoTypes[type];
+				var iuf = Math.log(entities.length / ufMap[type]);
 				var cfIuf = (Math.pow(cf, 1 + parseFloat($scope.generalityBias)))*(Math.pow(iuf, 1 - parseFloat($scope.generalityBias)));
 				
 				cfIufSum += Math.pow(cfIuf, 2);
-				userCFIUFMap[type[0]] = cfIuf;
+				entityCFIUFMap[type] = cfIuf;
 			});
 			
 			var euclidLength = Math.sqrt(cfIufSum);
 			
-			if(currentUser.ontology.cfIufMap) {
-				var newMap = normalizeCFIUF(currentUser, userCFIUFMap, euclidLength);
+			if(currentEntity.ontology.cfIufMap) {
+				var newMap = normalizeCFIUF(currentEntity, entityCFIUFMap, euclidLength);
 				
 				for(var key in newMap) {
-					if(!currentUser.ontology.cfIufMap[key]) {
-						currentUser.ontology.cfIufMap[key] = newMap[key];
+					if(!currentEntity.ontology.cfIufMap[key]) {
+						currentEntity.ontology.cfIufMap[key] = newMap[key];
 					} else {
-						var a = Math.round(currentUser.ontology.cfIufMap[key] * 100) / 100;
+						var a = Math.round(currentEntity.ontology.cfIufMap[key] * 100) / 100;
 						var b = Math.round(newMap[key] * 100) / 100;
-						if(a != b) currentUser.ontology.cfIufMap[key] = newMap[key];
+						if(a != b) currentEntity.ontology.cfIufMap[key] = newMap[key];
 					}
 				}
-				
 			} else {
-				
-				currentUser.ontology.cfIufMap = normalizeCFIUF(currentUser, userCFIUFMap, euclidLength);
+				currentEntity.ontology.cfIufMap = normalizeCFIUF(currentEntity, entityCFIUFMap, euclidLength);
 			}
+			
+			currentEntity.ontology.topTypes = getTopTypes(currentEntity.ontology.cfIufMap, 5);
 		}
 	}
 	
@@ -203,17 +216,20 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		if($scope.refreshCnt % 25 == 0) graph.start();
 	});
 	
+	/**
+	 * Function to cluster the network, assuming we have a similarity graph.
+	 */
 	$scope.clusterNetwork = function() {
 		$scope.clusteringNetwork = true;
 		
 		var e = {};
+		
+		// Copy the nodes and links from the current graph.
 		e.nodes = _.cloneDeep(graph.getNodes());
 		e.links = _.cloneDeep(graph.getLinks());
 		
-		_.each(e.nodes, function(node) {
-			_.pick(node, ['name', 'group', 'userIndex']);
-		});
-		
+		// Remove unneeded info that will prevent comparisons from the nodes and links.
+		_.each(e.nodes, function(node) { _.pick(node, ['name', 'group', 'userIndex']); });
 		_.each(e.links, function(link) {
 			link.source = _.pick(link.source, ['name', 'group', 'userIndex']);
 			link.target = _.pick(link.target, ['name', 'group', 'userIndex']);
@@ -221,7 +237,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		});
 		
 		HCSService.doWork(e).then(function(data) {
-			
 			// We've finished calculating the cluster graph. Render the final version.
 			$scope.clusteringNetwork = false;
 			
@@ -232,145 +247,53 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			_.each(data.clusters, function(cluster, i) {
 				var clusterNodes = cluster.nodes;
 				var clusterEdges = cluster.edges;
-				var groupIndex = i+1;
-				
-				var group = $scope.groups[groupIndex];
-				group.users = [];
-				group.sortedYagotypes = [];
+				var group = { users: [], ontology: { yagotypes: {} } };
 				
 				_.each(clusterNodes, function(node) {
 					var user = $scope.users[node.userIndex];
+					user.tweets = [];
 					group.users.push(user);
-					group.sortedYagotypes.concat(user.ontology.sortedYagotypes);
+					
+					// Merge YAGO types of this user into the YAGO types of the group.
+					group.ontology.yagotypes = _.merge(user.ontology.yagotypes, group.ontology.yagotypes, function(a, b) { return _.isNumber(a) ? _.isNumber(b) ? a+b : a : b; });
 				});
 				
-				
-				graph.addCluster(clusterNodes, clusterEdges, groupIndex);
+				// Update the group-based User Frequency map.
+				updateUFMap($scope.gfMap, group.ontology.yagotypes);
+				$scope.groups.push(group);
+				graph.addCluster(clusterNodes, clusterEdges, i);
 			});
 			
-			// Update force settings and refresh.
-			graph.getForce().charge(-120).linkDistance(90);
-			graph.start();
+			// Update the CF-IUF maps for each group. Top types will be calculated too.
+			updateCFIUF($scope.groups, $scope.gfMap, $scope.groups.length-1);
 
-			
-			
-			
-			
-			/*var includedNodes = {};
-			var evalClusters = [];
-
-			for(var i = 0; i < data.clusters.length; i++) {
-				var clusterNodes = data.clusters[i].cluster;
-				
-				$scope.groups[i+1] = {};
-				$scope.groups[i+1].users = [];
-				$scope.groups[i+1].sortedYagotypes = [];
-				
-				var group = $scope.groups[i+1];
-				var evalGroup = [];
-				
-				for(var j = 0; j < clusterNodes.length; j++) {
-					var node = clusterNodes[j];
-					includedNodes[node] = true;
-					graph.setGroup(node, i+1);
-					
-					var user = $scope.users[graph.getNodes()[node].userIndex];
-					group.users.push(user);
-					evalGroup.push(user.screenName);
-					
-					
-					for(var k = 0; k < user.ontology.sortedYagotypes.length; k++) {
-						
-						var added = false;
-						
-						for(var l = 0; l < group.sortedYagotypes.length; l++) {
-							if(group.sortedYagotypes[l][0] == user.ontology.sortedYagotypes[k][0]) {
-								group.sortedYagotypes[l][1] += user.ontology.sortedYagotypes[k][1];
-								added = true;
-								break;
-							}
-						}
-						
-						if(!added) {
-							group.sortedYagotypes.push(user.ontology.sortedYagotypes[k]);
-							$scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] = $scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] ? $scope.groupCFMap[user.ontology.sortedYagotypes[k][0]] + 1 : 1;
-						}
-					}
-				}
-				
-				evalClusters.push(evalGroup);
-			}
-			
-			var i = graph.getNodes().length;
-			while(i--) {
-				if(!includedNodes[i]) {
-					graph.removeNodeLinks(i);
-					graph.removeNodeByIndex(i);
-				}
-			}
-			
-			var groupCFIUFMap = {};
-			
 			var labelString = "\nTopic labels:\n\n";
 			
-			for(var i = 1; i <= data.clusters.length; i++) {
-				var currentGroup = $scope.groups[i];
-				groupCFIUFMap = {};
-				var cfIufSum = 0;
-				var types = currentGroup.sortedYagotypes;
-
-				for(var j = 0; j < types.length; j++) {
-					var type = types[j];
-					var cf = type[1];
-					var iuf = Math.log(Object.keys($scope.groups).length / $scope.groupCFMap[type[0]]);
-					var cfIuf = (Math.pow(cf, 1 + $scope.generalityBias))*(Math.pow(iuf, 1 - $scope.generalityBias));
-					
-					cfIufSum += Math.pow(cfIuf, 2);
-					
-					groupCFIUFMap[type[0]] = cfIuf;
-				}
+			_.each($scope.groups, function(group, i) {
+				var legendText = group.ontology.topTypes[0][0];
+				labelString += "Topic " + (i+1) + ": ";
 				
-				var euclidLength = Math.sqrt(cfIufSum);
-				
-				currentGroup.cfIufMap = normalizeCFIUF(currentGroup, groupCFIUFMap, euclidLength);
-				var legendText = currentGroup.topTypes[0][0];
-				
-				for(var j = 1; j < 5; j++) {
-					legendText += ", " + currentGroup.topTypes[j][0];
+				for(var j = 1; j < group.ontology.topTypes.length; j++) {
+					legendText += ", " + group.ontology.topTypes[j][0];
 				}
 				
 				$scope.legend[i] = legendText;
-				
-				labelString += "Topic " + (i-1) + ": ";
-				labelString += legendText;
-				
-				for(var j = 5; j < 10; j++) {
-					labelString += ", " + currentGroup.topTypes[j][0];
-				}
-				
-				labelString += "\n";
-			}
+				labelString += legendText + "\n";
+			});
 			
 			console.log(labelString);
 			
-			//force.charge(-60);
-			graph.getForce().linkDistance(60);
+			// Update force settings and refresh.
+			graph.getForce().charge(-90).linkDistance(90);
+			graph.start($scope.legend);
 
-			graph.start($scope.legend);*/
-			
-			//evaluateClusteringAccuracy(evalClusters, $scope.users.length);
+			// Evaluate the accuracy of the clustering result (if ground truth present).
+			EvaluationService.mcc($scope.groups, $scope.users.length);
 		});
 	}
 	
 	$scope.getUser = function() {
-		$scope.cfMap = {};
-		$scope.processing = false;
-		$scope.finished = false;
-		$scope.showSimilarityGraph = false;
-		
-
-		
-		//start();
+		init();
 		
 		$scope.noUserFound = false;
 		$scope.users = [];
@@ -425,10 +348,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		user.loadingOntology = true;
 		var ontologyJSON = UserOntology.ontology({ name: user.screenName, concatenation: $scope.concatenation }, function() {
 			user.ontology = ontologyJSON.user.userOntology;
-			user.ontology.sortedYagotypes = [];
 			
-			updateCFMap(user);
-			updateCFIUF(0);
+			updateUFMap($scope.ufMap, user.ontology.yagotypes);
+			updateCFIUF($scope.users, $scope.ufMap, 0);
 			
 			user.loadingOntology = false;
 		});
@@ -473,14 +395,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			var ontologyJSON = UserOntology.ontology({ name: $scope.users[index].screenName }, function() {
 				
 				$scope.users[index].ontology = ontologyJSON.user.userOntology;
-				$scope.users[index].ontology.sortedYagotypes = [];
-				
 				$scope.users[index].loadingOntology = false;
 				
-				updateCFMap($scope.users[index]);
+				updateUFMap($scope.ufMap, $scope.users[index].ontology.yagotypes);
 				
 				if(index % 50 == 0) {
-					updateCFIUF(index);
+					updateCFIUF($scope.users, $scope.ufMap, index);
 				}
 				
 				index += 1;
@@ -489,13 +409,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					$scope.processNetwork(index);
 				} else {
 					if((index-1) % 50 != 0) {
-						updateCFIUF(index-1);
+						updateCFIUF($scope.users, $scope.ufMap, index-1);
 					}
 					$scope.finished = true;
-					//applyLDA();
+					applyLDA();
 				}
 			});
-			
 		});
 	}
 	
@@ -559,7 +478,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		
 		// Execute the LDA algorithm, then evaluate the result.
 		LDAService.doWork(config).then(function(topicUsers) {
-			evaluateClusteringAccuracy(topicUsers, $scope.users.length);
+			EvaluationService.mcc(topicUsers, $scope.users.length);
         });
 	}
 }]);

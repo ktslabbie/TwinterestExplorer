@@ -18,7 +18,7 @@ graphService.factory('Graph', function() {
 			.nodes(nodes)
 			.links(links)
 			.charge(-240)
-			.linkDistance(240)
+			.linkDistance(120)
 			.size([width, height])
 			.on("tick", tick);
 
@@ -95,6 +95,14 @@ graphService.factory('Graph', function() {
 		}
 		
 		/** 
+		 * Removes all nodes and links from the graph, as well as the graph itself.
+		 */
+		this.killGraph = function() {
+			that.clearGraph();
+			svg.selectAll("").remove();
+		}
+		
+		/** 
 		 * Adds a cluster (given nodes and links) to the graph and assigns it a group number.
 		 */
 		this.addCluster = function(pNodes, pLinks, group) {
@@ -162,7 +170,7 @@ graphService.factory('Graph', function() {
 		}
 		
 		function tick() {
-			var k = 0.015;
+			var k = 0.02;
 
 			nodes.forEach(function(o, i) {
 				if(o.group % 5 == 0) {
