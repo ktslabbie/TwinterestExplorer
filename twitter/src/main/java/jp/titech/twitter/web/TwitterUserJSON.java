@@ -16,9 +16,9 @@ public class TwitterUserJSON {
     public TwitterUserJSON(TwitterUser user) {
     	this.user = user;
     	
-    	for (Tweet tweet : this.user.getTweets()) {
+    	/*for (Tweet tweet : this.user.getTweets()) {
 			tweet.stripNonHashtagElements();
-		}
+		}*/
     }
     
     @JsonProperty

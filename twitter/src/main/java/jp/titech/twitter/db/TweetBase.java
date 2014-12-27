@@ -54,8 +54,8 @@ public class TweetBase {
 	addMediaStatement, addLocationStatement, addOntologyStatement, addUserStatement, updateUserEnglishRateStatement, addUserFollowerStatement;
 
 	private PreparedStatement 	getSingleTweetStatement, getTweetsStatement, getHashtagsStatement, getLocationStatement, getURLStatement,
-	getUserMentionsStatement, getMediaStatement, getUserOntologyStatement, getUserByIDStatement,
-	getUserByNameStatement, getUserFollowersStatement;
+	getUserMentionsStatement, getMediaStatement, getUserOntologyStatement, getUserByIDStatement, getAllUsersStatement,
+	getUserByNameStatement, getUserFollowersStatement, updateSingleTweetStatement;
 
 	/**
 	 * Default constructor.
@@ -103,8 +103,10 @@ public class TweetBase {
 			getUserOntologyStatement 	= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_ontology.sql"));
 			getUserByIDStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_by_id.sql"));
 			getUserByNameStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_by_screen_name.sql"));
+			getAllUsersStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_all_users.sql"));
 			getUserFollowersStatement	= dbConnection.prepareStatement(Util.readFile(this.sqlSelectDir + "select_user_followers.sql"));
 			
+			updateSingleTweetStatement 		= dbConnection.prepareStatement(Util.readFile(this.sqlUpdateDir + "update_single_tweet.sql"));
 			updateUserEnglishRateStatement	= dbConnection.prepareStatement(Util.readFile(this.sqlUpdateDir + "update_user_english_rate.sql"));
 
 			Log.getLogger().info("SQL statements prepared.");
@@ -432,8 +434,8 @@ public class TweetBase {
 				user = new TwitterUser(resultSet.getLong(1), userName, resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), 
 						resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), resultSet.getDate(9), resultSet.getBoolean(10), resultSet.getDouble(11), resultSet.getString(12));
 
-				//user.setTweets(getTweets(resultSet.getLong(1)));
-				//user.setUserOntology(getUserOntology(resultSet.getLong(1)));
+				user.setTweets(getTweets(resultSet.getLong(1)));
+				user.setUserOntology(getUserOntology(resultSet.getLong(1)));
 			}
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 
@@ -462,6 +464,38 @@ public class TweetBase {
 		} catch (SQLException sqle) { sqle.printStackTrace(); }
 
 		return user;
+	}
+	
+	public void stripAllTweets() {
+
+		try {
+			ResultSet resultSet = getAllUsersStatement.executeQuery();
+
+			while(resultSet.next()) {
+				List<Tweet> tweets = getTweets(resultSet.getLong(1));
+				
+				for(Tweet tweet : tweets) {
+					tweet.stripElements();
+					updateTweet(tweet);
+				}
+			}
+
+		} catch (SQLException sqle) { sqle.printStackTrace(); }
+
+	}
+
+	private void updateTweet(Tweet tweet) {
+		
+		long tweetID = tweet.getTweetID();
+		
+		try {
+			updateSingleTweetStatement.clearParameters();
+			updateSingleTweetStatement.setString(1, tweet.getContent());
+			updateSingleTweetStatement.setLong(2, tweetID);
+			updateSingleTweetStatement.executeUpdate();
+			Log.getLogger().info("Successfully (?) updated tweet! New content: " + tweet.getContent());
+			
+		} catch (SQLException sqle) { sqle.printStackTrace(); }
 	}
 
 	/**

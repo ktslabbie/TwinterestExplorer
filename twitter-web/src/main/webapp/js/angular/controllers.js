@@ -1,8 +1,8 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'SimilarityService', 
+.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'UserList', 'SimilarityService', 
                                   'HCSService', 'EvaluationService', 'LDAService', 'Graph',
-                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, SimilarityService, 
+                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, UserList, SimilarityService, 
                                 		  	HCSService, EvaluationService, LDAService, Graph) {
 	
 	$scope.loadingUser = false;
@@ -21,12 +21,27 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.screenName = "bnmuller";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
+	$scope.tweetsPerUser = 150;
 	
+	// # of topics for LDA.
 	$scope.ldaTopics = 3;
 	
+	// Named Entity Recognition settings.
+	$scope.nerConfidence = 0.2;
+	$scope.nerSupport = 0;
 	$scope.generalityBias = 0;
 	$scope.concatenation = 50;
+	
+	// Minimum similarity threshold.
 	$scope.minimumSimilarity = 0.2;
+	
+	// Twitter user restrictions.
+	$scope.minFollowers = 50;
+	$scope.maxFollowers = 1000;
+	$scope.minFollowing = 50;
+	$scope.maxFollowing = 1000;
+	$scope.minTweets = 150;
+	$scope.maxTweets = 10000;
 	
 	var graph;
 	
@@ -368,13 +383,31 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	};
 	
 	$scope.getDCGNetwork = function(userRelevanceList) {
+		
 		$scope.loadingNetwork = true;
-		var networkJSON = UserNetwork.network({ list: userRelevanceList }, function() {
-			_.each(networkJSON.network, function(user) {
+		$scope.processing = true;
+		
+		var userListJSON = UserList.list({ list: userRelevanceList }, function() {
+			
+			_.each(userListJSON.twitterUserList, function(user) {
+				user.imageVisible = true;
+				user.ontology = user.userOntology;
+				delete user.userOntology;
+				delete user.ontology.ontology;
+				
+				getTweetStats(user);
+				
+				updateUFMap($scope.ufMap, user.ontology.yagotypes);
+				
 				$scope.users.push(user);
 			});
+			
+			updateCFIUF($scope.users, $scope.ufMap, $scope.users.length-1);
+			
+			$scope.finished = true;
 			$scope.loadingNetwork = false;
 			$scope.pageSize = 10;
+			applyLDA();
 		});
 	};
 	
@@ -469,17 +502,19 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		console.log("Applying LDA!");
 		
 		// Initialize the LDA vocabulary given the users and number of topics.
-		LDAService.init($scope.users, $scope.ldaTopics);
+		//LDAService.init($scope.users, $scope.ldaTopics);
+		var csv = LDAService.prepareTMTInput($scope.users);
+		console.log(csv);
 		
 		// Remaining configuration parameters, including base values for the Gibbs sampling. These will be divided by K and V, respectively.
 		// alpha: per-document distributions over topics (0.1)
 		// beta: per-topic distributions over words (0.01)
-		config = { iterations: 2000, burnIn: 400, thinInterval: 100, sampleLag: 10, gibbsAlphaNum: 50, gibbsBetaNum: 200 };
+		//config = { iterations: 2000, burnIn: 400, thinInterval: 100, sampleLag: 10, gibbsAlphaNum: 50, gibbsBetaNum: 200 };
 		
 		// Execute the LDA algorithm, then evaluate the result.
-		LDAService.doWork(config).then(function(topicUsers) {
+		/*LDAService.doWork(config).then(function(topicUsers) {
 			EvaluationService.mcc(topicUsers, $scope.users.length);
-        });
+        });*/
 	}
 }]);
 

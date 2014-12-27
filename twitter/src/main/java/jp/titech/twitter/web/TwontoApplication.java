@@ -26,12 +26,14 @@ public class TwontoApplication extends Application<TwontoConfiguration> {
 		final UserTweetsResource userTweetsResource = new UserTweetsResource();
 		final UserOntologyResource userOntologyResource = new UserOntologyResource(configuration.getDefaultName());
 		final UserNetworkResource userNetworkResource = new UserNetworkResource(configuration.getDefaultName());
+		final TwitterUserListResource twitterUserListResourceResource = new TwitterUserListResource();
 		final APIHealthCheck healthCheck = new APIHealthCheck();
 		    
 		environment.jersey().register(twitterUserResource);
 		environment.jersey().register(userTweetsResource);
 		environment.jersey().register(userOntologyResource);
 		environment.jersey().register(userNetworkResource);
+		environment.jersey().register(twitterUserListResourceResource);
 		environment.healthChecks().register("template", healthCheck);
 	}
 }

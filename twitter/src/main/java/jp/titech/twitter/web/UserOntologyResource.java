@@ -9,6 +9,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBaseUtil;
@@ -32,15 +33,21 @@ public class UserOntologyResource {
     		Vars.CONCATENATION_WINDOW = concatenation.get();
     	}
     	
-    	
     	if(id.isPresent()) {
     		targetUser = TweetBaseUtil.getTwitterUserWithID(id.get());
     	} else {
     		targetUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
     	}
     	
-    	OntologyController ontologyController = OntologyController.getInstance();
-		ontologyController.createUserOntology(targetUser);
-        return new TwitterUserJSON(targetUser);
+    	if(!targetUser.hasTweets()) {
+    		MiningController mc = MiningController.getInstance();
+        	mc.mineUser(targetUser);
+    	}
+    	
+    	if(targetUser.getEnglishRate() > 0.8) {
+    		OntologyController ontologyController = OntologyController.getInstance();
+    		ontologyController.createUserOntology(targetUser);
+            return new TwitterUserJSON(targetUser);
+    	} else return null;
     }
 }

@@ -160,6 +160,22 @@ ldaService.factory("LDAService", ['$q',  function($q) {
 			props.docs = documents;
 		},
 		
+		prepareTMTInput: function(users) {
+			var allCount = 0;
+			var csv = "";
+			
+			_.each(users, function(user) {				
+				_.each(user.tweets, function (tweet) {
+					allCount++;
+					csv += '' + allCount + ',' + user.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
+				});
+			});
+			
+			console.log("TMT data prepared!");
+			
+			return csv;
+		},
+		
         doWork: function(config) {        	
         	angular.extend(config, props);
         	

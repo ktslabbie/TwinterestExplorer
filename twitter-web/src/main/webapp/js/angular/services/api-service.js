@@ -23,3 +23,9 @@ twitterAPIService.factory('UserNetwork', ['$resource', function($resource) {
 						network: { isArray: false, method: 'get'}
 	});
 }]);
+
+twitterAPIService.factory('UserList', ['$resource', function($resource) {
+	return $resource('/api/get-user-list', { }, {
+						list: { isArray: false, method: 'get'}
+	});
+}]);

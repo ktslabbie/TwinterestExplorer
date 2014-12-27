@@ -18,7 +18,8 @@
 		<h1 class="text-center text-title"><img class="icon-twit" src="img/twitter-256.png" height="48"> Twitter Interest Community Builder (<strong>Beta</strong>)</h1>
 	</div>
     	
-    <div class="container" ng-controller="TwitterController">    	
+    <div class="container" ng-controller="TwitterController">  
+      	
    		<div class="row">
    			<div class="col-md-6">
     			<h3>By seed user:</h3>
@@ -32,7 +33,7 @@
 				    </div>
 			    </form>
 		    </div>
-		    <div class="col-md-6 text-muted">
+		    <div class="col-md-5 text-muted">
     			<h3>By keyword:</h3>
 	    		<form class="form-target-user disabled">
 				    <div class="input-group input-group-lg text-muted">
@@ -43,41 +44,87 @@
 				    </div>
 			    </form>
 		    </div>
+		    <div class="col-md-1 text-muted" style="padding-top: 60px;">
+    			<a href="" data-toggle="modal" data-target="#settingsModal" ng-click="openModal = true"><i class="fa fa-gear pull-left" style="color: #666666; font-size: 36px;"></i></a>
+	    		
+		    </div>
+		</div>
+		
+		<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			<div class="modal-dialog" style="width: 90%">
+				<div class="modal-content">
+					<div class="modal-header text-center">
+						<button type="button" class="close" data-dismiss="modal">
+							<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+						</button>
+						<h4 class="modal-title" id="myModalLabel">Settings</h4>
+					</div>
+					<div class="modal-body">
+						<div class="row">
+							<div class="col-md-6">
+								<h3>Twitter mining</h3>
+							</div>
+							<div class="col-md-6">
+								<h3>Named Entity Recognition</h3>
+							</div>
+						</div>
+						<div class="row">
+					    	<div class="col-md-1">
+					    		Tweets/user: <input type="text" ng-model="tweetsPerUser" class="form-control">
+					    	</div>
+					    	<div class="col-md-2">
+					    		Processed in groups of: <input type="text" ng-model="concatenation" class="form-control">
+					    	</div>
+					    	<div class="col-md-3">
+					    		<div>Mining mode:</div> 
+					    		<div class="btn-group" data-toggle="buttons">
+							        <label class="btn btn-default active"><input type="radio" name="year" value="none" checked="">None</label>
+							        <label class="btn btn-default"><input type="radio" name="year" value="new">New</label>
+							        <label class="btn btn-default"><input type="radio" name="year" value="all">All</label>
+							    </div>
+					    	</div>
+					    	<div class="col-md-1">NER confidence: <input type="text" ng-model="nerConfidence" class="form-control"></div>
+					    	<div class="col-md-1">NER support: <input type="text" ng-model="nerSupport" class="form-control"></div>
+					    	<div class="col-md-1">LDA topics: <input type="text" ng-model="ldaTopics" class="form-control"></div>
+					    </div>
+					    <div class="row">
+							<div class="col-md-6">
+								<h3>User collection restrictions</h3>
+							</div>
+							<div class="col-md-6">
+								<h3>Clustering</h3>
+							</div>
+						</div>
+					    <div class="row">
+					    	<div class="col-md-1">Min. followers: <input type="text" ng-model="minFollowers" class="form-control"></div>
+					    	<div class="col-md-1">Max. followers: <input type="text" ng-model="maxFollowers" class="form-control"></div>
+					    	<div class="col-md-1">Min. following: <input type="text" ng-model="minFollowing" class="form-control"></div>
+					    	<div class="col-md-1">Max. following: <input type="text" ng-model="maxFollowing" class="form-control"></div>
+					    	<div class="col-md-1">Min. tweets: <input type="text" ng-model="minTweets" class="form-control"></div>
+					    	<div class="col-md-1">Max. tweets: <input type="text" ng-model="maxTweets" class="form-control"></div>
+					    	
+					    	<div class="col-md-2">
+					    		Generality bias (0-1): <input type="text" ng-model="generalityBias" class="form-control">
+					    	</div>
+					    	<div class="col-md-2">
+					    		Similarity threshold: <input type="text" ng-model="minimumSimilarity" class="form-control">
+					    	</div>
+					    	
+					    </div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Save & close</button>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<div class="row row-settings" ng-cloak>
     		<div class="col-md-12 spinner-large text-center" ng-if="loadingUser"><i class="fa fa-spinner fa-spin"></i></div>
 
-			<div class="animate-show-hide" ng-show="!loadingUser && (users.length == 0 || userChanged())">
-		    	<div class="col-md-1 animate-show-hide">
-		    		Tweets/user: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="200">
-		    	</div>
-		    	<div class="col-md-2 animate-show-hide">
-		    		Processed in groups of: <input type="text" ng-model="concatenation" class="form-control" placeholder="50">
-		    	</div>
-		    	<div class="col-md-2 animate-show-hide">
-		    		<div>Mining mode:</div> 
-		    		<div class="btn-group" data-toggle="buttons">
-				        <label class="btn btn-default active"><input type="radio" name="year" value="none" checked="">None</label>
-				        <label class="btn btn-default"><input type="radio" name="year" value="new">New</label>
-				        <label class="btn btn-default"><input type="radio" name="year" value="all">All</label>
-				    </div>
-		    	</div>
-		    	<div class="col-md-2 animate-show-hide">NER confidence: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0.2"></div>
-		    	<div class="col-md-2 animate-show-hide">NER support: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="0"></div>
-		    	<div class="col-md-2 animate-show-hide">LDA topics: <input type="text" ng-model="ldaTopics" class="form-control"></div>
-		    </div>
-		    
 		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="noUserFound">No user found with that screen name.</h1>
 	    	
 	    	<div class="animate-show-hide" ng-show="!loadingNetwork && users[0].ontology.yagotypes && users.length <= 1 && !userChanged()">
-		    	<div class="col-md-1">Min. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>
-		    	<div class="col-md-1">Max. followers: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="1000"></div>
-		    	<div class="col-md-1">Min. following: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="50"></div>
-		    	<div class="col-md-1">Max. following: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="1000"></div>
-		    	<div class="col-md-1">Min. tweets: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="150"></div>
-		    	<div class="col-md-1">Max. tweets: <input type="text" ng-model="tweetNumber" class="form-control" placeholder="10000"></div>
-		    	
 		    	<div class="col-md-2">
 					<input type="file" id="files">
 					<button id="upload" class="btn btn-default" type="button">Upload DCG file</button>
@@ -93,13 +140,7 @@
 							<i class="fa fa-2x pull-left"></i>Collect followers</a>
 	    		</div>
 	    	</div>
-	    	
-	    	
-	    	
 
-			<div class="col-md-2 animate-show-hide" ng-show="users.length > 1 && !processing && !userChanged()">
-	    		Generality bias (0-1): <input type="text" ng-model="generalityBias" class="form-control">
-	    	</div>
 	    	
 	    	<div class="col-md-10 text-right animate-if" ng-if="users.length > 1 && !processing && !userChanged()" ng-cloak>
 	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="processNetwork(1)" href="#">
@@ -109,11 +150,6 @@
 			<div class="col-md-1 col-md-push-11 text-center" style="margin-top: 8px;" ng-if="processing && !finished || loadingNetwork || loadingSimilarityGraph  && !userChanged()">
 	    		<i class="fa fa-spinner fa-spin text-loading"></i>
 			</div>
-			
-			<div class="col-md-2 animate-show-hide" ng-show="finished && !loadingSimilarityGraph && !userChanged()">
-	    		Similarity threshold: <input type="text" ng-model="minimumSimilarity" class="form-control">
-	    	</div>
-			
 			
 			<div class="col-md-10 text-right animate-if" ng-if="finished && !loadingSimilarityGraph && !finishedSimilarityGraph && !userChanged()" ng-cloak>
 	    		<a class="btn btn-lg btn-success btn-get-network" ng-click="calculateSimilarityGraph()" href="#">
