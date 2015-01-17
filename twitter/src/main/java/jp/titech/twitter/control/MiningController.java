@@ -7,6 +7,7 @@ package jp.titech.twitter.control;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.mining.UserMiner;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Vars;
 
 /**
@@ -29,14 +30,15 @@ public class MiningController {
 	 * 
 	 * @param user
 	 */
-	public void mineUser(TwitterUser user) {
+	public void mineUser(TwitterUser user, TwitterConnector connector) {
+		if(connector == null) connector = new TwitterConnector();
 		
 		if(Vars.MINING_MODE.equals("NONE")) {
-			userMiner = new UserMiner(user, UserMiner.MINE_NONE);
+			userMiner = new UserMiner(user, UserMiner.MINE_NONE, connector);
 		} else if(Vars.MINING_MODE.equals("NEW")) {
-			userMiner = new UserMiner(user, UserMiner.MINE_NEW);
+			userMiner = new UserMiner(user, UserMiner.MINE_NEW, connector);
 		} else if (Vars.MINING_MODE.equals("ALL")) {
-			userMiner = new UserMiner(user, UserMiner.MINE_ALL);
+			userMiner = new UserMiner(user, UserMiner.MINE_ALL, connector);
 		}
 		
 		userMiner.mineUser();

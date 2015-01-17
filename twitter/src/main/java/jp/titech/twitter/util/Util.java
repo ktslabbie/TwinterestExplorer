@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.RedisQuery;
 import jp.titech.twitter.ontology.types.*;
 
 import ch.qos.logback.core.status.WarnStatus;
@@ -268,16 +268,16 @@ public class Util {
 	 * @return
 	 */
 	public static OntologyType determineOntologyType(String uri) {
-		if(uri.contains("dbpedia.org/ontology/")){
-			return new DBpediaType(uri.split("dbpedia.org/ontology/")[1]);
+		if(uri.contains("dbpedia.org/class/yago/")){
+			return new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
+		} else if(uri.contains("dbpedia.org/resource/")){
+			return new DBpediaType(uri.split("dbpedia.org/resource/")[1]);
 		} else if(uri.contains("schema.org/")){
 			return new SchemaOrgType(uri.split("schema.org/")[1]);
 		} else if(uri.contains("rdf.freebase.com/ns/")){
 			String[] pathSplit = uri.split("rdf.freebase.com/ns/");
 			String[] domainSplit = pathSplit[1].split("/");
 			return (domainSplit.length == 1) ? new FreebaseType(domainSplit[0]) : new FreebaseType(domainSplit[0], domainSplit[1]);
-		} else if(uri.contains("dbpedia.org/class/yago/")){
-			return new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
 		} else if(uri.contains("dbpedia.org/resource/Category:")){
 			return new Category(uri.split("dbpedia.org/resource/Category:")[1]);
 		} else {
@@ -329,7 +329,7 @@ public class Util {
 		return result;
 	}
 
-	public static double calculateYAGOOntologyDistance(File fileOne, File fileTwo) {
+	/*public static double calculateYAGOOntologyDistance(File fileOne, File fileTwo) {
 
 		Log.getLogger().info("Calculating average YAGO ontology path length for files " + fileOne.getName() + " and " + fileTwo.getName() + "...");
 		HashMap<YAGOType, Integer> mapOne = new HashMap<YAGOType, Integer>(), mapTwo = new HashMap<YAGOType, Integer>();
@@ -374,7 +374,7 @@ public class Util {
 			e.printStackTrace();
 		}
 
-		DBpediaQuery dbpq = DBpediaQuery.getInstance();
+		RedisQuery dbpq = new RedisQuery();
 		int totalDistance = 0;
 
 		for (YAGOType v : mapOne.keySet()) {
@@ -389,7 +389,7 @@ public class Util {
 		double apl = (1/(double)(totalOne*totalTwo)*totalDistance);
 
 		return apl;
-	}
+	}*/
 
 	/**
 	 * Formats a number to a given amount of decimal places.

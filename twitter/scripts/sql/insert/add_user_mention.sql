@@ -1,1 +1,1 @@
-INSERT INTO TweetBase.Usermentions (tweet_id, user_mention) VALUES (?, ?)
+INSERT INTO Usermentions (tweet_id, user_mention) VALUES (?, ?)

@@ -1,4 +1,4 @@
-package jp.titech.twitter.web;
+/*package jp.titech.twitter.web;
 
 import java.util.List;
 
@@ -34,4 +34,4 @@ public class UserTweetsJSON {
     public double getEnglishRate() {
         return this.englishRate;
     }
-}
+}*/

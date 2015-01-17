@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Users WHERE screen_name = ?
+SELECT * FROM Users WHERE screen_name = ?

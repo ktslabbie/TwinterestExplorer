@@ -15,15 +15,16 @@ import jp.titech.twitter.util.Util;
 public class UserOntology {
 
 	private Map<OntologyType, Integer> ontology  = new HashMap<OntologyType, Integer>();
-	private Map<DBpediaType, Integer> dbpediaTypes = new HashMap<DBpediaType, Integer>();
+	/*private Map<DBpediaType, Integer> dbpediaTypes = new HashMap<DBpediaType, Integer>();
 	private Map<SchemaOrgType, Integer> schemaOrgTypes = new HashMap<SchemaOrgType, Integer>();
 	private Map<FreebaseType, Integer> freebaseTypes = new HashMap<FreebaseType, Integer>();
 	private Map<YAGOType, Integer> yagoTypes = new HashMap<YAGOType, Integer>();
-	private Map<Category, Integer> categories = new HashMap<Category, Integer>();
+	private Map<Category, Integer> categories = new HashMap<Category, Integer>();*/
 	
-	private Map<YAGOType, Double> yagoCFIUFMap = new HashMap<YAGOType, Double>();
+	//private Map<YAGOType, Double> yagoCFIUFMap = new HashMap<YAGOType, Double>();
 	
-	private int dbpediaTypeCount = 0, schemaOrgTypeCount = 0, freebaseTypeCount = 0, yagoTypeCount = 0, categoryCount = 0;
+	//private int dbpediaTypeCount = 0, schemaOrgTypeCount = 0, freebaseTypeCount = 0, yagoTypeCount = 0, categoryCount = 0;
+	private int yagoTypeCount = 0;
 	
 	public UserOntology() {}
 	
@@ -60,12 +61,12 @@ public class UserOntology {
 	public void addClass(OntologyType type, int cardinality) {
 		this.ontology.put(type, cardinality);
 		
-		if(type instanceof Category){
-			this.categories.put((Category) type, cardinality);
-			this.categoryCount += cardinality;
-		} else if(type instanceof YAGOType){
+		/*if(type instanceof YAGOType){
 			this.yagoTypes.put((YAGOType) type, cardinality);
 			this.yagoTypeCount += cardinality;
+		} else if(type instanceof Category){
+			this.categories.put((Category) type, cardinality);
+			this.categoryCount += cardinality;
 		} else if(type instanceof FreebaseType){
 			this.freebaseTypes.put((FreebaseType) type, cardinality);
 			this.freebaseTypeCount += cardinality;
@@ -75,7 +76,7 @@ public class UserOntology {
 		} else if(type instanceof SchemaOrgType){
 			this.schemaOrgTypes.put((SchemaOrgType) type, cardinality);
 			this.schemaOrgTypeCount += cardinality;
-		} 
+		} */
 	}
 	
 	/**
@@ -86,8 +87,8 @@ public class UserOntology {
 	 */
 	public void addDBpediaType(DBpediaType type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.dbpediaTypes.put(type, cardinality);
-		this.dbpediaTypeCount += cardinality;
+		//this.dbpediaTypes.put(type, cardinality);
+		//this.dbpediaTypeCount += cardinality;
 	}
 	
 	/**
@@ -98,7 +99,7 @@ public class UserOntology {
 	 */
 	public void addYAGOType(YAGOType type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.yagoTypes.put(type, cardinality);
+		//this.yagoTypes.put(type, cardinality);
 		this.yagoTypeCount += cardinality;
 	}
 	
@@ -110,8 +111,8 @@ public class UserOntology {
 	 */
 	public void addFreebaseType(FreebaseType type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.freebaseTypes.put(type, cardinality);
-		this.freebaseTypeCount += cardinality;
+		//this.freebaseTypes.put(type, cardinality);
+		//this.freebaseTypeCount += cardinality;
 	}
 	
 	/**
@@ -122,8 +123,8 @@ public class UserOntology {
 	 */
 	public void addSchemaOrgType(SchemaOrgType type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.schemaOrgTypes.put(type, cardinality);
-		this.schemaOrgTypeCount += cardinality;
+		//this.schemaOrgTypes.put(type, cardinality);
+		//this.schemaOrgTypeCount += cardinality;
 	}
 	
 	/**
@@ -131,10 +132,10 @@ public class UserOntology {
 	 * 
 	 * @param type
 	 * @param cardinality
-	 */
+	 *//*
 	public void addCategory(Category type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.categories.put(type, cardinality);
+		//this.categories.put(type, cardinality);
 		this.categoryCount += cardinality;
 	}
 	
@@ -172,119 +173,119 @@ public class UserOntology {
 	}
 	public boolean contains(Category category) {
 		return categories.containsKey(category);
-	}
+	}*/
 
 	/**
 	 * @return the dbpediaTypes
-	 */
+	 *//*
 	public Map<DBpediaType, Integer> getDBpediaTypes() {
 		return dbpediaTypes;
 	}
 
-	/**
+	*//**
 	 * @param dbpediaTypes the dbpediaTypes to set
-	 */
+	 *//*
 	public void setDBpediaTypes(Map<DBpediaType, Integer> dbpediaTypes) {
 		this.dbpediaTypes = dbpediaTypes;
 	}
 
-	/**
+	*//**
 	 * @return the schemaOrgTypes
-	 */
+	 *//*
 	public Map<SchemaOrgType, Integer> getSchemaOrgTypes() {
 		return schemaOrgTypes;
 	}
 
-	/**
+	*//**
 	 * @param schemaOrgTypes the schemaOrgTypes to set
-	 */
+	 *//*
 	public void setSchemaOrgTypes(Map<SchemaOrgType, Integer> schemaOrgTypes) {
 		this.schemaOrgTypes = schemaOrgTypes;
 	}
 
-	/**
+	*//**
 	 * @return the freebaseTypes
-	 */
+	 *//*
 	public Map<FreebaseType, Integer> getFreebaseTypes() {
 		return freebaseTypes;
 	}
 
-	/**
+	*//**
 	 * @param freebaseTypes the freebaseTypes to set
-	 */
+	 *//*
 	public void setFreebaseTypes(Map<FreebaseType, Integer> freebaseTypes) {
 		this.freebaseTypes = freebaseTypes;
 	}
 
-	/**
+	*//**
 	 * @return the yagoTypes
-	 */
+	 *//*
 	public Map<YAGOType, Integer> getYAGOTypes() {
 		return yagoTypes;
 	}
 
-	/**
+	*//**
 	 * @param yagoTypes the yagoTypes to set
-	 */
+	 *//*
 	public void setYAGOTypes(Map<YAGOType, Integer> yagoTypes) {
 		this.yagoTypes = yagoTypes;
 	}
 
-	/**
+	*//**
 	 * @return the categories
-	 */
+	 *//*
 	public Map<Category, Integer> getCategories() {
 		return categories;
 	}
 
-	/**
+	*//**
 	 * @param categories the categories to set
-	 */
+	 *//*
 	public void setCategories(Map<Category, Integer> categories) {
 		this.categories = categories;
-	}
+	}*/
 
 	/**
 	 * @return the dbpediaTypeCount
-	 */
+	 *//*
 	public int getDBpediaTypeCount() {
 		return dbpediaTypeCount;
 	}
 
-	/**
+	*//**
 	 * @param dbpediaTypeCount the dbpediaTypeCount to set
-	 */
+	 *//*
 	public void setDBpediaTypeCount(int dbpediaTypeCount) {
 		this.dbpediaTypeCount = dbpediaTypeCount;
 	}
 
-	/**
+	*//**
 	 * @return the schemaOrgTypeCount
-	 */
+	 *//*
 	public int getSchemaOrgTypeCount() {
 		return schemaOrgTypeCount;
 	}
 
-	/**
+	*//**
 	 * @param schemaOrgTypeCount the schemaOrgTypeCount to set
-	 */
+	 *//*
 	public void setSchemaOrgTypeCount(int schemaOrgTypeCount) {
 		this.schemaOrgTypeCount = schemaOrgTypeCount;
 	}
 
-	/**
+	*//**
 	 * @return the freebaseTypeCount
-	 */
+	 *//*
 	public int getFreebaseTypeCount() {
 		return freebaseTypeCount;
 	}
 
-	/**
+	*//**
 	 * @param freebaseTypeCount the freebaseTypeCount to set
-	 */
+	 *//*
 	public void setFreebaseTypeCount(int freebaseTypeCount) {
 		this.freebaseTypeCount = freebaseTypeCount;
-	}
+	}*/
 
 	/**
 	 * @return the yagoTypeCount
@@ -302,25 +303,25 @@ public class UserOntology {
 
 	/**
 	 * @return the categoryCount
-	 */
+	 *//*
 	public int getCategoryCount() {
 		return categoryCount;
 	}
 
-	/**
+	*//**
 	 * @param categoryCount the categoryCount to set
-	 */
+	 *//*
 	public void setCategoryCount(int categoryCount) {
 		this.categoryCount = categoryCount;
-	}
+	}*/
 	
-	public Map<YAGOType, Double> getYagoCFIUFMap() {
+	/*public Map<YAGOType, Double> getYagoCFIUFMap() {
 		return yagoCFIUFMap;
 	}
 
 	public void setYagoCFIUFMap(Map<YAGOType, Double> yagoCFIUFMap) {
 		this.yagoCFIUFMap = yagoCFIUFMap;
-	}
+	}*/
 	
 	/**
 	 * Override the toString() method to provide a nice, sorted representation of the ontology. 
@@ -330,15 +331,24 @@ public class UserOntology {
 	@Override
 	public String toString() {
 		
-		Map<DBpediaType, Integer> dbpediaSortedMap 		= Util.sortByValue(this.dbpediaTypes);
+		/*Map<DBpediaType, Integer> dbpediaSortedMap 		= Util.sortByValue(this.dbpediaTypes);
 		Map<YAGOType, Integer> yagoSortedMap 			= Util.sortByValue(this.yagoTypes);
 		Map<SchemaOrgType, Integer> schemaSortedMap 	= Util.sortByValue(this.schemaOrgTypes);
 		Map<FreebaseType, Integer> freebaseSortedMap 	= Util.sortByValue(this.freebaseTypes);
-		Map<Category, Integer> categorySortedMap 		= Util.sortByValue(this.categories);
+		Map<Category, Integer> categorySortedMap 		= Util.sortByValue(this.categories);*/
+		Map<OntologyType, Integer> ontologySortedMap 	= Util.sortByValue(this.ontology);
 		
-		Map<YAGOType, Double> yagoCFIUFSortedMap 		= Util.sortByValue(this.yagoCFIUFMap);
+		//Map<YAGOType, Double> yagoCFIUFSortedMap 		= Util.sortByValue(this.yagoCFIUFMap);
 		
-		String out = "DBpedia_type\tcount\tCF-IUF\n";
+		String out = "Ontology_type\tcount\tCF-IUF\n";
+		
+		for (OntologyType type : ontologySortedMap.keySet()) {
+			out += type.typeID() + "\t" + ontologySortedMap.get(type) + "\n";
+		}
+		
+		//out += "\nYAGO-CFIUF\tcount\tCF-IUF\n";
+		
+		/*String out = "DBpedia_type\tcount\tCF-IUF\n";
 
 		for (DBpediaType type : dbpediaSortedMap.keySet()) {
 			out += type.typeID() + "\t" + dbpediaSortedMap.get(type) + "\n";
@@ -366,7 +376,7 @@ public class UserOntology {
 
 		for (Category type : categorySortedMap.keySet()) {
 			out += type.typeID() + "\t" + categorySortedMap.get(type) + "\n";
-		}
+		}*/
 
 		return out;
 	}

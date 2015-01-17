@@ -1,1 +1,1 @@
-UPDATE TweetBase.Tweets SET content = ? WHERE tweet_id = ?
+UPDATE Tweets SET content = ? WHERE tweet_id = ?

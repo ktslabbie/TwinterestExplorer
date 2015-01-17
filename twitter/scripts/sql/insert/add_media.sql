@@ -1,1 +1,1 @@
-INSERT INTO TweetBase.Media (tweet_id, media_url) VALUES (?, ?)
+INSERT INTO Media (tweet_id, media_url) VALUES (?, ?)

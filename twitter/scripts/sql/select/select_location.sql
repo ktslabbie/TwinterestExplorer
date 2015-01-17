@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Locations WHERE tweet_id = ?
+SELECT * FROM Locations WHERE tweet_id = ?

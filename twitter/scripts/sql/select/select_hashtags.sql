@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Hashtags WHERE tweet_id = ?
+SELECT * FROM Hashtags WHERE tweet_id = ?

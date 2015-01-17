@@ -2,7 +2,7 @@
  * @author		Kristian Slabbekoorn
  * @version		1.0
  * @since		18 jun. 2013
- */
+ *//*
 package jp.titech.twitter;
 
 import java.io.File;
@@ -20,7 +20,7 @@ import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.control.NetworkController;
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.network.NetworkClusterer;
 import jp.titech.twitter.network.clustering.HCS;
 import jp.titech.twitter.ontology.similarity.CFIUF;
@@ -47,10 +47,10 @@ import org.jgrapht.ext.VertexNameProvider;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.xml.sax.SAXException;
 
-/**
+*//**
  * @author Kristian Slabbekoorn
  *
- */
+ *//*
 public class GetUserNetworkAppMulti {
 
 	final static long SEED_USER_ID = 52344859; //@mikegroner: 55569628 @bnmuller: 55569628   @BBC_TopGear 52344859 @CCCManhattan
@@ -75,13 +75,14 @@ public class GetUserNetworkAppMulti {
 		Set<TwitterUser> userSet2 = twitterUserGraph2.vertexSet();
 		
 		Set<TwitterUser> englishUserSet = new HashSet<TwitterUser>();
+		TwitterConnector connector = new TwitterConnector();
 		
-		TwitterUser targetUser = TweetBaseUtil.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME);
-		ontologyController.createUserOntology(targetUser);
+		TwitterUser targetUser = connector.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME);
+		ontologyController.createUserOntology(targetUser, Vars.SPOTLIGHT_DEFAULT_URL);
 		englishUserSet.add(targetUser);
 		
-		TwitterUser targetUser2 = TweetBaseUtil.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME2);
-		ontologyController.createUserOntology(targetUser2);
+		TwitterUser targetUser2 = connector.getTwitterUserWithScreenName(TARGET_USER_SCREEN_NAME2);
+		ontologyController.createUserOntology(targetUser2, Vars.SPOTLIGHT_DEFAULT_URL);
 		englishUserSet.add(targetUser2);
 		
 		String users = "\n";
@@ -89,11 +90,11 @@ public class GetUserNetworkAppMulti {
 		for (TwitterUser user : userSet) {
 			//users += user.getScreenName();
 			//users += "\n";
-			miningController.mineUser(user);
+			miningController.mineUser(user, connector);
 			
 			if(user.getEnglishRate() > Vars.MIN_ENGLISH_RATE) {
 				Log.getLogger().info("Enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + "), so create ontology...");
-				ontologyController.createUserOntology(user);
+				ontologyController.createUserOntology(user, Vars.SPOTLIGHT_DEFAULT_URL);
 				englishUserSet.add(user);
 			} else {
 				Log.getLogger().info("Not enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + ")! Skipping.");
@@ -103,11 +104,11 @@ public class GetUserNetworkAppMulti {
 		for (TwitterUser user : userSet2) {
 			//users += user.getScreenName();
 			//users += "\n";
-			miningController.mineUser(user);
+			miningController.mineUser(user, connector);
 			
 			if(user.getEnglishRate() > Vars.MIN_ENGLISH_RATE) {
 				Log.getLogger().info("Enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + "), so create ontology...");
-				ontologyController.createUserOntology(user);
+				ontologyController.createUserOntology(user, Vars.SPOTLIGHT_DEFAULT_URL);
 				englishUserSet.add(user);
 			} else {
 				Log.getLogger().info("Not enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + ")! Skipping.");
@@ -198,3 +199,4 @@ public class GetUserNetworkAppMulti {
 		
 	}
 }
+*/

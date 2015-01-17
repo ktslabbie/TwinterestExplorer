@@ -15,8 +15,9 @@ public class Vars {
 	 * Twitter variables
 	 */
 	public static final String 	TWITTER_SEARCH_API	 			= c.getProperty("twitter.searchAPI");
+	public static final String	API_ACCOUNTS_FILE				= c.getProperty("twitter.apiAccountsFile");
 	public static final int		TIMELINE_TWEET_COUNT			= Integer.valueOf(c.getProperty("twitter.timelineTweetCount"));
-	public static int		CONCATENATION_WINDOW				= Integer.valueOf(c.getProperty("twitter.concatenationWindow"));
+	public static int			CONCATENATION_WINDOW			= Integer.valueOf(c.getProperty("twitter.concatenationWindow"));
 	public static final int		MIN_FOLLOWERS					= Integer.valueOf(c.getProperty("twitter.minFollowers"));
 	public static final int		MAX_FOLLOWERS					= Integer.valueOf(c.getProperty("twitter.maxFollowers"));
 	public static final int		MIN_FRIENDS						= Integer.valueOf(c.getProperty("twitter.minFriends"));
@@ -28,10 +29,9 @@ public class Vars {
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	
+	public static final String  REDIS_URL						= c.getProperty("redis.url");
+	
 	public static final String  DBPEDIA_NAMESPACE				= c.getProperty("dbpedia.namespace");
-	public static final String 	DBPEDIA_RDF_DIRECTORY 			= c.getProperty("dbpedia.rdfDirectory");
-	public static final String 	DBPEDIA_REPOSITORY_DIRECTORY 	= c.getProperty("dbpedia.repositoryDirectory");
-	public static final boolean	DBPEDIA_REMOTE					= Boolean.valueOf(c.getProperty("dbpedia.remote"));				// Remote DBpedia querying yes/no
 	
 	public static final String	DATA_DIRECTORY					= c.getProperty("data.dataDirectory");
 	public static final String	USER_DIRECTORY					= c.getProperty("data.userDirectory");
@@ -45,11 +45,11 @@ public class Vars {
 	public static final String	SPARQL_PREFIXES					= Util.readFile(c.getProperty("sparql.prefixFile"));
 	public static final String	SPARQL_SCRIPT_DIRECTORY			= c.getProperty("sparql.scriptDirectory");
 	
-	public static final boolean	SPOTLIGHT_REMOTE				= Boolean.valueOf(c.getProperty("spotlight.remote"));			// Remote Spotlight querying yes/no
-	public static final String 	SPOTLIGHT_URL					= c.getProperty("spotlight.url");
+	public static final String 	SPOTLIGHT_DEFAULT_URL			= c.getProperty("spotlight.defaultURL");
+	public static final String 	SPOTLIGHT_BASE_URL				= c.getProperty("spotlight.baseURL");
+	public static final String[] SPOTLIGHT_PORTS				= c.getProperty("spotlight.ports").split(",");
 	public static double 		SPOTLIGHT_CONFIDENCE			= Double.parseDouble(c.getProperty("spotlight.confidence"));
 	public static int 			SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
-	public static final boolean INCLUDE_EMPTY_SURFACE_FORMS 	= Boolean.valueOf(c.getProperty("spotlight.includeEmptySurfaceForms"));
 
 	public static final double  GENERALITY_BIAS 				=  Double.parseDouble(c.getProperty("similarity.generalityBias"));
 

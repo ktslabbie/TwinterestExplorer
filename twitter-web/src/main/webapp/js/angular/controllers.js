@@ -1,9 +1,9 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'UserList', 'SimilarityService', 
-                                  'HCSService', 'EvaluationService', 'LDAService', 'Graph',
+.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'UserList', 'SimilarityService',
+                                  'CFIUFService', 'HCSService', 'EvaluationService', 'Graph',
                                   function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, UserList, SimilarityService, 
-                                		  	HCSService, EvaluationService, LDAService, Graph) {
+                                		   CFIUFService, HCSService, EvaluationService, Graph) {
 	
 	$scope.loadingUser = false;
 	$scope.noUserFound = false;
@@ -15,37 +15,45 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.loadingSimilarityGraph = false;
 	$scope.finishedSimilarityGraph = false;
 	$scope.clusteringNetwork = false;
+	$scope.updatingCFIUF = false;
+	$scope.finalCFIUFUpdate = false;
+	
+	$scope.startTime = 0;
+	$scope.endTime = 0;
 	
 	$scope.users = [];
+	$scope.validUsers = [];
 	$scope.groups = [];
 	$scope.screenName = "bnmuller";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
-	$scope.tweetsPerUser = 150;
-	
-	// # of topics for LDA.
-	$scope.ldaTopics = 3;
+	$scope.tweetsPerUser = 300;
+	$scope.userCount = 200;
+	$scope.minimumEnglishRate = 0.8;
 	
 	// Named Entity Recognition settings.
-	$scope.nerConfidence = 0.2;
+	$scope.nerConfidence = 0;
 	$scope.nerSupport = 0;
 	$scope.generalityBias = 0;
-	$scope.concatenation = 50;
+	$scope.concatenation = 25;
 	
 	// Minimum similarity threshold.
 	$scope.minimumSimilarity = 0.2;
 	
 	// Twitter user restrictions.
-	$scope.minFollowers = 50;
-	$scope.maxFollowers = 1000;
-	$scope.minFollowing = 50;
-	$scope.maxFollowing = 1000;
-	$scope.minTweets = 150;
-	$scope.maxTweets = 10000;
+	$scope.maxSeedUserFollowers = 50000;
+	$scope.minFollowers = 0;
+	$scope.maxFollowers = 10000;
+	$scope.minFollowing = 0;
+	$scope.maxFollowing = 10000;
+	$scope.minTweets = 300;
+	$scope.maxTweets = 1000000;
 	
+	$scope.processIndex = 0;
+	$scope.maxProcesses = 6;
+	$scope.activeProcesses = 1;
 	var graph;
 	
-	$scope.legend = {};
 	$scope.ufMap = {};
 	$scope.gfMap = {};
 	
@@ -62,20 +70,23 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.loadingNetwork = false;
 		$scope.processing = false;
 		$scope.finished = false;
+		$scope.showAllUsers = false;
 		$scope.showSimilarityGraph = false;
 		$scope.loadingSimilarityGraph = false;
 		$scope.finishedSimilarityGraph = false;
 		$scope.clusteringNetwork = false;
+		$scope.updatingCFIUF = false;
 		
 		$scope.users = [];
+		$scope.validUsers = [];
+		$scope.visibleUsers = [];
 		$scope.groups = [];
 		$scope.refreshCnt = 0;
 		
+		graph = new Graph(1280, 720, "#graph");
 		
-		graph = new Graph(960, 720, "#graph");
-		
-		$scope.legend = {};
 		$scope.ufMap = {};
+		$scope.zoomedUFMap = {};
 		$scope.gfMap = {};
 	}
 	
@@ -84,6 +95,33 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		if(!$scope.screenName || $scope.users.length === 0 || !$scope.users[0].screenName) return false;
 		return $scope.screenName.toLowerCase() != $scope.users[0].screenName.toLowerCase();
 	}
+	
+	$scope.$on('graphZoom', function (event, data) {
+		$scope.visibleUsers = $scope.groups[data.group].users;
+		$scope.zoomedUFMap = {};
+		_.each($scope.visibleUsers, function(user, i) {
+			updateUFMap($scope.zoomedUFMap, user.userOntology.ontology);
+		});
+		
+		console.log("Zoomed UF map: " + JSON.stringify($scope.zoomedUFMap));
+
+		var ev = {};
+		ev.entities = $scope.visibleUsers;
+		ev.ufMap = $scope.zoomedUFMap;
+		ev.index = $scope.visibleUsers.length-1;
+		ev.generalityBias = -0.6;
+
+		CFIUFService.doWork(ev).then(function(newOntologies) {
+			_.each(newOntologies, function(newOntology, i) {
+				$scope.visibleUsers[i].userOntology = newOntology;
+				//console.log("NEW ONTOLOGY: " + JSON.stringify($scope.visibleUsers[i].userOntology));
+			});
+			//$scope.minimumSimilarity = 0.05;
+			$scope.minimumSimilarity = 0.03;
+			
+			$scope.calculateSimilarityGraph();
+		});
+	});
 	
 	/**
 	 *  Extract retweets, hashtags and mentions from a user's tweets.
@@ -105,33 +143,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	/**
-	 * Extracts a more readable name from a YAGO type.
-	 */
-	$scope.getTypeName = function(yagoType) {
-		var typeName = yagoType.split(":")[1];
-		var wordnetCode = typeName.substr(typeName.length - 9);
-		
-		if(!isNaN(wordnetCode))
-			typeName = typeName.substr(0, typeName.length - 9);
-		
-		return typeName;
-	}
-	
-	/**
-	 * Return the top-k types sorted by their value.
-	 */
-	function getTopTypes(map, k) {
-		return _.map(_.first(_.sortBy(_.pairs(map), function(tuple) { return -tuple[1]; }), k), function(type) { type[0] = $scope.getTypeName(type[0]); return type; });
-	}
-	
-	/**
-	 * Normalize the CF-IUF map to values between 0 and 1 given the Euclidian length of all CF-IUF scores.
-	 */
-	function normalizeCFIUF(user, userCFIUFMap, euclidLength) {
-		return map = (euclidLength === 0) ? userCFIUFMap : _.mapValues(userCFIUFMap, function(val) { return val/euclidLength; });
-	}
-	
-	/**
 	 * Update the user frequency map with new values.
 	 */
 	function updateUFMap(ufMap, typeMap) {
@@ -142,42 +153,50 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Update the CF-IUF scores for all entities (can be users or groups of users) up to entities[userIndex].
 	 */
 	function updateCFIUF(entities, ufMap, index) {
-		for(var i = 0; i <= index; i++) {
-			var currentEntity = entities[i];
-			var yagoTypes = currentEntity.ontology.yagotypes;
+		if(!$scope.updatingCFIUF || $scope.finalCFIUFUpdate) {
+			$scope.updatingCFIUF = true;
 			
-			entityCFIUFMap = {};
-			var cfIufSum = 0;
+			var ev = {};
+			ev.entities = entities;
+			ev.ufMap = ufMap;
+			ev.index = index;
+			ev.generalityBias = $scope.generalityBias;
 			
-			_.each(_.keys(yagoTypes), function(type) {
-				var cf = yagoTypes[type];
-				var iuf = Math.log(entities.length / ufMap[type]);
-				var cfIuf = (Math.pow(cf, 1 + parseFloat($scope.generalityBias)))*(Math.pow(iuf, 1 - parseFloat($scope.generalityBias)));
+			CFIUFService.doWork(ev).then(function(newOntologies) {
+				/*if($scope.finalCFIUFUpdate) {
+					console.log("Final CFIUF update...");
+				}*/
 				
-				cfIufSum += Math.pow(cfIuf, 2);
-				entityCFIUFMap[type] = cfIuf;
-			});
-			
-			var euclidLength = Math.sqrt(cfIufSum);
-			
-			if(currentEntity.ontology.cfIufMap) {
-				var newMap = normalizeCFIUF(currentEntity, entityCFIUFMap, euclidLength);
 				
-				for(var key in newMap) {
-					if(!currentEntity.ontology.cfIufMap[key]) {
-						currentEntity.ontology.cfIufMap[key] = newMap[key];
-					} else {
-						var a = Math.round(currentEntity.ontology.cfIufMap[key] * 100) / 100;
-						var b = Math.round(newMap[key] * 100) / 100;
-						if(a != b) currentEntity.ontology.cfIufMap[key] = newMap[key];
-					}
+				_.each(newOntologies, function(newOntology, i) {
+					//$scope.users[i].userOntology = newOntology;
+					$scope.validUsers[i].userOntology = newOntology;
+				});
+				
+				$scope.updatingCFIUF = false;
+				if($scope.finalCFIUFUpdate) {
+					//console.log("Turning off final CFIUF update...");
+					$scope.finalCFIUFUpdate = false;
 				}
-			} else {
-				currentEntity.ontology.cfIufMap = normalizeCFIUF(currentEntity, entityCFIUFMap, euclidLength);
-			}
-			
-			currentEntity.ontology.topTypes = getTopTypes(currentEntity.ontology.cfIufMap, 5);
+			});
 		}
+	}
+	
+	/**
+	 * Update the CF-IUF scores for all entities (can be users or groups of users) up to entities[userIndex].
+	 */
+	function updateCFIUFGroup(group, ufMap, index) {
+		var ev = {};
+		ev.entities = group;
+		ev.ufMap = ufMap;
+		ev.index = index;
+		ev.generalityBias = $scope.generalityBias;
+		
+		CFIUFService.doWork(ev).then(function(newOntologies) {
+			_.each(newOntologies, function(newOntology, i) {
+				$scope.groups[i].userOntology = newOntology;
+			})
+		});
 	}
 	
 	/**
@@ -189,11 +208,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.loadingSimilarityGraph = true;
 		$scope.finishedSimilarityGraph = false;
 		
-		$scope.refreshCnt = 0;
-		
 		var ev = {};
 		ev.minSim = $scope.minimumSimilarity;
-		ev.users = $scope.users;
+		
+		//if(!users) users = $scope.validUsers;
+		ev.users = $scope.visibleUsers;
+		graph.clearNodes();
 		
 		SimilarityService.doWork(ev).then(function(data) {
 			
@@ -203,7 +223,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			$scope.finishedSimilarityGraph = true;
 			
 			// Calculate the DCG scores for this network (if available).
-			if(EvaluationService.getRelevanceScores()) EvaluationService.dcg(graph.getNodes(), graph.getLinks());
+			//if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.dcg(graph.getNodes(), graph.getLinks());
 			
 			// Finally, cluster the similarity graph.
 			$scope.clusterNetwork();
@@ -214,9 +234,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Function to catch updates and push them to the similarity graph.
 	 */
 	$scope.$on('simGraphUpdate', function(event, data) {
+		
+		//console.log("Updating graph: " + JSON.stringify(data));
+		
 		// Create the new, ungrouped nodes.
-		var aNode = { name: $scope.users[data.i].screenName, group: 0, userIndex: data.i };
-		var bNode = { name: $scope.users[data.j].screenName, group: 0, userIndex: data.j };
+		var aNode = { name: $scope.visibleUsers[data.i].screenName, group: 0, userIndex: data.i };
+		var bNode = { name: $scope.visibleUsers[data.j].screenName, group: 0, userIndex: data.j };
 		
 		// Add the nodes (if not yet existing) and get their index.
 		var aIndex = graph.addNode(aNode);
@@ -224,6 +247,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 		// Add the link between the nodes.
 		graph.addLink({ source: aIndex, target: bIndex, value: data.similarity});
+		
+		
 		
 		// Refresh SVG graph only one in 25 updates, to make rendering smoother.
 		$scope.refreshCnt++;
@@ -236,6 +261,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 */
 	$scope.clusterNetwork = function() {
 		$scope.clusteringNetwork = true;
+		$scope.groups = [];
+		$scope.gfMap = {};
 		
 		var e = {};
 		
@@ -251,6 +278,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			_.pick(link, ['source', 'target', 'value']);
 		});
 		
+		//console.log("Sending: " + JSON.stringify(e));
+		
 		HCSService.doWork(e).then(function(data) {
 			// We've finished calculating the cluster graph. Render the final version.
 			$scope.clusteringNetwork = false;
@@ -262,110 +291,156 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			_.each(data.clusters, function(cluster, i) {
 				var clusterNodes = cluster.nodes;
 				var clusterEdges = cluster.edges;
-				var group = { users: [], ontology: { yagotypes: {} } };
+				var group = { users: [], userOntology: { ontology: {} } };
+				
+				//console.log("Cluster: " + JSON.stringify(cluster));
 				
 				_.each(clusterNodes, function(node) {
-					var user = $scope.users[node.userIndex];
+					var user = $scope.visibleUsers[node.userIndex];
 					user.tweets = [];
 					group.users.push(user);
 					
 					// Merge YAGO types of this user into the YAGO types of the group.
-					group.ontology.yagotypes = _.merge(user.ontology.yagotypes, group.ontology.yagotypes, function(a, b) { return _.isNumber(a) ? _.isNumber(b) ? a+b : a : b; });
+					_.each(Object.keys(user.userOntology.ontology), function(type) {
+						group.userOntology.ontology[type] = _.isNumber(group.userOntology.ontology[type]) ? 
+								group.userOntology.ontology[type]+user.userOntology.ontology[type] : user.userOntology.ontology[type];
+					});
+					//group.userOntology.ontology = _.merge(user.userOntology.ontology, group.userOntology.ontology, function(a, b) { return _.isNumber(a) ? _.isNumber(b) ? a+b : a : b; });
 				});
 				
 				// Update the group-based User Frequency map.
-				updateUFMap($scope.gfMap, group.ontology.yagotypes);
+				updateUFMap($scope.gfMap, group.userOntology.ontology);
 				$scope.groups.push(group);
 				graph.addCluster(clusterNodes, clusterEdges, i);
 			});
 			
 			// Update the CF-IUF maps for each group. Top types will be calculated too.
-			updateCFIUF($scope.groups, $scope.gfMap, $scope.groups.length-1);
+			//updateCFIUFGroup($scope.groups, $scope.gfMap, $scope.groups.length-1);
 
-			var labelString = "\nTopic labels:\n\n";
+			var ev = {};
+			ev.entities = $scope.groups;
+			ev.ufMap = $scope.gfMap;
+			ev.index = $scope.groups.length-1;
+			ev.generalityBias = $scope.generalityBias;
 			
-			_.each($scope.groups, function(group, i) {
-				var legendText = group.ontology.topTypes[0][0];
-				labelString += "Topic " + (i+1) + ": ";
+			CFIUFService.doWork(ev).then(function(newOntologies) {
 				
-				for(var j = 1; j < group.ontology.topTypes.length; j++) {
-					legendText += ", " + group.ontology.topTypes[j][0];
-				}
+				/*_.each(newOntologies, function(newOntology, i) {
+					$scope.groups[i].userOntology = newOntology;
+				})*/
 				
-				$scope.legend[i] = legendText;
-				labelString += legendText + "\n";
+				var labelString = "\nTopic labels:\n\n";
+				var legend = {};
+				
+				//if($scope.groups.length > 1) {
+					_.each($scope.groups, function(group, i) {
+						group.userOntology = newOntologies[i];
+						
+						var legendText = group.userOntology.topTypes[0][0];
+						labelString += "Topic " + (i+1) + ": ";
+						
+						for(var j = 1; j < group.userOntology.topTypes.length; j++) {
+							legendText += ", " + group.userOntology.topTypes[j][0];
+						}
+						
+						legend[i] = legendText;
+						labelString += legendText + "\n";
+					});
+				//}
+					
+				console.log(labelString);
+				
+				// Update force settings and refresh.
+				graph.getForce().charge(-90).linkDistance(90);
+				graph.start(legend);
+
+				// Evaluate the accuracy of the clustering result (if ground truth present).
+				//if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
 			});
-			
-			console.log(labelString);
-			
-			// Update force settings and refresh.
-			graph.getForce().charge(-90).linkDistance(90);
-			graph.start($scope.legend);
-
-			// Evaluate the accuracy of the clustering result (if ground truth present).
-			EvaluationService.mcc($scope.groups, $scope.users.length);
 		});
+	}
+	
+	function prepareUser(user, index) {
+		$scope.users.push(user);
+
+		if(user['protected'] || user.statusesCount < $scope.minTweets) return;
+		
+		if(user.tweets.length > 0) {
+			if(user.englishRate < $scope.minimumEnglishRate) return;
+			getTweetStats(user);
+			
+			//console.log(JSON.stringify(user));
+			
+			if(_.isEmpty(user.userOntology.ontology)) {
+				$scope.getOntology(user, index);
+			} else {
+				$scope.validUsers.push(user);
+				$scope.visibleUsers.push(user);
+				updateUFMap($scope.ufMap, user.userOntology.ontology);
+				//updateCFIUF($scope.validUsers, $scope.ufMap, index);
+			}
+			
+		} else {
+			$scope.getOntology(user, index);
+		}
+		
+		user.imageVisible = true;
 	}
 	
 	$scope.getUser = function() {
 		init();
 		
-		$scope.noUserFound = false;
-		$scope.users = [];
+		$scope.noUserFound = false;		
 		$scope.loadingUser = true;
+		
 		var userJSON = TwitterUser.user({ name: $scope.screenName }, function() {
-			if(userJSON.user) {
-				$scope.users.push(userJSON.user);
-				$scope.users[0].profileImageURL = userJSON.user.profileImageURL;
-				
-				// Cancel old timeout.
-			    if ($scope.users[0].timeoutId) {
-			        $timeout.cancel($scope.users[0].timeoutId);
-			    }
-
-			    // Hide images to start with (to prevent overlap).
-			    $scope.users[0].imageVisible = false;
-
-			    $scope.users[0].timeoutId = $timeout(function() {
-			        $scope.users[0].imageVisible = true;
-			        $scope.users[0].timeoutId = undefined;
-			    }, 10);
-				
-				if($scope.users[0].tweets.length > 0) {
-					getTweetStats($scope.users[0]);
-					$scope.getOntology($scope.users[0]);
-				} else {
-					$scope.getTweets($scope.users[0]);
-				}
-			} else {
-				$scope.noUserFound = true;
-				$scope.users = [];
-			}
-			
 			$scope.loadingUser = false;
+			
+			if(userJSON.user) {
+				prepareUser(userJSON.user, 0);
+				//updateCFIUF($scope.validUsers, $scope.ufMap, 0);
+			}
+			else
+				$scope.noUserFound = true;
 		});
 	};
 	
-	$scope.getTweets = function(user) {
-		user.loadingTweets = true;
-		var tweetsJSON = UserTweets.tweets({ name: user.screenName }, function() {
-			user.englishRate = tweetsJSON.englishRate;
-			user.tweets = tweetsJSON.tweets;
+	var getNewUser = function(index) {
+		
+		var userJSON = TwitterUser.user({ name: $scope.screenName }, function() {
 			
+			if(userJSON.user) {
+				prepareUser(userJSON.user, index);
+				updateCFIUF($scope.validUsers, $scope.ufMap, index);
+			}
+		});
+	};
+	
+	$scope.getOntology = function(user, i) {
+		user.loadingTweets = true;
+		user.loadingOntology = true;
+		
+		var ontologyJSON = UserOntology.ontology({ name: user.screenName, concatenation: $scope.concatenation, index: i,
+													c: $scope.nerConfidence, s: $scope.nerSupport}, function() {
+			
+			//user = ontologyJSON.user;
+			user.englishRate = ontologyJSON.user.englishRate;
+			user.tweets = ontologyJSON.user.tweets;
 			getTweetStats(user);
-			$scope.getOntology(user);
 			
 			user.loadingTweets = false;
-		});
-	};
-	
-	$scope.getOntology = function(user) {
-		user.loadingOntology = true;
-		var ontologyJSON = UserOntology.ontology({ name: user.screenName, concatenation: $scope.concatenation }, function() {
-			user.ontology = ontologyJSON.user.userOntology;
 			
-			updateUFMap($scope.ufMap, user.ontology.yagotypes);
-			updateCFIUF($scope.users, $scope.ufMap, 0);
+			if(user.englishRate < $scope.minimumEnglishRate) {
+				user.loadingOntology = false;
+				return;
+			}
+			
+			$scope.validUsers.push(user);
+			$scope.visibleUsers.push(user);
+			user.userOntology = ontologyJSON.user.userOntology;
+			
+			updateUFMap($scope.ufMap, user.userOntology.ontology);
+			updateCFIUF($scope.validUsers, $scope.ufMap, i);
 			
 			user.loadingOntology = false;
 		});
@@ -373,12 +448,16 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	$scope.getTargetUserNetwork = function(user) {
 		$scope.loadingNetwork = true;
-		var networkJSON = UserNetwork.network({ name: user.screenName }, function() {
-			_.each(networkJSON.network, function(user, i) {
-				if(i > 0) $scope.users.push(user);
-			});
+		
+		var networkJSON = UserNetwork.network({ name: user.screenName, userCount: $scope.userCount }, function() {
+			
+			for(var i = 1; i < networkJSON.network.length; i++) {
+				$scope.users.push(networkJSON.network[i]);
+			}
+
 			$scope.loadingNetwork = false;
 			$scope.pageSize = 10;
+			$scope.processIndex = 1;
 		});
 	};
 	
@@ -387,68 +466,130 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.loadingNetwork = true;
 		$scope.processing = true;
 		
+		/*_.each(userRelevanceList, function(screenName, i) {
+			getNewUser(i+1);
+			if(i % 10 === 0) updateCFIUF($scope.validUsers, $scope.ufMap, i);
+		});*/
+		
 		var userListJSON = UserList.list({ list: userRelevanceList }, function() {
-			
-			_.each(userListJSON.twitterUserList, function(user) {
-				user.imageVisible = true;
-				user.ontology = user.userOntology;
-				delete user.userOntology;
-				delete user.ontology.ontology;
+			_.each(userListJSON.twitterUserList, function(user, i) {
 				
-				getTweetStats(user);
-				
-				updateUFMap($scope.ufMap, user.ontology.yagotypes);
-				
-				$scope.users.push(user);
+				prepareUser(user, i);
 			});
 			
-			updateCFIUF($scope.users, $scope.ufMap, $scope.users.length-1);
+			updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
 			
-			$scope.finished = true;
+			//$scope.finished = true;
 			$scope.loadingNetwork = false;
+			
+			$scope.$watch('updatingCFIUF', function() {
+				if($scope.updatingCFIUF === false) {
+					//$scope.processing = false;
+					$scope.finished = true;
+				}
+			});
+			
 			$scope.pageSize = 10;
-			applyLDA();
+			//$scope.processNetwork(1);
+			
+			//updateCFIUF($scope.users, $scope.ufMap, $scope.users.length-1);
+			
+			//prepareTMTData();
 		});
 	};
 	
 	$scope.processNetwork = function(index) {
+		$scope.startTime = new Date().getTime();
+		console.log("Starting time: " + $scope.startTime);
+		
+		$scope.processNetworkRec(index);
+		
+		for(var i = 2; i <= $scope.maxProcesses; i++) {
+			$scope.processNetworkRec(i);
+			$scope.processIndex++;
+			$scope.activeProcesses++;
+		}
+	}
+	
+	$scope.processNetworkRec = function(index) {
+		console.log("index: " + index);
 		
 		$scope.processing = true;
+		
+		var user = $scope.users[index];
 
-		$scope.users[index].loadingTweets = true;
-		var tweetsJSON = UserTweets.tweets({ name: $scope.users[index].screenName }, function() {
+		user.loadingTweets = true;
+		//var tweetsJSON = UserTweets.tweets({ name: $scope.users[index].screenName }, function() {
 			
-			$scope.users[index].englishRate = tweetsJSON.englishRate;
-			$scope.users[index].tweets = tweetsJSON.tweets;
+		user.loadingOntology = true;
+		
+		var ontologyJSON = UserOntology.ontology({ name: user.screenName, index: index, concatenation: $scope.concatenation, 
+													c: $scope.nerConfidence, s: $scope.nerSupport }, function() {
 			
-			getTweetStats($scope.users[index]);
 			
-			$scope.users[index].loadingTweets = false;
-			$scope.users[index].loadingOntology = true;
-			var ontologyJSON = UserOntology.ontology({ name: $scope.users[index].screenName }, function() {
+			user.englishRate = ontologyJSON.user.englishRate;
+			
+			if(!user['protected'] && user.englishRate >= $scope.minimumEnglishRate) {
+			
+				user.tweets = ontologyJSON.user.tweets;
+				getTweetStats(user);
+															
+				user.userOntology = ontologyJSON.user.userOntology;
 				
-				$scope.users[index].ontology = ontologyJSON.user.userOntology;
-				$scope.users[index].loadingOntology = false;
+				updateUFMap($scope.ufMap, user.userOntology.ontology);
 				
-				updateUFMap($scope.ufMap, $scope.users[index].ontology.yagotypes);
+				$scope.validUsers.push(user);
+				$scope.visibleUsers.push(user);
+				//if(index % 1 == 0) {
+				updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
+				//}
+			}
+			
+			user.loadingTweets = false;
+			user.loadingOntology = false;
+			
+			if($scope.processIndex < $scope.users.length-1 && $scope.activeProcesses <= $scope.maxProcesses) {
+				$scope.processIndex++;
+				index = $scope.processIndex;
 				
-				if(index % 50 == 0) {
-					updateCFIUF($scope.users, $scope.ufMap, index);
+				$timeout(function() {
+					$scope.processNetworkRec(index);
+			    }, 0);
+				
+				if(index < $scope.users.length-2 && $scope.activeProcesses <= $scope.maxProcesses-1) {
+					$scope.processIndex++;
+					$scope.activeProcesses++;
+					
+					$timeout(function() {
+						$scope.processNetworkRec(index+1);
+				    }, 0);
 				}
 				
-				index += 1;
 				
-				if(index < $scope.users.length) {
-					$scope.processNetwork(index);
-				} else {
-					if((index-1) % 50 != 0) {
-						updateCFIUF($scope.users, $scope.ufMap, index-1);
-					}
+			} else {
+				if(!$scope.finished && $scope.activeProcesses <= 1) {
+					//if((index) % 10 != 0) {
+					$timeout(function() {
+						console.log("Final CF-IUF update at index " + ($scope.validUsers.length-1) );
+						$scope.finalCFIUFUpdate = true;
+						updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
+					}, 4000);
+						
+					//}
 					$scope.finished = true;
-					applyLDA();
+					$scope.endTime = new Date().getTime();
+					console.log("Ending time: " + $scope.endTime);
+					var time = $scope.endTime - $scope.startTime;
+					console.log("Execution time: " + time);
+					
+					//console.log("UF Map: " + JSON.stringify($scope.ufMap));
 				}
-			});
+				
+				$scope.activeProcesses--;
+				//prepareTMTData();
+			}
 		});
+		//});
 	}
 	
 	$scope.loadMore = function() {
@@ -498,23 +639,20 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	    }
 	}
 	
-	function applyLDA() {
-		console.log("Applying LDA!");
+	function prepareTMTData() {
+		console.log("Preparing TMT data.");
 		
-		// Initialize the LDA vocabulary given the users and number of topics.
-		//LDAService.init($scope.users, $scope.ldaTopics);
-		var csv = LDAService.prepareTMTInput($scope.users);
+		var allCount = 0;
+		var csv = "";
+		
+		_.each($scope.users, function(user) {				
+			_.each(user.tweets, function (tweet) {
+				allCount++;
+				csv += '' + allCount + ',' + user.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
+			});
+		});
+		
 		console.log(csv);
-		
-		// Remaining configuration parameters, including base values for the Gibbs sampling. These will be divided by K and V, respectively.
-		// alpha: per-document distributions over topics (0.1)
-		// beta: per-topic distributions over words (0.01)
-		//config = { iterations: 2000, burnIn: 400, thinInterval: 100, sampleLag: 10, gibbsAlphaNum: 50, gibbsBetaNum: 200 };
-		
-		// Execute the LDA algorithm, then evaluate the result.
-		/*LDAService.doWork(config).then(function(topicUsers) {
-			EvaluationService.mcc(topicUsers, $scope.users.length);
-        });*/
 	}
 }]);
 

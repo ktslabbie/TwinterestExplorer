@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Users
+SELECT * FROM Users

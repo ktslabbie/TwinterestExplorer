@@ -1,1 +1,1 @@
-UPDATE TweetBase.Users SET english_rate = ? WHERE user_id = ?
+UPDATE Users SET english_rate = ? WHERE user_id = ?

@@ -1,1 +1,1 @@
-DELETE FROM TweetBase.Users;
+DELETE FROM Users;

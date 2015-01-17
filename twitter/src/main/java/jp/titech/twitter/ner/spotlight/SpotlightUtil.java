@@ -6,6 +6,8 @@
 package jp.titech.twitter.ner.spotlight;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +32,14 @@ import org.json.JSONObject;
  */
 public class SpotlightUtil {
 
-	public static Map<String, List<DBpediaResourceOccurrence>> jsonToResourceOccurrences(JSONObject json){
+	public static List<DBpediaResourceOccurrence> jsonToResourceOccurrences(JSONObject json){
 
-		Map<String, List<DBpediaResourceOccurrence>> resourceOccurrenceMap = new LinkedHashMap<String, List<DBpediaResourceOccurrence>>();
+		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
+		//List<DBpediaResourceOccurrence> resourceOccurrenceMap = new LinkedHashMap<String, List<DBpediaResourceOccurrence>>();
 
 		try {
 			DBpediaResourceOccurrence occurrence = null;
+			if(json == null) return bestCandidates;
 
 			JSONObject jsonMain = json.getJSONObject("annotation");
 
@@ -46,16 +50,14 @@ public class SpotlightUtil {
 			JSONArray surfaceForms = new JSONArray();
 			
 			if(object == null) {
-				return resourceOccurrenceMap;
+				return bestCandidates;
 			} else if(object instanceof JSONArray){
 				surfaceForms = (JSONArray) object;
 			} else if(object instanceof JSONObject){
-				((JSONObject) object).toJSONArray(surfaceForms);
+				surfaceForms.put(object);
 			}
 			
 			for (int i = 0; i < surfaceForms.length(); i++) {
-				List<DBpediaResourceOccurrence> resourceOccurrences = new ArrayList<DBpediaResourceOccurrence>();
-				
 				JSONObject jsonSurfaceForm = surfaceForms.getJSONObject(i);
 				//SurfaceForm surfaceForm = new SurfaceForm(jsonSurfaceForm.getString("@name"));
 				String surfaceForm = jsonSurfaceForm.getString("@name");
@@ -71,27 +73,22 @@ public class SpotlightUtil {
 					jsonResources.put(jsonResourceTemp);
 				}
 
-				if(jsonResources != null) {
-					for (int j = 0; j < jsonResources.length(); j++) {
-						JSONObject jsonResource = jsonResources.getJSONObject(j);
-						DBpediaResource dbpediaResource = jsonToDBpediaResource(jsonResource);
-						occurrence = new DBpediaResourceOccurrence(dbpediaResource, surfaceForm, context, textOffset);
-						occurrence.setPercentageOfSecondRank(jsonResource.getDouble("@percentageOfSecondRank"));
-						occurrence.setSimilarityScore(jsonResource.getDouble("@finalScore"));
-						resourceOccurrences.add(occurrence);
-					}
-					if(!Vars.INCLUDE_EMPTY_SURFACE_FORMS)
-						resourceOccurrenceMap.put(surfaceForm, resourceOccurrences);
+				if(jsonResources != null && jsonResources.length() > 0) {
+					JSONObject jsonResource = jsonResources.getJSONObject(0);
+					DBpediaResource dbpediaResource = jsonToDBpediaResource(jsonResource);
+					
+					occurrence = new DBpediaResourceOccurrence(dbpediaResource, surfaceForm, context, textOffset);
+					occurrence.setPercentageOfSecondRank(jsonResource.getDouble("@percentageOfSecondRank"));
+					occurrence.setSimilarityScore(jsonResource.getDouble("@finalScore"));
+					bestCandidates.add(occurrence);
 				}
-				if(Vars.INCLUDE_EMPTY_SURFACE_FORMS)
-					resourceOccurrenceMap.put(surfaceForm, resourceOccurrences);
 			}
 			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		
-		return resourceOccurrenceMap;
+		return bestCandidates;
 	}
 
 	/**
@@ -103,9 +100,12 @@ public class SpotlightUtil {
 			DBpediaResource dbpediaResource = new DBpediaResource(jsonResource.getString("@uri"));
 			dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
 			dbpediaResource.setSupport(jsonResource.getInt("@support"));
+			
+			//TODO: fix ontology types from Spotlight!
 			String[] types = jsonResource.getString("@types").split(", ");
 			
 			List<OntologyType> typeList = new ArrayList<OntologyType>();
+			
 			for (int k = 0; k < types.length; k++) {
 				OntologyType type = determineNativeOntologyType(types[k]);
 				if(type != null)

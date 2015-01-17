@@ -1,1 +1,1 @@
-INSERT INTO TweetBase.URLs (tweet_id, url) VALUES (?, ?)
+INSERT INTO URLs (tweet_id, url) VALUES (?, ?)

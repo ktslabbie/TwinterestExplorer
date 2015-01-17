@@ -12,7 +12,8 @@ import javax.ws.rs.core.MediaType;
 import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
+import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
 @Path("/api/get-user-ontology")
@@ -27,27 +28,37 @@ public class UserOntologyResource {
 
     @GET
     @Timed
-    public TwitterUserJSON getUser(@QueryParam("id") Optional<Long> id, @QueryParam("name") Optional<String> name, @QueryParam("concatenation") Optional<Integer> concatenation) {
-    	TwitterUser targetUser;
-    	if(concatenation.isPresent()) {
-    		Vars.CONCATENATION_WINDOW = concatenation.get();
-    	}
+    public TwitterUserJSON getUser(@QueryParam("index") Optional<Integer> index, @QueryParam("id") Optional<Long> id, 
+    							@QueryParam("name") Optional<String> name, @QueryParam("concatenation") Optional<Integer> concatenation,
+    							@QueryParam("c") Optional<Double> c, @QueryParam("s") Optional<Integer> s) {
     	
-    	if(id.isPresent()) {
-    		targetUser = TweetBaseUtil.getTwitterUserWithID(id.get());
-    	} else {
-    		targetUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
-    	}
+    	TwitterUser targetUser;
+    	
+    	if(c.isPresent()) Vars.SPOTLIGHT_CONFIDENCE = c.get();
+    	if(s.isPresent()) Vars.SPOTLIGHT_SUPPORT = s.get();
+    	if(concatenation.isPresent()) Vars.CONCATENATION_WINDOW = concatenation.get();
+    	
+    	TwitterConnector connector = new TwitterConnector(index.or(-1));
+    	
+    	if(id.isPresent())
+    		targetUser = connector.getTwitterUserWithID(id.get());
+    	else
+    		targetUser = connector.getTwitterUserWithScreenName(name.or(defaultName));
+    	
     	
     	if(!targetUser.hasTweets()) {
     		MiningController mc = MiningController.getInstance();
-        	mc.mineUser(targetUser);
+        	mc.mineUser(targetUser, connector);
     	}
     	
+    	int portIndex = index.or(Vars.SPOTLIGHT_PORTS.length);
+    	String spotlightUrl = Vars.SPOTLIGHT_BASE_URL + ":" + Vars.SPOTLIGHT_PORTS[portIndex % Vars.SPOTLIGHT_PORTS.length];
+    	
     	if(targetUser.getEnglishRate() > 0.8) {
-    		OntologyController ontologyController = OntologyController.getInstance();
-    		ontologyController.createUserOntology(targetUser);
-            return new TwitterUserJSON(targetUser);
-    	} else return null;
+			OntologyController ontologyController = OntologyController.getInstance();
+			ontologyController.createUserOntology(targetUser, spotlightUrl);
+    	}
+    	
+    	return new TwitterUserJSON(targetUser);
     }
 }

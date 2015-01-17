@@ -1,1 +1,1 @@
-INSERT INTO TweetBase.Tweets (tweet_id, user_id, screen_name, created_at, content, isretweet, lang) VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO Tweets (tweet_id, user_id, created_at, content, isretweet, lang) VALUES (?, ?, ?, ?, ?, ?)

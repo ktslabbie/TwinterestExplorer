@@ -1,4 +1,4 @@
-package jp.titech.twitter.ontology.similarity;
+/*package jp.titech.twitter.ontology.similarity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,11 +82,11 @@ public class OccurrenceSimilarity extends SimilarityFunction {
 			similarity = 0;
 		}
 
-		/*if(similarity >= confidence || Double.isNaN(similarity)) {
+		if(similarity >= confidence || Double.isNaN(similarity)) {
 			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass included!");
 		} else {
 			Log.getLogger().info("Total included: " + included + "/" + totalSmallest + " class occurrences. Similarity: " + similarity + "\t\tClass excluded!");
-		}*/
+		}
 
 		return similarity;
 	}
@@ -95,3 +95,4 @@ public class OccurrenceSimilarity extends SimilarityFunction {
 		return "occurrence";
 	}
 }
+*/

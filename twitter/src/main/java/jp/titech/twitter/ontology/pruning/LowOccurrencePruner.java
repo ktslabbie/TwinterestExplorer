@@ -2,7 +2,7 @@
  * @author		Kristian Slabbekoorn
  * @version		1.0
  * @since		17 dec. 2012
- */
+ *//*
 package jp.titech.twitter.ontology.pruning;
 
 import java.util.HashMap;
@@ -17,10 +17,10 @@ import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
-/**
+*//**
  * @author Kristian Slabbekoorn
  *
- */
+ *//*
 public class LowOccurrencePruner implements Pruner {
 
 	private UserOntology userOntology;
@@ -79,3 +79,4 @@ public class LowOccurrencePruner implements Pruner {
 		return prunedUserOntology;
 	}
 }
+*/

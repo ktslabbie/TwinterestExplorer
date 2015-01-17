@@ -4,9 +4,13 @@
  * @since		16 okt. 2012
  */
 package jp.titech.twitter.data;
+import io.dropwizard.jackson.Jackson;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.JsonSerializer;
 
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
@@ -20,7 +24,7 @@ import jp.titech.twitter.util.Util;
 public class Tweet {
 
 	private long 			tweetID, userID;
-	private String 			screenName, content, locationName, language;
+	private String 			content, locationName, language;
 	private boolean 		isRetweet;
 	private Date 			createdAt;
 	private List<String> 	userMentions, hashtags, URLs, media;
@@ -41,12 +45,12 @@ public class Tweet {
 	 * @param locationName
 	 * @param language
 	 */
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt, String content, boolean isRetweet, String locationName, String language,
+	public Tweet(long tweetID, long userID, Date createdAt, String content, boolean isRetweet, String locationName, String language,
 			List<String> userMentions, List<String> hashtags, List<String> URLs, List<String> media) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
-		this.screenName = screenName;
+		//this.screenName = screenName;
 		this.createdAt = createdAt;
 		this.content = content;
 		this.isRetweet = isRetweet;
@@ -62,7 +66,7 @@ public class Tweet {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
-		this.screenName = screenName;
+		//this.screenName = screenName;
 		this.createdAt = createdAt;
 		this.userMentions = new ArrayList<String>();
 		this.hashtags = new ArrayList<String>();
@@ -100,17 +104,17 @@ public class Tweet {
 
 	/**
 	 * @return the screenName
-	 */
+	 *//*
 	public String getScreenName() {
 		return screenName;
 	}
 
-	/**
+	*//**
 	 * @param screenName the screenName to set
-	 */
+	 *//*
 	public void setScreenName(String screenName) {
 		this.screenName = screenName;
-	}
+	}*/
 
 	/**
 	 * @return the content
@@ -272,7 +276,7 @@ public class Tweet {
 	@Override
 	public String toString() {
 		return "Tweet [tweetID=" + tweetID + ", userID=" + userID
-				+ ", screenName=" + screenName + ", content=" + content
+				+ ", content=" + content
 				+ ", locationName=" + locationName + ", isRetweet=" + isRetweet
 				+ ", createdAt=" + createdAt + ", hashtags=" + hashtags + ", language=" + language + "]";
 	}
@@ -349,7 +353,6 @@ public class Tweet {
 		this.stripMedia();
 		this.stripNetslang();
 		this.removeStrangeChars();
-		setContent(getContent().trim());
 		
 		return this.getContent();
 	}
@@ -364,7 +367,6 @@ public class Tweet {
 		this.stripMedia();
 		this.stripNetslang();
 		this.removeStrangeChars();
-		setContent(getContent().trim());
 		
 		return this.getContent();
 	}
@@ -373,7 +375,7 @@ public class Tweet {
 	 *  Strips JSON-breaking characters.
 	 */
 	public String removeStrangeChars() {
-		setContent(getContent().replaceAll("[@,—.:;<>“”{}\\[\\]()’‘]", "").trim());
+		setContent(getContent().replaceAll("[@,—.:;<>\"“”{}\\[\\]()’‘]", "").trim());
 		return this.getContent();
 	}
 	

@@ -2,7 +2,7 @@
  * @author		Kristian Slabbekoorn
  * @version		1.0
  * @since		18 jun. 2013
- */
+ *//*
 package jp.titech.twitter;
 
 import java.util.HashSet;
@@ -14,6 +14,7 @@ import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.control.NetworkController;
 import jp.titech.twitter.data.TwitterUser;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.network.NetworkClusterer;
 import jp.titech.twitter.network.clustering.HCS;
 import jp.titech.twitter.ontology.similarity.CFIUF;
@@ -31,10 +32,10 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-/**
+*//**
  * @author Kristian Slabbekoorn
  *
- */
+ *//*
 public class TestUserNetworkApp {
 
 	final static long SEED_USER_ID = 50407038; //@mikegroner: 55569628 @bnmuller: 55569628   @BBC_TopGear 52344859
@@ -49,21 +50,23 @@ public class TestUserNetworkApp {
 		MiningController miningController 			= MiningController.getInstance();
 		OntologyController ontologyController 		= OntologyController.getInstance();
 		EvaluationController evaluationController 	= EvaluationController.getInstance();
+		
 
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph = networkController.createNetworkFromSeedUser(TARGET_USER_SCREEN_NAME, 105);
 
 		Set<TwitterUser> userSet = twitterUserGraph.vertexSet();
 		Set<TwitterUser> englishUserSet = new HashSet<TwitterUser>();
+		TwitterConnector connector = new TwitterConnector();
 		String users = "\n";
 
 		for (TwitterUser user : userSet) {
 			//users += user.getScreenName();
 			//users += "\n";
-			miningController.mineUser(user);
+			miningController.mineUser(user, connector);
 			
 			if(user.getEnglishRate() > Vars.MIN_ENGLISH_RATE) {
 				Log.getLogger().info("Enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + "), so create ontology...");
-				ontologyController.createUserOntology(user);
+				ontologyController.createUserOntology(user, Vars.SPOTLIGHT_DEFAULT_URL);
 				englishUserSet.add(user);
 			} else {
 				Log.getLogger().info("Not enough English tweets for user @" + user.getScreenName() + " (" + Util.round(2, user.getEnglishRate()) + ")! Skipping.");
@@ -94,7 +97,7 @@ public class TestUserNetworkApp {
 			//Log.getLogger().info(user.getUserOntology().toString());
 		}
 		
-		/*SimilarityFunction occurrenceSimilarity = new OccurrenceSimilarity(cfiuf);
+		SimilarityFunction occurrenceSimilarity = new OccurrenceSimilarity(cfiuf);
 		SimilarityFunction tfidfCosineSimilarity = new CosineSimilarity(tfidf);
 		SimilarityFunction cfiufCosineSimilarity = new CosineSimilarity(cfiuf);
 		
@@ -128,7 +131,8 @@ public class TestUserNetworkApp {
 		Log.getLogger().info(tfidfClusterer.printClusters());
 		
 		Log.getLogger().info("Printing clusters for CF-IUF weighting.");
-		Log.getLogger().info(cfiufClusterer.printClusters());*/
+		Log.getLogger().info(cfiufClusterer.printClusters());
 		
 	}
 }
+*/

@@ -1,4 +1,4 @@
-package jp.titech.twitter.ontology.similarity;
+/*package jp.titech.twitter.ontology.similarity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,3 +52,4 @@ public class CFIUF extends WeightingScheme {
 		return dfMap;
 	}
 }
+*/

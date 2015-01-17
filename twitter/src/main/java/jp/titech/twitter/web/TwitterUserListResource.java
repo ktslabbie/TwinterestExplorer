@@ -18,7 +18,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.network.NetworkBuilder;
 import jp.titech.twitter.util.Log;
 
@@ -35,10 +35,11 @@ public class TwitterUserListResource {
     	
     	if(userRelevanceList != null && !userRelevanceList.isEmpty()) {
     		List<TwitterUser> users = new ArrayList<TwitterUser>();
+    		TwitterConnector connector = new TwitterConnector();
     		
     		for(String screenName : userRelevanceList.split(",")) {
     			Log.getLogger().info("Retrieving @" + screenName + "...");
-    			users.add(TweetBaseUtil.getTwitterUserWithScreenName(screenName));
+    			users.add(connector.getTwitterUserWithScreenName(screenName));
     		}
     		
     		return new TwitterUserListJSON(users);

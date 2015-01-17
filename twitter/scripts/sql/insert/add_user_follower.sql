@@ -1,1 +1,1 @@
-INSERT INTO TweetBase.Followers (user_id, follower_id) VALUES (?, ?)
+INSERT INTO Followers (user_id, follower_id) VALUES (?, ?)

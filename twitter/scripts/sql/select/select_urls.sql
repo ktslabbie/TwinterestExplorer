@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.URLs WHERE tweet_id = ?
+SELECT * FROM URLs WHERE tweet_id = ?

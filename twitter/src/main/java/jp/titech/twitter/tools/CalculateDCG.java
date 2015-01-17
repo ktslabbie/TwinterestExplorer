@@ -8,7 +8,7 @@ package jp.titech.twitter.tools;
 import java.io.File;
 import java.util.ArrayList;
 
-import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.RedisQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;

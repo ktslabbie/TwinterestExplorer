@@ -1,6 +1,6 @@
 var graphService = angular.module('twitterWeb.GraphService', []);
 
-graphService.factory('Graph', function() {	
+graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope, CFIUFService) {	
 	
 	/**
 	 * Constructor, with class name
@@ -35,13 +35,40 @@ graphService.factory('Graph', function() {
 		this.getLinks = function() { return links; }
 		this.getNodeNameMap = function() { return nodeNameMap; }
 		this.getForce = function() { return force; }
+		
+		this.zoom = function(group) {
+			that.clearLinks();
+			nodeNameMap = {};
+			
+			for(var i = nodes.length-1; i >= 0; i--) {
+				if(nodes[i].group != group) {
+					nodes.splice(i, 1);
+				}
+			}
+			
+			for(var i = nodes.length-1; i >= 0; i--) {
+				nodeNameMap[nodes[i].name] = i;
+			}
+			
+			//legend.remove();
+			
+			that.start();
+			
+			$rootScope.$broadcast('graphZoom', {
+				  group: group,
+			});
+		}
 
 		/**
 		 * Add a node to the graph if not there yet. Returns the index of the new or existing node.
 		 */
 		this.addNode = function(pNode) {
 			var index = nodeNameMap[pNode.name];
-			if(index >= 0) return index;
+			
+			if(index >= 0) {
+				nodes[index].group = pNode.group;
+				return index;
+			}
 			
 			// Node not contained. Add it.
 			nodes.push(pNode);
@@ -88,10 +115,27 @@ graphService.factory('Graph', function() {
 		/** 
 		 * Removes all nodes and links from the graph.
 		 */
+		this.clearNodes = function() {
+			nodeNameMap = {};
+			while(nodes.length > 0) nodes.pop();
+		}
+		
+		/** 
+		 * Removes all nodes and links from the graph.
+		 */
+		this.clearLinks = function() {
+			while(links.length > 0) links.pop();
+		}
+		
+		/** 
+		 * Removes all nodes and links from the graph.
+		 */
 		this.clearGraph = function() {
 			nodeNameMap = {};
 			while(links.length > 0) links.pop();
 			while(nodes.length > 0) nodes.pop();
+			while(color.domain().length > 0) color.domain().pop();
+			//legend.remove();
 		}
 		
 		/** 
@@ -125,18 +169,18 @@ graphService.factory('Graph', function() {
 			}
 		}
 		
-
 		this.start = function(scopeLegend) {
 			link = link.data(force.links(), function(d) { return d.value; });
 			link.enter().insert("line", ".node").attr("class", "link");
 			link.exit().remove();
-			link.style("stroke-width", function(d) { return (Math.pow(d.value*3.5, 2)); });
+			link.style("stroke-width", function(d) { return (Math.pow(d.value*3, 2)); });
 
 			node = node.data(force.nodes(), function(d) { return d.name;});
 			node.enter().append("circle").attr("class", function(d) { return "node " + d.name; }).attr("r", 8);
 			node.exit().remove();
 			node.style("fill", function(d) { return color(d.group); });
 			node.call(force.drag);
+			node.on("dblclick",function(d){ that.zoom(d.group); });
 
 			text = text.data(force.nodes());
 			text.enter().append("text");
@@ -152,13 +196,13 @@ graphService.factory('Graph', function() {
 					.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
 
 				legend.append("rect")
-					.attr("x", width - 136)
+					.attr("x", width - 20)
 					.attr("width", 18)
 					.attr("height", 18)
 					.style("fill", color);
 			
 				legend.append("text")
-					.attr("x", width - 140)
+					.attr("x", width - 24)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
@@ -205,4 +249,4 @@ graphService.factory('Graph', function() {
    * Return the constructor function
    */
 	return Graph;
-});
+}]);

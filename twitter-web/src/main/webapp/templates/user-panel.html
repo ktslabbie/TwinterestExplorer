@@ -42,122 +42,78 @@
 	</div>
 </div>
 
-<!-- Tweets -->
-<div class="col-md-3 tweet-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingTweets">
-	<h3 class="text-muted">Getting tweets...</h3>
-	<br>
-	<i class="fa fa-spinner fa-spin text-loading"></i>
+<div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="targetUser.protected">
+	<h3 class="text-muted">This user is protected.</h3>
+</div>
+<div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="!targetUser.protected && targetUser.statusesCount < minTweets">
+	<h3 class="text-muted">This user does not have enough tweets.</h3>
+</div>
+<div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < 0.8">
+	<h3 class="text-muted">This user's English rate is too low.</h3>
 </div>
 
-
-<div class="col-md-3 tweet-panel text-center animate-if" ng-if="targetUser.tweets.length > 0">
-	<div class="row">
-		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}" ng-click="openModal = $index">
-			Got <span ng-bind="targetUser.tweets.length"></span> Tweets
-		</a>
+<div ng-if="!targetUser.protected">
+	<!-- Tweets -->
+	<div class="col-md-3 tweet-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingTweets">
+		<h3 class="text-muted">Getting tweets...</h3>
 		<br>
-		<span class="text-retweets">(<span ng-bind="targetUser.retweets"></span> retweets)</span>
+		<i class="fa fa-spinner fa-spin text-loading"></i>
 	</div>
-	<div class="row tag-mention-panel">
-		<div class="col-md-6">
-			<span class="text-muted">TOP HASHTAGS</span>
+	
+	<div class="col-md-3 tweet-panel text-center animate-if" ng-if="targetUser.tweets.length > 0 && targetUser.statusesCount >= minTweets && targetUser.englishRate > 0.8">
+		<div class="row">
+			<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}" ng-click="openModal = $index">
+				Got <span ng-bind="targetUser.tweets.length"></span> Tweets
+			</a>
 			<br>
-			<div class="row text-tags" ng-repeat="hashtag in targetUser.hashtags | orderBy: '-occ' | limitTo:'5' ">
-				#<span ng-bind="hashtag.tag"></span> (<span ng-bind="hashtag.occ"></span>)
-			</div>
+			<span class="text-retweets">(<span ng-bind="targetUser.retweets"></span> retweets)</span>
 		</div>
-		<div class="col-md-6">
-			<span class="text-muted">TOP MENTIONS</span>
-			<br>
-			<div class="row text-tags" ng-repeat="mention in targetUser.userMentions | orderBy: '-occ' | limitTo:'5' ">
-				@<span ng-bind="mention.mention"></span> (<span ng-bind="mention.occ"></span>)
-			</div>
-		</div>
-	</div>
-</div>
-
-<div ng-if="openModal == $index" class="modal fade" id="tweetModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-	<div class="modal-dialog" style="width: 70%">
-		<div class="modal-content">
-			<div class="modal-header text-center">
-				<button type="button" class="close" data-dismiss="modal">
-					<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-				</button>
-				<h4 class="modal-title" id="myModalLabel"><i>All tweets by <span ng-bind="targetUser.name"></span></i></h4>
-			</div>
-			<div class="modal-body">
-				<div class="row" ng-repeat="tweet in targetUser.tweets">
-					<div class="md-col-12" style="padding-left: 16px; padding-right: 16px;">
-					<!-- <strong><span ng-bind="tweet.createdAt"></span></strong>:  -->
-						<span ng-bind="tweet.content"></span>
-					</div>
+		<div class="row tag-mention-panel">
+			<div class="col-md-6">
+				<span class="text-muted">TOP HASHTAGS</span>
+				<br>
+				<div class="row text-tags" ng-repeat="hashtag in targetUser.hashtags | orderBy: '-occ' | limitTo:'5' ">
+					#<span ng-bind="hashtag.tag"></span> (<span ng-bind="hashtag.occ"></span>)
 				</div>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<div class="col-md-6">
+				<span class="text-muted">TOP MENTIONS</span>
+				<br>
+				<div class="row text-tags" ng-repeat="mention in targetUser.userMentions | orderBy: '-occ' | limitTo:'5' ">
+					@<span ng-bind="mention.mention"></span> (<span ng-bind="mention.occ"></span>)
+				</div>
 			</div>
+		</div>
+	</div>
+	
+	
+		<!-- <div class="row" ng-repeat="tweet in targetUser.tweets">
+			<div class="col-md-12 col-tweet"><small><span ng-bind="tweet.content"></span></small></div>
+		</div> -->
+	
+	<!-- Ontology -->
+	<div class="col-md-4 types-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingOntology">
+		<h3 class="text-muted">Getting interests...</h3>
+		<br>
+		<i class="fa fa-spinner fa-spin text-loading"></i>
+	</div>
+	
+	<div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.userOntology.cfIufMap && targetUser.statusesCount >= minTweets && targetUser.englishRate > 0.8">
+		<div class="row row-header text-center">
+			<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}" ng-click="openModal = $index">
+				Top traits (CF-IUF Ranking)
+			</a>
+		</div>
+		<div class="row text-muted">
+			<div class="col-md-9">Trait</div>
+			<div class="col-md-3">Confidence</div>
+		</div>
+		<div class="row list-types" ng-repeat="entry in targetUser.userOntology.topTypes">
+			<div class="col-md-9"><small><span ng-bind="entry[0]"></span></small></div>
+			<div class="col-md-3 col-confidence"><small><span ng-bind="entry[1] | number:2"></small></span></div>
 		</div>
 	</div>
 </div>
 
 
-	<!-- <div class="row" ng-repeat="tweet in targetUser.tweets">
-		<div class="col-md-12 col-tweet"><small><span ng-bind="tweet.content"></span></small></div>
-	</div> -->
 
-<!-- Ontology -->
-<div class="col-md-4 types-panel text-center" style="margin-top: 28px;" ng-if="targetUser.loadingOntology">
-	<h3 class="text-muted">Getting interests...</h3>
-	<br>
-	<i class="fa fa-spinner fa-spin text-loading"></i>
-</div>
-
-<div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.ontology.cfIufMap">
-	<div class="row row-header text-center">
-		<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}" ng-click="openModal = $index">
-			Top traits (CF-IUF Ranking)
-		</a>
-	</div>
-	<div class="row text-muted">
-		<div class="col-md-9">Trait</div>
-		<div class="col-md-3">Confidence</div>
-	</div>
-	<div class="row list-types" ng-repeat="entry in targetUser.ontology.topTypes">
-		<div class="col-md-9"><small><span ng-bind="entry[0]"></span></small></div>
-		<div class="col-md-3 col-confidence"><small><span ng-bind="entry[1] | number:2"></small></span></div>
-	</div>
-</div>
-
-<!-- <div ng-if="openModal == $index" class="modal fade" id="traitModal{{targetUser.screenName}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-	<div class="modal-dialog" style="width: 60%">
-		<div class="modal-content">
-			<div class="modal-header text-center">
-				<button type="button" class="close" data-dismiss="modal">
-					<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-				</button>
-				<h4 class="modal-title" id="myModalLabel"><i>All traits of <span ng-bind="targetUser.name"></span></i></h4>
-			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><strong>Trait</strong></p>
-					</div>
-					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><strong>CF-IUF</strong></p>
-					</div>
-				</div>
-				<div class="row list-types" ng-repeat="(key, value) in targetUser.ontology.cfIufMap">
-					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><span ng-bind="getTypeName(key)"></span></p>
-					</div>
-					<div class="col-md-6" style="padding-left: 16px; padding-right: 16px;">
-						<p><span ng-bind="value"></span></p>
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
-</div> -->

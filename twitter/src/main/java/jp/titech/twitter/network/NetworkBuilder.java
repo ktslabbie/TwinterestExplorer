@@ -1,6 +1,5 @@
 package jp.titech.twitter.network;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -13,13 +12,10 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import twitter4j.PagableResponseList;
-import twitter4j.User;
-import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.WeightedEdge;
 import jp.titech.twitter.db.TweetBase;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -39,6 +35,7 @@ public class NetworkBuilder {
 	private boolean				restrictToLocal = false;	// Set true to disable contacting the Twitter API
 	private boolean				getFollowers = true;
 	private int					userCount;
+	private TwitterConnector 	connector;
 
 	DirectedGraph<TwitterUser, DefaultWeightedEdge> graph;
 
@@ -49,9 +46,10 @@ public class NetworkBuilder {
 		processQueue.add(this.seedUser);
 		processed = new HashSet<Long>();
 		userCount = 0;
+		connector = new TwitterConnector();
 	}
 
-	public NetworkBuilder(TwitterUser seedUser, int maxSize) {
+	public NetworkBuilder(TwitterUser seedUser, int maxSize, TwitterConnector connector) {
 		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		this.seedUser = seedUser;
 		processQueue = new PriorityQueue<TwitterUser>();
@@ -59,6 +57,7 @@ public class NetworkBuilder {
 		this.maxUsers = maxSize;
 		processed = new HashSet<Long>();
 		userCount = 0;
+		this.connector = connector;
 	}
 	
 	public NetworkBuilder(TwitterUser seedUser, Set<TwitterUser> otherUsers) {
@@ -76,6 +75,7 @@ public class NetworkBuilder {
 		this.maxUsers = otherUsers.size()+1;
 		processed = new HashSet<Long>();
 		userCount = 0;
+		connector = new TwitterConnector();
 	}
 
 	public void build() {
@@ -125,7 +125,7 @@ public class NetworkBuilder {
 		TwitterUser follower;
 		for (long id : followerIDs) {
 			if(!processed.contains(id)) {
-				follower = TweetBaseUtil.getTwitterUserWithID(id);
+				follower = connector.getTwitterUserWithID(id);
 
 				if(isValidUser(follower) && !follower.equals(currentUser)) {
 					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
@@ -144,7 +144,7 @@ public class NetworkBuilder {
 	}
 	
 	private void processRemoteUsers(TwitterUser currentUser, long cursor) {
-		List<TwitterUser> followers = TweetBaseUtil.getFollowersList(currentUser.getUserID(), cursor);
+		List<TwitterUser> followers = connector.getFollowersList(currentUser.getUserID(), cursor);
 		
 		for (TwitterUser follower : followers) {
 			if(!processed.contains(follower.getUserID())) {
@@ -167,7 +167,7 @@ public class NetworkBuilder {
 			}
 		}
 		
-		cursor = TweetBaseUtil.getNextCursor();
+		cursor = connector.getNextCursor();
 		
 		if(userCount <= maxUsers && cursor != 0) {
 			processRemoteUsers(currentUser, cursor);
@@ -226,7 +226,6 @@ public class NetworkBuilder {
 	 * @return true if valid
 	 */
 	private boolean isValidUser(TwitterUser currentUser) {
-		if(currentUser.getScreenName().equals("cccmanhattan")) return true;
 		return  currentUser != null &&
 				currentUser.getFollowersCount()	>= Vars.MIN_FOLLOWERS &&
 				currentUser.getFollowersCount()	<= Vars.MAX_FOLLOWERS &&

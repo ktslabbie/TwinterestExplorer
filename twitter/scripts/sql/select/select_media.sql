@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Media WHERE tweet_id = ?
+SELECT * FROM Media WHERE tweet_id = ?

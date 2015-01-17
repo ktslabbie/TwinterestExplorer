@@ -1,8 +1,5 @@
 package jp.titech.twitter.web;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.common.base.Optional;
 import com.codahale.metrics.annotation.Timed;
 
@@ -16,7 +13,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.network.NetworkBuilder;
 
 @Path("/api/get-user-network")
@@ -31,12 +28,15 @@ public class UserNetworkResource {
 
 	@GET
 	@Timed
-	public TwitterNetworkJSON getNetwork(@QueryParam("name") Optional<String> name) {
+	public TwitterNetworkJSON getNetwork(@QueryParam("name") Optional<String> name, @QueryParam("userCount") Optional<Integer> userCount) {
 		DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph;
 		NetworkBuilder networkBuilder;
+		TwitterConnector connector = new TwitterConnector();
 
-		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
-		networkBuilder = new NetworkBuilder(seedUser, 99);
+		TwitterUser seedUser = connector.getTwitterUserWithScreenName(name.or(defaultName));
+		if(seedUser.isProtected()) return null; // This should not be possible.
+		
+		networkBuilder = new NetworkBuilder(seedUser, userCount.or(99), connector);
 		networkBuilder.build();
 		twitterUserGraph = networkBuilder.getGraph();
 

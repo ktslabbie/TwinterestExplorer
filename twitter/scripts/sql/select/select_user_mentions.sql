@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Usermentions WHERE tweet_id = ?
+SELECT * FROM Usermentions WHERE tweet_id = ?

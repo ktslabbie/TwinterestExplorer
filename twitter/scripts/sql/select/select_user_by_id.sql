@@ -1,1 +1,1 @@
-SELECT * FROM TweetBase.Users WHERE user_id = ?
+SELECT * FROM Users WHERE user_id = ?

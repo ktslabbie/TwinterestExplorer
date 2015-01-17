@@ -5,19 +5,12 @@
  */
 package jp.titech.twitter.control;
 
-import java.io.File;
 import java.util.HashMap;
 
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.ontology.OntologyBuilder;
-import jp.titech.twitter.ontology.pruning.HighGeneralityPruner;
-import jp.titech.twitter.ontology.pruning.LowOccurrencePruner;
-import jp.titech.twitter.ontology.pruning.Pruner;
 import jp.titech.twitter.ontology.types.OntologyType;
-import jp.titech.twitter.util.Log;
-import jp.titech.twitter.util.Util;
-import jp.titech.twitter.util.Vars;
 
 /**
  * Class to control most of the functionality of the program.
@@ -39,46 +32,46 @@ public class OntologyController {
 	 * 
 	 * @param user
 	 */
-	public void createUserOntology(TwitterUser user) {
+	public void createUserOntology(TwitterUser user, String spotlightUrl) {
 		
-		OntologyBuilder ob = new OntologyBuilder(user);
+		OntologyBuilder ob = new OntologyBuilder(user, spotlightUrl);
 		ob.build();
 		fullUserOntology = ob.getUserOntology();
-		fullUserOntology.setOntology(new HashMap<OntologyType, Integer>()); // TODO: change back
+		//fullUserOntology.setOntology(new HashMap<OntologyType, Integer>());
 		user.setUserOntology(fullUserOntology);
 
-		this.applyPruning(user);
+		/*if(!Vars.PRUNING_MODE.equals("NONE")) {
+			this.applyPruning(user);
+		}*/
 	}
 	
-	private void applyPruning(TwitterUser user) {
+	/*private void applyPruning(TwitterUser user) {
 		
 		Pruner pruner = null;
 		prunedUserOntology = user.getUserOntology();
 		
-		if(!Vars.PRUNING_MODE.equals("NONE")) {
-			if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("LOW")) {
-				Log.getLogger().info("Applying low-occurrence pruning.");
-				
-				pruner = new LowOccurrencePruner(fullUserOntology);
-				pruner.prune();
-				prunedUserOntology = pruner.getPrunedUserOntology();
-			}
+		if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("LOW")) {
+			Log.getLogger().info("Applying low-occurrence pruning.");
 			
-			if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("HIGH")) {
-				Log.getLogger().info("Applying high-generality pruning.");
-				
-				if(Vars.PRUNING_MODE.equals("BOTH")) {
-					pruner = new HighGeneralityPruner(fullUserOntology, prunedUserOntology);
-				} else if(Vars.PRUNING_MODE.equals("HIGH")) {
-					pruner = new HighGeneralityPruner(fullUserOntology);
-				}
-				pruner.prune();
-				prunedUserOntology = pruner.getPrunedUserOntology();
+			pruner = new LowOccurrencePruner(fullUserOntology);
+			pruner.prune();
+			prunedUserOntology = pruner.getPrunedUserOntology();
+		}
+		
+		if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("HIGH")) {
+			Log.getLogger().info("Applying high-generality pruning.");
+			
+			if(Vars.PRUNING_MODE.equals("BOTH")) {
+				pruner = new HighGeneralityPruner(fullUserOntology, prunedUserOntology);
+			} else if(Vars.PRUNING_MODE.equals("HIGH")) {
+				pruner = new HighGeneralityPruner(fullUserOntology);
 			}
+			pruner.prune();
+			prunedUserOntology = pruner.getPrunedUserOntology();
 		}
 		
 		user.setUserOntology(prunedUserOntology);
- 	}
+ 	}*/
 	
 	/**
 	 * Retrieve the Controller singleton instance.

@@ -273,8 +273,17 @@ div.col-tweet {
 	margin-bottom: 20px;
 }
 
+.plain-link {
+	text-decoration: none;
+	color: #FFFFFF;
+}
+
+.plain-link:hover {
+	color: #EEEEEE;
+}
+
 .text-loading {
-	font-size: 56px;
+	font-size: 40px;
 }
 
 a:hover {
@@ -285,7 +294,7 @@ a:hover {
 .graph {
     margin-top: 16px;
 	background-color: #FFFFFF;
-	border: solid 1px #999999;
+	
 }
 
 .node-text {

@@ -1,4 +1,4 @@
-package jp.titech.twitter.web;
+/*package jp.titech.twitter.web;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 
 import jp.titech.twitter.control.MiningController;
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 
 @Path("/api/get-user-tweets")
 @Produces(MediaType.APPLICATION_JSON)
@@ -21,12 +21,15 @@ public class UserTweetsResource {
     @GET
     @Timed
     public UserTweetsJSON getTweets(@QueryParam("name") String name) {
-    	TwitterUser user = TweetBaseUtil.getTwitterUserWithScreenName(name);
+    	TwitterConnector connector = new TwitterConnector();
+    	TwitterUser user = connector.getTwitterUserWithScreenName(name);
+    	
+    	
     	MiningController mc = MiningController.getInstance();
-    	mc.mineUser(user);
+    	mc.mineUser(user, connector);
     	
         //if(user.getEnglishRate() > 0.8)
 			return new UserTweetsJSON(user.getTweets(), user.getEnglishRate());
         //else return new UserTweetsJSON(null, user.getEnglishRate());
     }
-}
+}*/

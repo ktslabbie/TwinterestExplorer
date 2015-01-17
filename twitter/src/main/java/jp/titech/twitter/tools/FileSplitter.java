@@ -32,8 +32,8 @@ public class FileSplitter {
 	/*
 	 * Variables
 	 */
-	static final String RDF_DIRECTORY = "C://may_split/";							// Directory with RDF files
-	static final String EXTENSION = "csv";											// Extension of RDF files
+	static final String RDF_DIRECTORY = "../data/";									// Directory with RDF files
+	static final String EXTENSION = "nt";											// Extension of RDF files
 	static final int LINES_PER_FILE = 10000;										// Number of lines per split file
 	
 	public static void main( String[] args ) {
@@ -53,7 +53,7 @@ public class FileSplitter {
 	}
 	
 	/**
-	 * Read a text file and split it into chunks of lines lines.
+	 * Read a text file and split it into chunks of lines.
 	 * 
 	 * @param file The file
 	 * @param lines The number of lines per split file
@@ -63,7 +63,7 @@ public class FileSplitter {
 		BufferedReader br = null;
 		String out = "";
 		try {
-			br = new BufferedReader(new FileReader(file));
+			br = new BufferedReader(new FileReader(file), 1000000);
 			FileWriter fw;
 			String currentLine;
 			int count = 0;
@@ -72,8 +72,9 @@ public class FileSplitter {
 				out += currentLine + "\n";
 				count++;
 				//showProgress(count, lines);
-				if(count == lines){
+				if(count == lines) {
 					//String subfix = (fileIndex < 10) ? "_0" : "_";
+					Log.getLogger().info("Writing " + file.getAbsolutePath() + "_" + fileIndex + "." + Util.getExtension(file) + " to disk...");
 					fw = new FileWriter(new File(file.getAbsolutePath() + "_" + fileIndex + "." + Util.getExtension(file)));
 					fw.write(out);
 					fw.close();

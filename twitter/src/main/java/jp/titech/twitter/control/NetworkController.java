@@ -12,7 +12,7 @@ import javax.swing.JScrollPane;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserSimilarity;
 import jp.titech.twitter.data.WeightedEdge;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.network.NetworkBuilder;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
 import jp.titech.twitter.util.Log;
@@ -32,8 +32,11 @@ public class NetworkController {
 
 	private static NetworkController 	networkController;
 	private DirectedGraph<TwitterUser, DefaultWeightedEdge> twitterUserGraph;
+	private TwitterConnector connector;
 
-	private NetworkController() {}
+	private NetworkController() {
+		connector = new TwitterConnector();
+	}
 
 	/**
 	 * Entry point to gather a network of users around some seed user.
@@ -44,12 +47,12 @@ public class NetworkController {
 	 * @return a directed graph of users and edges
 	 */
 	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromSeedUser(String screenName, int maxCount) {
-
-		TwitterUser seedUser = TweetBaseUtil.getTwitterUserWithScreenName(screenName);
+		
+		TwitterUser seedUser = connector.getTwitterUserWithScreenName(screenName);
 
 		Log.getLogger().info("Constructing network from seed user @" + seedUser.getScreenName() + "...");
 
-		NetworkBuilder networkBuilder = new NetworkBuilder(seedUser, maxCount);
+		NetworkBuilder networkBuilder = new NetworkBuilder(seedUser, maxCount, connector);
 		networkBuilder.build();
 		twitterUserGraph = networkBuilder.getGraph();
 
@@ -67,13 +70,13 @@ public class NetworkController {
 	 */
 	public DirectedGraph<TwitterUser, DefaultWeightedEdge> createNetworkFromTargetUser(String targetUserScreenName, File dcgRelevanceFile) {
 		
-		TwitterUser targetUser = TweetBaseUtil.getTwitterUserWithScreenName(targetUserScreenName);
+		TwitterUser targetUser = connector.getTwitterUserWithScreenName(targetUserScreenName);
 		Set<TwitterUser> otherUsers = new HashSet<TwitterUser>();
 		String fileString = Util.readFile(dcgRelevanceFile);
 		String[] lines = fileString.split("\n");
 		
 		for (String line : lines)
-			otherUsers.add(TweetBaseUtil.getTwitterUserWithScreenName(line.split("\t")[0]));
+			otherUsers.add(connector.getTwitterUserWithScreenName(line.split("\t")[0]));
 
 		Log.getLogger().info("Constructing network from seed user @" + targetUser.getScreenName() + " using users contained in the relevance file...");
 
@@ -82,29 +85,6 @@ public class NetworkController {
 		twitterUserGraph = networkBuilder.getGraph();
 
 		return twitterUserGraph;
-	}
-
-	public void drawSimilarityGraph(Graph<TwitterUser, DefaultWeightedEdge> dgraph) {
-
-		JGraphModelAdapter<TwitterUser, DefaultWeightedEdge> model = new JGraphModelAdapter<TwitterUser, DefaultWeightedEdge>(dgraph);
-		
-		// Construct Model and Graph
-		JGraph graph = new JGraph(model);
-		
-		// Control-drag should clone selection
-		graph.setCloneable(true);
-
-		// When over a cell, jump to its default port (we only have one, anyway)
-		graph.setJumpToDefaultPort(true);
-
-		// Show in Frame
-		JFrame frame = new JFrame();
-
-		frame.setSize(1600,900);
-		frame.setLocation(100,100);
-		frame.getContentPane().add(new JScrollPane(graph));
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setVisible(true);
 	}
 
 	public UndirectedGraph<TwitterUser, DefaultWeightedEdge> createSimilarityGraph(SimilarityFunction similarityFunction, double threshold) {

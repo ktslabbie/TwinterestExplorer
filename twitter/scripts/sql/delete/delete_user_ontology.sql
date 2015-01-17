@@ -1,10 +1,1 @@
-DELETE FROM TweetBase.hashtags;
-DELETE FROM TweetBase.locations;
-DELETE FROM TweetBase.urls;
-DELETE FROM TweetBase.media;
-DELETE FROM TweetBase.friends;
-DELETE FROM TweetBase.followers;
-DELETE FROM TweetBase.usermentions;
-DELETE FROM TweetBase.ontology;
-DELETE FROM TweetBase.tweets;
-DELETE FROM TweetBase.users;
+DELETE FROM ontology WHERE user_id = 21878635;

@@ -20,7 +20,7 @@ import jp.titech.twitter.data.UserOntology;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.ner.spotlight.SpotlightQuery;
-import jp.titech.twitter.ontology.dbpedia.DBpediaQuery;
+import jp.titech.twitter.ontology.dbpedia.RedisQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -29,12 +29,14 @@ public class OntologyBuilder {
 
 	private TwitterUser user;
 	private UserOntology userOntology;
+	private String spotlightURL;
 	private int totalTweetCount;
 	private boolean ontologyExists;
 	private Date startDate, endDate;
 
-	public OntologyBuilder(TwitterUser user) {
+	public OntologyBuilder(TwitterUser user, String spotlightURL) {
 		this.user = user;
+		this.spotlightURL = spotlightURL;
 		totalTweetCount = (Vars.TIMELINE_TWEET_COUNT <= 3200) ? Vars.TIMELINE_TWEET_COUNT : 3200;
 		ontologyExists = TweetBase.getInstance().isOntologyContained(user.getUserID());
 	}
@@ -49,19 +51,18 @@ public class OntologyBuilder {
 			userOntology = TweetBase.getInstance().getUserOntology(user.getUserID());
 			
 		} else {
-			Log.getLogger().info("Running DBpedia Spotlight on tweet content...");
+			Log.getLogger().info("Ontology not in DB. Running DBpedia Spotlight on tweet content...");
 			
 			userOntology = new UserOntology();
 			List<Tweet> tweets = TweetBase.getInstance().getTweets(user.getUserID());
 			if(tweets.isEmpty()) {
 				Log.getLogger().info("No tweets yet for this user! Try to mine...");
 				MiningController mc = MiningController.getInstance();
-				mc.mineUser(user);
+				mc.mineUser(user, null);
 				tweets = user.getTweets();
 			}
 			
 			int processedTweetCount = 0;
-			Util.loadStopwords(Vars.STOPWORDS_FILE);
 			
 			if(startDate != null && endDate != null){
 				Log.getLogger().info("Getting tweets between " + startDate + " and " + endDate);
@@ -80,7 +81,7 @@ public class OntologyBuilder {
 				}
 				
 				//Log.getLogger().info("Unstripped content: " + tweet.getContent());
-				tweet.stripNonHashtagElements();
+				//tweet.stripNonHashtagElements();
 				//Log.getLogger().info("Stripped content: " + tweet.getContent());
 				
 				concatenatedContent += tweet.getContent() + " ";
@@ -90,23 +91,28 @@ public class OntologyBuilder {
 					if(concatenatedContent.startsWith("'")) {
 						concatenatedContent = concatenatedContent.substring(1);
 					}
-					Log.getLogger().info("Stripped (and concatenated) tweet content: " + concatenatedContent);
+					//Log.getLogger().info("Stripped (and concatenated) tweet content: " + concatenatedContent);
 					
 					if(concatenatedContent.isEmpty() || concatenatedContent.equals(" ")) continue;
 	
-					SpotlightQuery spotlightQuery = SpotlightQuery.getInstance();
-					Map<String, List<DBpediaResourceOccurrence>> occurrences = spotlightQuery.annotate(concatenatedContent);
+					SpotlightQuery spotlightQuery = new SpotlightQuery(spotlightURL);
+					List<DBpediaResourceOccurrence> bestCandidates = spotlightQuery.annotate(concatenatedContent);
+					
+					/*Log.getLogger().info("Listing best cans.");
+					for(DBpediaResourceOccurrence can : bestCandidates) {
+						Log.getLogger().info("Best cans: " + can.getResource().getFullUri());
+					}*/
 	
-					if(!occurrences.isEmpty()) {
+					/*if(!occurrences.isEmpty()) {
 						for (String key : occurrences.keySet()) {
-							Log.getLogger().info("Match: " + key + ": " + occurrences.get(key).get(0)); // Only show the first candidate.
+							//Log.getLogger().info("Match: " + key + ": " + occurrences.get(key).get(0)); // Only show the first candidate.
 						}
-					}
+					}*/
 					
-					List<DBpediaResourceOccurrence> bestCandidates = this.initBestCandidates(occurrences);
+					//List<DBpediaResourceOccurrence> bestCandidates = this.initBestCandidates(occurrences);
 					
-					DBpediaQuery dbpQuery = DBpediaQuery.getInstance();
-					dbpQuery.collectClasses(bestCandidates, userOntology);
+					RedisQuery redisQuery = new RedisQuery();
+					redisQuery.collectAllTypes(bestCandidates, userOntology);
 					
 					tweetsConcatenatedCount = 0;
 					concatenatedContent = "";
@@ -117,7 +123,8 @@ public class OntologyBuilder {
 				if(processedTweetCount >= totalTweetCount) break;
 			}
 
-			TweetBase.getInstance().addUserOntology(user.getUserID(), userOntology);
+			if(!userOntology.getOntology().isEmpty())
+				TweetBase.getInstance().addUserOntology(user.getUserID(), userOntology);
 		}
 	}
 	
@@ -126,7 +133,7 @@ public class OntologyBuilder {
 	 * 
 	 * @return A list of the 1st ranked candidate DBpedia resource occurrences
 	 */
-	private List<DBpediaResourceOccurrence> initBestCandidates(Map<String, List<DBpediaResourceOccurrence>> occurrences) {
+	/*private List<DBpediaResourceOccurrence> initBestCandidates(Map<String, List<DBpediaResourceOccurrence>> occurrences) {
 		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
 		Collection<List<DBpediaResourceOccurrence>> col = occurrences.values();
 
@@ -137,7 +144,7 @@ public class OntologyBuilder {
 		}
 		
 		return bestCandidates;
-	}
+	}*/
 	
 	/**
 	 * @return the startDate
@@ -170,4 +177,20 @@ public class OntologyBuilder {
 	public UserOntology getUserOntology() {
 		return this.userOntology;
 	}
+
+	/**
+	 * @return the spotlightURL
+	 */
+	public String getSpotlightURL() {
+		return spotlightURL;
+	}
+
+	/**
+	 * @param spotlightURL the spotlightURL to set
+	 */
+	public void setSpotlightURL(String spotlightURL) {
+		this.spotlightURL = spotlightURL;
+	}
+
+	
 }

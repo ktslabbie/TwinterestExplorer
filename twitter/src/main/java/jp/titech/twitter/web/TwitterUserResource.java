@@ -10,7 +10,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBaseUtil;
+import jp.titech.twitter.mining.api.TwitterConnector;
 
 @Path("/api/get-twitter-user")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,11 +26,12 @@ public class TwitterUserResource {
     @Timed
     public TwitterUserJSON getUser(@QueryParam("id") Optional<Long> id, @QueryParam("name") Optional<String> name) {
     	TwitterUser targetUser;
+    	TwitterConnector connector = new TwitterConnector();
     	
     	if(id.isPresent()) {
-    		targetUser = TweetBaseUtil.getTwitterUserWithID(id.get());
+    		targetUser = connector.getTwitterUserWithID(id.get());
     	} else {
-    		targetUser = TweetBaseUtil.getTwitterUserWithScreenName(name.or(defaultName));
+    		targetUser = connector.getTwitterUserWithScreenName(name.or(defaultName));
     	}
     	
         return new TwitterUserJSON(targetUser);

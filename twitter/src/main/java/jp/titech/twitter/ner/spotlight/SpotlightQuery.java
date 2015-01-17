@@ -13,12 +13,14 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
+
 import org.json.JSONObject;
 
 import jp.titech.twitter.data.Tweet;
@@ -31,44 +33,18 @@ import jp.titech.twitter.util.Vars;
  *
  */
 public class SpotlightQuery {
+	
+	private String spotlightURL;
 
-	private static SpotlightQuery spotlightQuery;
-	private boolean remote;
-
-	private SpotlightQuery() {
-		remote = Vars.SPOTLIGHT_REMOTE;
-	}
-
-	public static SpotlightQuery getInstance(){
-		if(spotlightQuery == null) {
-			spotlightQuery = new SpotlightQuery();
-		}
-		return spotlightQuery;
-	}
-
-
-	/**
-	 * @param text 	The Tweet content
-	 * @return JSONObject
-	 */
-	public Map<String, List<DBpediaResourceOccurrence>> annotate(String text) {
-		return remote ? annotateRemotely(text) : annotateLocally(text);
+	public SpotlightQuery(String pSpotlightURL){
+		spotlightURL = pSpotlightURL;
 	}
 
 	/**
 	 * @param text
 	 * @return
 	 */
-	private Map<String, List<DBpediaResourceOccurrence>> annotateLocally(String text) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param text
-	 * @return
-	 */
-	private Map<String, List<DBpediaResourceOccurrence>> annotateRemotely(String text) {
+	public List<DBpediaResourceOccurrence> annotate(String text) {
 		JSONObject json = null;
 
 		//Log.getLogger().info("Running DBpedia Spotlight annotator (retrieving all candidates)...");
@@ -78,7 +54,7 @@ public class SpotlightQuery {
 				"&policy=&types=";
 
 		try {
-			URI uri = new URI("http", Vars.SPOTLIGHT_URL, "/rest/candidates", query, null);
+			URI uri = new URI("http", spotlightURL, "/rest/candidates", query, null);
 			URL url = new URL(uri.toASCIIString());
 			
 			//Log.getLogger().info(url.getQuery());
@@ -90,34 +66,27 @@ public class SpotlightQuery {
 
 			if (urlc.getResponseCode() != 200) {
 				Log.getLogger().error("Failed : HTTP error code : " + urlc.getResponseCode() + ". Returning empty occurrence map.");
-				return new HashMap<String, List<DBpediaResourceOccurrence>>();
+				return new ArrayList<DBpediaResourceOccurrence>();
 			}
 
-			boolean queried = false;
-			while(!queried){
-				try {
+			
+			try {
 
-					BufferedReader br = new BufferedReader(new InputStreamReader((urlc.getInputStream())));
+				BufferedReader br = new BufferedReader(new InputStreamReader((urlc.getInputStream())));
 
-					String output, jsonString = "";
-					while ((output = br.readLine()) != null) {
-						jsonString += output;
-					}
-
-					json = new JSONObject(jsonString);
-
-					queried = true;
-				} catch (Exception e) {
-					Log.getLogger().error(e.getMessage());
-					Log.getLogger().info("Returning empty occurrence map.");
-					return new HashMap<String, List<DBpediaResourceOccurrence>>();
-					
-					//queried = true;
-//					synchronized(this){
-//						this.wait(Vars.QUERY_RETRY);
-//					}
+				String output, jsonString = "";
+				while ((output = br.readLine()) != null) {
+					jsonString += output;
 				}
+
+				json = new JSONObject(jsonString);
+
+			} catch (Exception e) {
+				Log.getLogger().error(e.getMessage());
+				Log.getLogger().info("Returning empty occurrence map.");
+				return new ArrayList<DBpediaResourceOccurrence>();
 			}
+			
 		} catch (URISyntaxException e) {
 			Log.getLogger().error(e.getMessage());
 		} catch (MalformedURLException e) {
@@ -128,7 +97,4 @@ public class SpotlightQuery {
 
 		return SpotlightUtil.jsonToResourceOccurrences(json);
 	}
-
-
-
 }
