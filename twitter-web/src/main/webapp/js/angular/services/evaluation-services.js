@@ -91,7 +91,7 @@ evalService.factory("EvaluationService", function() {
         	var pib = [];
         	var count = 0;
 
-        	output += "Users per topic:\n\n";
+        	output += "\nUsers per topic:\n\n";
         	_.each(groups, function(group, i) {
         		output += "Topic " + (i+1) + ": ";
 
@@ -105,6 +105,8 @@ evalService.factory("EvaluationService", function() {
 
         		output += "\n";
         	});
+        	
+        	output += "\n";
 
         	var nullCluster = { users: [] };
 
@@ -116,21 +118,23 @@ evalService.factory("EvaluationService", function() {
         		}
         	});
         	
-        	groups.push(nullCluster);
+        	if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
-        	console.log("Total users: " + count);
-        	console.log("pia length: " + pia.length);
-        	console.log("pib length: " + pib.length);
+        	//console.log("Total users: " + count);
+        	//console.log("subPia length: " + subPia.length);
+        	//console.log("pia length: " + pia.length);
+        	//console.log("pib length: " + pib.length);
         	
-        	
-        	var ka = 9;
+        	//var ka = Object.keys(GT_TOPICS).length;
+        	var ka = Object.keys(GT_SUBTOPICS).length;
         	var kb = groups.length;
         	var n = userCount;
         	var nhl = new Array();
         	
-        	console.log("NMI: we have " + n + " users, ka: " + 9 + ", kb: " + kb);
-        	console.log("NMI: pia: " + JSON.stringify(pia));
-        	console.log("NMI: pib: " + JSON.stringify(pib));
+        	//console.log("NMI: we have " + n + " users, ka: " + ka + ", kb: " + kb);
+        	//console.log("NMI: pia: " + JSON.stringify(pia));
+        	//console.log("NMI: subPia: " + JSON.stringify(subPia));
+        	//console.log("NMI: pib: " + JSON.stringify(pib));
         	
         	for (var i = 0; i < ka; i++)  {
         		nhl[i] = new Array();
@@ -140,18 +144,18 @@ evalService.factory("EvaluationService", function() {
         	
         	var ix = 1;
         	
-        	for(var i = 0; i <= n; i++) {
-    			if(pia[0] == ix && pib[0] == ix) {
+        	while(n > 0) {
+    			if(subPia[0] == ix && pib[0] == ix) {
     				nhl[ix-1][ix-1]++;
-    				pia.shift();
+    				subPia.shift();
     				pib.shift();
     				n--;
-    			} else if(pia[0] == ix) {
+    			} else if(subPia[0] == ix) {
     				var ixb = pib[0];
-    				if(ixb > kb) continue;
-    				while(pia[0] == ix) {
+    				if(ixb > kb) break;
+    				while(subPia[0] == ix) {
     					nhl[ix-1][ixb-1]++;
-    					pia.shift();
+    					subPia.shift();
     					pib.shift();
     					n--;
     					if(pib.length == 0) break;
@@ -159,29 +163,31 @@ evalService.factory("EvaluationService", function() {
     				}
     				ix++;
     			} else if(pib[0] == ix) {
-    				var ixa = pia[0];
-    				if(ixa > ka) continue;
+    				var ixa = subPia[0];
+    				if(ixa > ka) break;
     				while(pib[0] == ix) {
     					nhl[ixa-1][ix-1]++;
-    					pia.shift();
+    					subPia.shift();
     					pib.shift();
     					n--;
-    					if(pia.length == 0) break;
-    					if(pia[0] != ixa) ixa++;
+    					if(subPia.length == 0) break;
+    					if(subPia[0] != ixa) ixa++;
     				}
     				ix++;
     			} else {
     				ix++;
     			}
+    			
+    			//console.log("End loop. i: " + i + ", n")
         	}
         	
-        	console.log("NMI: nhl final: " + JSON.stringify(nhl));
+        	//console.log("NMI: nhl final: " + JSON.stringify(nhl));
         	
         	var nmiNum = 0, nmiDem = 0, n = userCount;
         	
         	for (var h = 0; h < ka; h++)  {
         		for (var l = 0; l < kb; l++) {
-        			var hi = nhl[h][l]*Math.log( (n*nhl[h][l]) / (groundGroups[h]*groups[l].users.length) );
+        			var hi = nhl[h][l]*Math.log( (n*nhl[h][l]) / (groundSubGroups[h]*groups[l].users.length) );
         			if(!isNaN(hi)) nmiNum += hi;
         		}
         	}
@@ -189,7 +195,7 @@ evalService.factory("EvaluationService", function() {
         	var nmiLeft = 0, nmiRight = 0;
         	
         	for (var h = 0; h < ka; h++)  {
-        		var hi = groundGroups[h]*(-Math.log( groundGroups[h] / n));
+        		var hi = groundSubGroups[h]*(-Math.log( groundSubGroups[h] / n));
         		if(!isNaN(hi)) nmiLeft += hi;
         	}
         	
@@ -202,7 +208,7 @@ evalService.factory("EvaluationService", function() {
         	
         	var nmi = nmiNum / nmiDem;
         	
-        	console.log("NMI: NMI final: " + nmi);
+        	output += "NMI: NMI final: " + nmi + "\n";
         	
         	_.each(groups, function(group) {
         		for(var i = 0; i < group.users.length-1; i++) {
@@ -210,8 +216,8 @@ evalService.factory("EvaluationService", function() {
         			for(var j = i+1; j < group.users.length; j++) {
         				var userB = group.users[j].screenName;
 
-        				for(var topic in GT_TOPICS) {
-        					if(GT_TOPICS[topic][userA] && GT_TOPICS[topic][userB]) {
+        				for(var topic in GT_SUBTOPICS) {
+        					if(GT_SUBTOPICS[topic][userA] && GT_SUBTOPICS[topic][userB]) {
         						a++;
         						done = true;
         						break;
@@ -230,8 +236,8 @@ evalService.factory("EvaluationService", function() {
         			var clusterB = groups[j].users;
         			_.each(clusterA, function(userA) {
         				_.each(clusterB, function(userB) {
-        					for(var topic in GT_TOPICS) {
-        						if(GT_TOPICS[topic][userA.screenName] && GT_TOPICS[topic][userB.screenName]) {
+        					for(var topic in GT_SUBTOPICS) {
+        						if(GT_SUBTOPICS[topic][userA.screenName] && GT_SUBTOPICS[topic][userB.screenName]) {
         							c++;
         							done = true;
         							break;
@@ -246,31 +252,23 @@ evalService.factory("EvaluationService", function() {
         	}
 
         	//var d = (n*(n-1)/2) - (a+b+c);
-        	console.log("a: " + a + ", b: " + b + ", c: " + c + ", d: " + d);
-        	console.log("Accuracy: " + ((a+d)/(a+b+c+d)));
+        	output += "a: " + a + ", b: " + b + ", c: " + c + ", d: " + d + "\n";
+        	output += "Accuracy: " + ((a+d)/(a+b+c+d)) + "\n";
 
         	var mcc = (a*d - b*c) / Math.sqrt( (a+b)*(a+c)*(d+b)*(d+c) );
         	var precision = a / (a+b);
         	var recall = a / (a+c);
         	var fScore = 2*((precision*recall)/(precision+recall));
 
-        	console.log("ClusterUsers / AllUsers: " + clusterUserCount + " / " + userCount);
+        	output += "ClusterUsers / AllUsers: " + clusterUserCount + " / " + userCount + "\n";
         	var corr = clusterUserCount / userCount;
         	
-        	console.log("Precision: " + precision + ", corrected for user count: " + precision*corr);
-        	console.log("Recall: " + recall + ", corrected for user count: " + recall*corr);
-        	console.log("F-score: " + fScore + ", corrected for user count: " + fScore*corr);
-        	console.log("MCC: " + mcc + ", corrected for user count: " + mcc*corr);
+        	output += "Precision: " + precision + ", corrected for user count: " + precision*corr + "\n";
+        	output += "Recall: " + recall + ", corrected for user count: " + recall*corr + "\n";
+			output += "F-score: " + fScore + ", corrected for user count: " + fScore*corr + "\n";
+			output += "MCC: " + mcc + ", corrected for user count: " + mcc*corr + "\n";
 
         	console.log(output);
         },
-        
-        /** 
-         * Function to evaluate communities based on Normalized Mutual Information.
-         * Input: array of user arrays (clusters with members).
-         **/
-        nmi: function(groups, userCount) {
-        	
-        }
     };
 });

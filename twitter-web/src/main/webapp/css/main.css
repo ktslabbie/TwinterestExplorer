@@ -107,10 +107,11 @@ html {
 }
 
 body {
-	background-color: #FBFBFB;
+	background-color: #FFF;
 	/* background-color: #FFFFFF; */
-	font-family: Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif;
+	font-family: "Source Sans Pro", Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif;
 	padding-bottom: 64px;
+	font-weight: 400;
 }
 
 .modal-open[style] {
@@ -134,11 +135,16 @@ div.page-title {
 }
 
 h1.text-title {
-	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
-	
+	font-family: "Roboto", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+	font-weight: 300;
 	color: #FFFFFF;
 	margin-top: 4px;
 	margin-bottom: 1px;
+}
+
+.it {
+	font-weight: 400;
+	font-size: 24px;
 }
 
 img.icon-twit {
@@ -159,7 +165,7 @@ img.icon-twit {
 	font-size: 20px;
 	padding: 16px;
 	margin-top: 6px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/* font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; */
 	background-color: #F9F9FD;
 	border-color: #DDDDDD;
 	color: #111111;
@@ -175,7 +181,7 @@ div.panel-target-user {
 	margin-top: 16px;
 	line-height: 120%;
 	max-height: 228px;
-	font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
+	/* font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif; */
 	background-color: #F1F4FF;
 	font-size: 12pt;
 	color: #222;
@@ -223,7 +229,7 @@ div.user-description {
 
 .user-stats {
 	font-size: 12px;
-	font-family: Verdana, sans-serif;
+	/* font-family: Verdana, sans-serif; */
 	padding-right: 0px;
 }
 
@@ -240,7 +246,7 @@ div.col-tweet {
 .text-tweet-number {
 	font-size: 30px;
 	line-height: 130%;
-	font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+	/* font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif; */
 	color: #000066;
 }
 
@@ -254,7 +260,7 @@ div.col-tweet {
 
 .tag-mention-panel {
 	font-size: 11px;
-	font-family: Verdana, sans-serif;
+	/* font-family: Verdana, sans-serif; */
 	margin-top: 28px;
 	max-height: 120px;
 	overflow-y: auto;
@@ -298,7 +304,7 @@ a:hover {
 }
 
 .node-text {
-  font: 10px sans-serif;
+  /* font: 10px sans-serif; */
   pointer-events: none;
   text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
 }

@@ -2,12 +2,13 @@ var GT_USERS = {};
 var GT_TOPICS = {};
 var GT_SUBTOPICS = {};
 var pia = [];
+var subPia = [];
 var groundGroups = [];
+var groundSubGroups = [];
 
 //var userCount = 0;
 
-var gtFileInput = $('#gtfile');
-var gtUploadButton = $('#gtupload');
+
 
 var utils = {
 		/* Converts an uploaded ground truth file to a collection of sets for easy lookup. */
@@ -17,7 +18,7 @@ var utils = {
 
 			var currentTopic = "";
 			var currentSubTopic = "";
-			var topicIndex = 0;
+			var topicIndex = 0, subTopicIndex = 0;
 			var cnt = 0;
 
 			if (file && file.length) {
@@ -36,11 +37,15 @@ var utils = {
 					} else if(result.charAt(0) == "-") {
 						currentSubTopic = result.substring(1,result.length-1);
 						GT_SUBTOPICS[currentSubTopic] = {};
+						groundSubGroups.push(0);
+						subTopicIndex++;
 					} else {
-						var currentUser = result.split("\t")[0];
-						var currentScore = result.split("\t")[1];
+						var currentUser = result.split(",")[0];
+						var currentScore = result.split(",")[1];
 						pia.push(topicIndex); cnt++;
+						subPia.push(subTopicIndex);
 						groundGroups[topicIndex-1]++;
+						groundSubGroups[subTopicIndex-1]++;
 						
 
 						if(GT_USERS[currentUser] == null) {
@@ -55,27 +60,8 @@ var utils = {
 				});
 			}
 			console.log("Added " + cnt + " users in total.");
+			//console.log("Topics: " + JSON.stringify(GT_TOPICS));
+			//console.log("Sub-topics: " + JSON.stringify(GT_SUBTOPICS));
 		},
 }
-
-//Function to upload a DCG file.
-gtUploadButton.on('click', function() {
-	if (!window.FileReader) {
-		alert("Your browser is not supported.");
-		return false;
-	}
-
-	var input = gtFileInput.get(0);
-	var reader = new FileReader();
-
-	if (input.files.length) {
-		var textFile = input.files[0];
-		reader.readAsText(textFile);
-
-		$(reader).on('load', utils.convertGTToJSON);
-		alert("Ground truth loaded!");
-	} else {
-		alert("Please upload a file before continuing.");
-	} 
-});
 

@@ -6,12 +6,14 @@ workerService.factory("CFIUFService", ['$q',  function($q) {
 	var defer = $q.defer();
 
 	worker.addEventListener('message', function(e) {
+		 console.log("Worker returns. Resolve...");
 		defer.resolve(e.data.ontologies);
 	}, false);
 	
 	return {
         doWork : function(ev) {
             defer = $q.defer();
+            console.log("Sending event to worker...");
             worker.postMessage(ev); // Send data to our worker. 
             return defer.promise;
         }

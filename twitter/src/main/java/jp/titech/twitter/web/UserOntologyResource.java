@@ -54,7 +54,7 @@ public class UserOntologyResource {
     	int portIndex = index.or(Vars.SPOTLIGHT_PORTS.length);
     	String spotlightUrl = Vars.SPOTLIGHT_BASE_URL + ":" + Vars.SPOTLIGHT_PORTS[portIndex % Vars.SPOTLIGHT_PORTS.length];
     	
-    	if(targetUser.getEnglishRate() > 0.8) {
+    	if(targetUser.getEnglishRate() > Vars.MIN_ENGLISH_RATE) {
 			OntologyController ontologyController = OntologyController.getInstance();
 			ontologyController.createUserOntology(targetUser, spotlightUrl);
     	}

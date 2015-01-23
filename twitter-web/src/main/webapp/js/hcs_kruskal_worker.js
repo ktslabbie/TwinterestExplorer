@@ -29,7 +29,7 @@ function kruskal(nodes, edges) {
 
 function isHighlyConnected(nodes, edges) {
 	var k = edges.length, n = nodes.length;
-	if(n < 1) return false; // cluster must have at least 3 vertices (our choice)
+	if(n < 3) return false; // cluster must have at least 3 vertices (our choice)
 	//if(n == 2) return true;
 	
 	console.log("# of edges: " + k + ", # of nodes: " + n);
@@ -46,7 +46,7 @@ function isHighlyConnected(nodes, edges) {
 		if(degree < k) k = degree;
 	}
 
-	return (k > n/3);
+	return (k >= n/3);
 }
 
 function hcs(nodes, edges) {

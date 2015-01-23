@@ -29,3 +29,9 @@ twitterAPIService.factory('UserList', ['$resource', function($resource) {
 						list: { isArray: false, method: 'get'}
 	});
 }]);
+
+twitterAPIService.factory('KeywordUsers', ['$resource', function($resource) {
+	return $resource('https://twitter.com/search', { }, {
+						list: { isArray: false, method: 'JSONP'}
+	});
+}]);

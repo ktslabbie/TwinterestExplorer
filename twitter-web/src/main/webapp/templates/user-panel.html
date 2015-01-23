@@ -8,8 +8,8 @@
 	<div class="row english-rate">
 		<div class="col-md-12 text-center">
 			<span class="text-muted">English rate: </span>
-			<strong ng-if="targetUser.englishRate >= 0.8" class="animate-if"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
-			<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < 0.8" class="animate-if"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+			<strong ng-if="targetUser.englishRate >= minimumEnglishRate" class="animate-if"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+			<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < minimumEnglishRate" class="animate-if"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
 			<strong ng-if="targetUser.englishRate == -1"><em>-</em></strong>
 		</div>
 	</div>
@@ -48,7 +48,7 @@
 <div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="!targetUser.protected && targetUser.statusesCount < minTweets">
 	<h3 class="text-muted">This user does not have enough tweets.</h3>
 </div>
-<div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < 0.8">
+<div class="col-md-7 text-center" style="margin-top: 48px;" ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < minimumEnglishRate">
 	<h3 class="text-muted">This user's English rate is too low.</h3>
 </div>
 
@@ -60,7 +60,7 @@
 		<i class="fa fa-spinner fa-spin text-loading"></i>
 	</div>
 	
-	<div class="col-md-3 tweet-panel text-center animate-if" ng-if="targetUser.tweets.length > 0 && targetUser.statusesCount >= minTweets && targetUser.englishRate > 0.8">
+	<div class="col-md-3 tweet-panel text-center animate-if" ng-if="targetUser.tweets.length > 0 && targetUser.statusesCount >= minTweets && targetUser.englishRate > minimumEnglishRate">
 		<div class="row">
 			<a class="text-tweet-number" href="" data-toggle="modal" data-target="#tweetModal{{targetUser.screenName}}" ng-click="openModal = $index">
 				Got <span ng-bind="targetUser.tweets.length"></span> Tweets
@@ -98,7 +98,7 @@
 		<i class="fa fa-spinner fa-spin text-loading"></i>
 	</div>
 	
-	<div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.userOntology.cfIufMap && targetUser.statusesCount >= minTweets && targetUser.englishRate > 0.8">
+	<div class="col-md-4 types-panel animate-show-hide" ng-show="targetUser.userOntology.cfIufMap && targetUser.statusesCount >= minTweets && targetUser.englishRate > minimumEnglishRate">
 		<div class="row row-header text-center">
 			<a class="text-tweet-number" href="" data-toggle="modal" data-target="#traitModal{{targetUser.screenName}}" ng-click="openModal = $index">
 				Top traits (CF-IUF Ranking)

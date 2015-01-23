@@ -1,1 +1,1 @@
-DELETE FROM Users;
+DELETE FROM Users WHERE screen_name = 'raceofficials';

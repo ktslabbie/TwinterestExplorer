@@ -1,8 +1,8 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'UserList', 'SimilarityService',
+.controller('TwitterController', ['$scope', '$timeout', '$http', 'TwitterUser', 'UserTweets', 'UserOntology', 'UserNetwork', 'UserList', 'KeywordUsers', 'SimilarityService',
                                   'CFIUFService', 'HCSService', 'EvaluationService', 'Graph',
-                                  function($scope, $timeout, TwitterUser, UserTweets, UserOntology, UserNetwork, UserList, SimilarityService, 
+                                  function($scope, $timeout, $http, TwitterUser, UserTweets, UserOntology, UserNetwork, UserList, KeywordUsers, SimilarityService, 
                                 		   CFIUFService, HCSService, EvaluationService, Graph) {
 	
 	$scope.loadingUser = false;
@@ -23,13 +23,14 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	$scope.users = [];
 	$scope.validUsers = [];
+	$scope.visibleUsers = [];
 	$scope.groups = [];
-	$scope.screenName = "bnmuller";
+	$scope.screenName = "iOS_blog";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
 	$scope.tweetsPerUser = 300;
 	$scope.userCount = 200;
-	$scope.minimumEnglishRate = 0.8;
+	$scope.minimumEnglishRate = 0.7;
 	
 	// Named Entity Recognition settings.
 	$scope.nerConfidence = 0;
@@ -38,10 +39,10 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.concatenation = 25;
 	
 	// Minimum similarity threshold.
-	$scope.minimumSimilarity = 0.2;
+	$scope.minimumSimilarity = 0.04;
 	
 	// Twitter user restrictions.
-	$scope.maxSeedUserFollowers = 50000;
+	$scope.maxSeedUserFollowers = 9990000;
 	$scope.minFollowers = 0;
 	$scope.maxFollowers = 10000;
 	$scope.minFollowing = 0;
@@ -50,12 +51,23 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.maxTweets = 1000000;
 	
 	$scope.processIndex = 0;
-	$scope.maxProcesses = 6;
+	$scope.maxProcesses = 7;
 	$scope.activeProcesses = 1;
 	var graph;
 	
 	$scope.ufMap = {};
 	$scope.gfMap = {};
+	
+	$scope.legend = [];
+	$scope.colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78",
+	  "#2ca02c", "#98df8a",
+	  "#d62728", "#ff9896",
+	  "#9467bd", "#c5b0d5",
+	  "#8c564b", "#c49c94",
+	  "#e377c2", "#f7b6d2",
+	  "#7f7f7f", "#c7c7c7",
+	  "#bcbd22", "#dbdb8d",
+	  "#17becf", "#9edae5" ];
 	
 	$scope.yagoTypeBlackList = {"Abstraction": true, "Group": true, "YagoLegalActorGeo": true, "YagoPermanentlyLocatedEntity": true, "PhysicalEntity": true,
 								"Object": true, "YagoGeoEntity": true, "YagoLegalActor": true, "Whole": true, "Region": true, "Musician": true };
@@ -64,6 +76,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Initialize the state of the application.
 	 */
 	function init() {
+		
+		
 		$scope.loadingUser = false;
 		$scope.noUserFound = false;
 		$scope.loadingOntology = false;
@@ -76,6 +90,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.finishedSimilarityGraph = false;
 		$scope.clusteringNetwork = false;
 		$scope.updatingCFIUF = false;
+		$scope.finalCFIUFUpdate = false;
 		
 		$scope.users = [];
 		$scope.validUsers = [];
@@ -83,11 +98,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.groups = [];
 		$scope.refreshCnt = 0;
 		
-		graph = new Graph(1280, 720, "#graph");
+		graph = new Graph(1280, 820, "#graph");
 		
 		$scope.ufMap = {};
 		$scope.zoomedUFMap = {};
 		$scope.gfMap = {};
+		
+		
 	}
 	
 	/* Function to check if the active user has changed (exact name no longer in input box). */
@@ -103,13 +120,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			updateUFMap($scope.zoomedUFMap, user.userOntology.ontology);
 		});
 		
-		console.log("Zoomed UF map: " + JSON.stringify($scope.zoomedUFMap));
+		//console.log("Zoomed UF map: " + JSON.stringify($scope.zoomedUFMap));
 
 		var ev = {};
 		ev.entities = $scope.visibleUsers;
 		ev.ufMap = $scope.zoomedUFMap;
 		ev.index = $scope.visibleUsers.length-1;
-		ev.generalityBias = -0.6;
+		ev.generalityBias = -0.4;
 
 		CFIUFService.doWork(ev).then(function(newOntologies) {
 			_.each(newOntologies, function(newOntology, i) {
@@ -117,7 +134,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				//console.log("NEW ONTOLOGY: " + JSON.stringify($scope.visibleUsers[i].userOntology));
 			});
 			//$scope.minimumSimilarity = 0.05;
-			$scope.minimumSimilarity = 0.03;
+			$scope.minimumSimilarity = 0.08;
 			
 			$scope.calculateSimilarityGraph();
 		});
@@ -162,11 +179,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			ev.index = index;
 			ev.generalityBias = $scope.generalityBias;
 			
+			console.log("Calling worker service...");
+			
 			CFIUFService.doWork(ev).then(function(newOntologies) {
 				/*if($scope.finalCFIUFUpdate) {
 					console.log("Final CFIUF update...");
 				}*/
-				
 				
 				_.each(newOntologies, function(newOntology, i) {
 					//$scope.users[i].userOntology = newOntology;
@@ -253,7 +271,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Refresh SVG graph only one in 25 updates, to make rendering smoother.
 		$scope.refreshCnt++;
 		//graph.start();
-		if($scope.refreshCnt % 25 == 0) graph.start();
+		if($scope.refreshCnt % 100 == 0) graph.start();
 	});
 	
 	/**
@@ -330,7 +348,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				})*/
 				
 				var labelString = "\nTopic labels:\n\n";
-				var legend = {};
+				$scope.legend = [];
 				
 				//if($scope.groups.length > 1) {
 					_.each($scope.groups, function(group, i) {
@@ -343,7 +361,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							legendText += ", " + group.userOntology.topTypes[j][0];
 						}
 						
-						legend[i] = legendText;
+						$scope.legend[i] = legendText;
 						labelString += legendText + "\n";
 					});
 				//}
@@ -351,11 +369,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				console.log(labelString);
 				
 				// Update force settings and refresh.
-				graph.getForce().charge(-90).linkDistance(90);
-				graph.start(legend);
-
+				graph.getForce().charge(-120).linkDistance(150);
+				
+				graph.start();
+				
 				// Evaluate the accuracy of the clustering result (if ground truth present).
-				//if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
+				if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
 			});
 		});
 	}
@@ -387,7 +406,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		user.imageVisible = true;
 	}
 	
-	$scope.getUser = function() {
+	$scope.getKeywordUsers = function(keyword) {
+		
+	};
+	
+	$scope.getSeedUser = function() {
 		init();
 		
 		$scope.noUserFound = false;		
@@ -402,17 +425,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			}
 			else
 				$scope.noUserFound = true;
-		});
-	};
-	
-	var getNewUser = function(index) {
-		
-		var userJSON = TwitterUser.user({ name: $scope.screenName }, function() {
-			
-			if(userJSON.user) {
-				prepareUser(userJSON.user, index);
-				updateCFIUF($scope.validUsers, $scope.ufMap, index);
-			}
 		});
 	};
 	
@@ -462,30 +474,29 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	};
 	
 	$scope.getDCGNetwork = function(userRelevanceList) {
-		
+		init();
 		$scope.loadingNetwork = true;
 		$scope.processing = true;
-		
-		/*_.each(userRelevanceList, function(screenName, i) {
-			getNewUser(i+1);
-			if(i % 10 === 0) updateCFIUF($scope.validUsers, $scope.ufMap, i);
-		});*/
 		
 		var userListJSON = UserList.list({ list: userRelevanceList }, function() {
 			_.each(userListJSON.twitterUserList, function(user, i) {
 				
+				//$scope.users.push(user);
+				//$scope.validUsers.push(user);
+				//$scope.visibleUsers.push(user);
 				prepareUser(user, i);
 			});
 			
 			updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
 			
-			//$scope.finished = true;
+			//$scope.processing = false;
 			$scope.loadingNetwork = false;
 			
 			$scope.$watch('updatingCFIUF', function() {
 				if($scope.updatingCFIUF === false) {
 					//$scope.processing = false;
 					$scope.finished = true;
+					
 				}
 			});
 			
@@ -504,7 +515,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		
 		$scope.processNetworkRec(index);
 		
-		for(var i = 2; i <= $scope.maxProcesses; i++) {
+		for(var i = 1; i <= $scope.maxProcesses; i++) {
 			$scope.processNetworkRec(i);
 			$scope.processIndex++;
 			$scope.activeProcesses++;
@@ -541,7 +552,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				$scope.validUsers.push(user);
 				$scope.visibleUsers.push(user);
 				//if(index % 1 == 0) {
-				updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
+				//updateCFIUF($scope.validUsers, $scope.ufMap, $scope.validUsers.length-1);
 				//}
 			}
 			
@@ -598,6 +609,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	var fileInput = $('#files');
 	var uploadButton = $('#upload');
+	
+	var gtFileInput = $('#gtfile');
+	var gtUploadButton = $('#gtupload');
+	
+	var ldaFileInput = $('#ldafile');
+	var ldaUploadButton = $('#ldaupload');
 
 	// Function to upload a DCG file.
 	uploadButton.on('click', function() {
@@ -618,7 +635,110 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	        alert("Please upload a file before continuing.");
 	    }
 	});
+	
+	// Function to upload a GT file.
+	gtUploadButton.on('click', function() {
+		if (!window.FileReader) {
+			alert("Your browser is not supported.");
+			return false;
+		}
 
+		var input = gtFileInput.get(0);
+		var reader = new FileReader();
+
+		if (input.files.length) {
+			var textFile = input.files[0];
+			reader.readAsText(textFile);
+
+			$(reader).on('load', utils.convertGTToJSON);
+			$(reader).on('load', processFile);
+			//alert("Ground truth loaded!");
+		} else {
+			alert("Please upload a file before continuing.");
+		} 
+	});
+	
+
+	// Function to upload an LDA topic result file.
+	ldaUploadButton.on('click', function() {
+		if (!window.FileReader) {
+			alert("Your browser is not supported.");
+			return false;
+		}
+
+		var input = ldaFileInput.get(0);
+		var reader = new FileReader();
+
+		if (input.files.length) {
+			var textFile = input.files[0];
+			reader.readAsText(textFile);
+			
+			
+
+			//$(reader).on('load', utils.convertGTToJSON);
+			$(reader).on('load', processLDAFile);
+			//alert("Ground truth loaded!");
+		} else {
+			alert("Please upload a file before continuing.");
+		} 
+	});
+
+	function processLDAFile(e) {
+	    var file = e.target.result;
+	    var results;
+	    var csvList = "";
+	    
+	    if (file && file.length) {
+	        results = file.split("\n");
+	        var t = results[0].split("\t").length - 1;
+	        var i = t;
+	        var userCount = 0;
+	        
+	        while(i--) {
+	        	$scope.groups.push( { users: [] } );
+	        }
+	        
+	        _.each(results, function(result) {
+	        	result = result.trim();
+	        	if(result === "") return;
+				var res = result.split("\t");
+				var g = 0;
+				var max = res[1];
+	        	
+				for(var i = 2; i <= t; i++) {
+	        		if(res[i] > max) {
+	        			max = res[i];
+	        			g = i-1;
+	        		}
+	        	}
+	        	
+				$scope.groups[g].users.push( { screenName: res[0] } );
+				userCount++;
+	        });
+	        
+	        //EvaluationService.mcc($scope.groups, userCount);
+	        
+	        randomClustering($scope.groups, userCount);
+	    }
+	}
+	
+	function randomClustering(groups, userCount) {
+		
+		var randomGroups = [];
+		var k = groups.length;
+		while(k--) randomGroups.push( { users: [] });
+		
+		_.each(groups, function(group) {
+			var users = group.users;
+			_.each(users, function(user) {
+				var i = Math.floor(Math.random()*randomGroups.length);
+				randomGroups[i].users.push(user);
+			});
+		});
+		
+		EvaluationService.mcc(randomGroups, userCount);
+	}
+	
 	function processFile(e) {
 	    var file = e.target.result;
 	    var results;
@@ -629,9 +749,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	        var relevanceScores = {};
 	        
 	        _.each(results, function(result) {
-	        	var res = result.split("\t");
-	        	csvList += res[0] + ",";
-	        	relevanceScores[res[0]] = res[1];
+	        	result = result.trim();
+	        	if(result === "") return;
+				if(result.charAt(0) != ":" && result.charAt(0) != "-") {
+					var res = result.split(",");
+					csvList += res[0] + ",";
+		        	relevanceScores[res[0]] = res[1];
+				}
 	        });
 	        
 	        EvaluationService.setRelevanceScores(relevanceScores);
@@ -643,16 +767,28 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		console.log("Preparing TMT data.");
 		
 		var allCount = 0;
+		var userCount = 0;
 		var csv = "";
+		var lastUser;
 		
-		_.each($scope.users, function(user) {				
+		_.each($scope.users, function(user) {
+			userCount++;
+			if(user.screenName === "gslgmcity") { lastUser = user; return; }
+			//console.log("Tweet count for " + user.screenName + ":\t" + user.tweets.length);
 			_.each(user.tweets, function (tweet) {
 				allCount++;
 				csv += '' + allCount + ',' + user.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
 			});
 		});
 		
+		_.each(lastUser.tweets, function (tweet) {
+			allCount++;
+			csv += '' + allCount + ',' + lastUser.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
+		});
+		
+		
 		console.log(csv);
+		//console.log("UserCount: " + userCount);
 	}
 }]);
 

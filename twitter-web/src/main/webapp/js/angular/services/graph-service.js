@@ -9,7 +9,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		
 		var that = this;
 		
-		var color = d3.scale.category10();
+		var color = d3.scale.category20();
 		var nodes = []; 					// Ex. { name: "", group: 0, userIndex: 0, index: 0 }
 		var links = []; 					// Ex. { source: nodeA, target: nodeB, value: 0.00 }
 		var nodeNameMap = {};				// A screenName -> nodeIndex map to make node lookups faster (from O(n) to O(log n)).
@@ -17,8 +17,8 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		var force = d3.layout.force()
 			.nodes(nodes)
 			.links(links)
-			.charge(-240)
-			.linkDistance(120)
+			.charge(-280)
+			.linkDistance(90)
 			.size([width, height])
 			.on("tick", tick);
 
@@ -31,6 +31,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		var text = svg.selectAll(".node-text");
 		var legend = svg.selectAll(".legend");
 		
+		this.getColors = function() { return color.domain(); }
 		this.getNodes = function() { return nodes; }
 		this.getLinks = function() { return links; }
 		this.getNodeNameMap = function() { return nodeNameMap; }
@@ -134,7 +135,9 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			nodeNameMap = {};
 			while(links.length > 0) links.pop();
 			while(nodes.length > 0) nodes.pop();
-			while(color.domain().length > 0) color.domain().pop();
+			//d3.select("g.legend").selectAll("*").remove();
+			svg.selectAll("g.legend").remove();
+			//while(color.domain().length > 0) color.domain().pop();
 			//legend.remove();
 		}
 		
@@ -169,11 +172,11 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			}
 		}
 		
-		this.start = function(scopeLegend) {
+		this.start = function() {
 			link = link.data(force.links(), function(d) { return d.value; });
 			link.enter().insert("line", ".node").attr("class", "link");
 			link.exit().remove();
-			link.style("stroke-width", function(d) { return (Math.pow(d.value*3, 2)); });
+			link.style("stroke-width", function(d) { var width = (Math.pow(d.value*3, 2)); return (width < 0.5) ? 0.5 : (width > 3) ? 3 : width; });
 
 			node = node.data(force.nodes(), function(d) { return d.name;});
 			node.enter().append("circle").attr("class", function(d) { return "node " + d.name; }).attr("r", 8);
@@ -189,7 +192,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			text.attr("y", ".31em");
 			text.text(function(d) { return "@" + d.name; });
 			
-			if(scopeLegend) {
+			/*if(scopeLegend) {
 				legend = legend.data(color.domain())
 					.enter().append("g")
 					.attr("class", "legend")
@@ -208,7 +211,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 					.style("text-anchor", "end")
 					.style("font-size","12px")
 					.text(function(d) { return scopeLegend[d]; });
-			}
+			}*/
 
 			force.start();
 		}
