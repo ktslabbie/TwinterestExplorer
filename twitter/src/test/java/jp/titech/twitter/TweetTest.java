@@ -27,7 +27,7 @@ public class TweetTest extends TestCase {
 			e.printStackTrace();
 		}
 		
-		testTweet = new Tweet(1, 234, date, "@mention_user This is the #test tweet. http://www.google.com http://www.youtube.com #YOLO #selfie End lol.", 
+		testTweet = new Tweet(1, 234, date.getTime(), "@mention_user This is the #test tweet. http://www.google.com http://www.youtube.com #YOLO #selfie End lol.", 
 								false, "Tokyo", "en", new ArrayList<String>(), new ArrayList<String>(), new ArrayList<String>(), new ArrayList<String>());
 		testTweet.addUserMention("mention_user");
 		testTweet.addURL("http://www.google.com");
@@ -36,7 +36,7 @@ public class TweetTest extends TestCase {
 		testTweet.addHashtag("test");
 		testTweet.addMedia("http://www.youtube.com");
 		
-		testRetweet = new Tweet(2, 234, date, 
+		testRetweet = new Tweet(2, 234, date.getTime(), 
 				"RT This is a #test retweet. #YOLO #selfie End.", false, "Tokyo", "en", 
 				new ArrayList<String>(), new ArrayList<String>(), new ArrayList<String>(), new ArrayList<String>());
 		testRetweet.addHashtag("YOLO");
@@ -51,7 +51,7 @@ public class TweetTest extends TestCase {
 		assertEquals(testTweet.getUserID(), 234);
 		assertNotNull(testTweet.getContent());
 		//assertEquals(testTweet.getScreenName(), "test_tweet_user");
-		assertEquals(testTweet.getCreatedAt().getTime(), date.getTime());
+		assertEquals(testTweet.getCreatedAt(), date.getTime());
 		assertFalse(testTweet.isRetweet());
 		assertEquals(testTweet.getLocationName(), "Tokyo");
 		assertEquals(testTweet.getLanguage(), "en");

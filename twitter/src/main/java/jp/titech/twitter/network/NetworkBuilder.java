@@ -227,13 +227,13 @@ public class NetworkBuilder {
 	 */
 	private boolean isValidUser(TwitterUser currentUser) {
 		return  currentUser != null &&
-				currentUser.getFollowersCount()	>= Vars.MIN_FOLLOWERS &&
-				currentUser.getFollowersCount()	<= Vars.MAX_FOLLOWERS &&
-				currentUser.getFriendsCount() 	>= Vars.MIN_FRIENDS &&
-				currentUser.getFriendsCount() 	<= Vars.MAX_FRIENDS && 
-				currentUser.getStatusesCount() 	>= Vars.MIN_TWEETS &&
-				currentUser.getStatusesCount() 	<= Vars.MAX_TWEETS && 
-				!currentUser.isProtected();
+				currentUser.getProperties().getFollowersCount()	>= Vars.MIN_FOLLOWERS &&
+				currentUser.getProperties().getFollowersCount()	<= Vars.MAX_FOLLOWERS &&
+				currentUser.getProperties().getFriendsCount() 	>= Vars.MIN_FRIENDS &&
+				currentUser.getProperties().getFriendsCount() 	<= Vars.MAX_FRIENDS && 
+				currentUser.getProperties().getStatusesCount() 	>= Vars.MIN_TWEETS &&
+				currentUser.getProperties().getStatusesCount() 	<= Vars.MAX_TWEETS && 
+				!currentUser.getProperties().isProtectedUser();
 	}
 
 	/**

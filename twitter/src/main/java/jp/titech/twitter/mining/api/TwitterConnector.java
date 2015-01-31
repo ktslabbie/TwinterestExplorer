@@ -67,7 +67,7 @@ public class TwitterConnector {
 				user = twitterAPIAccount.getTwitterAccount().showUser(userID);
 
 				if(user != null) // Can a user be null here?
-					twitterUser = tweetBase.addUser(user);
+					twitterUser = tweetBase.addUser(convertUser(user));
 
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
@@ -96,8 +96,8 @@ public class TwitterConnector {
 			try {
 				user = twitterAPIAccount.getTwitterAccount().showUser(screenName);
 
-				if(user != null) // Can a user be null here?
-					twitterUser = tweetBase.addUser(user);
+				if(user != null) // null = no user with this screenName on Twitter. 
+					twitterUser = tweetBase.addUser(convertUser(user));
 
 			} catch (TwitterException e) {
 				if(e.getErrorCode() == 63)	{
@@ -123,7 +123,7 @@ public class TwitterConnector {
 			nextCursor = followers.getNextCursor();
 
 			for (User follower: followers) {
-				users.add(tweetBase.addUser(follower));
+				users.add(tweetBase.addUser(convertUser(follower)));
 				tweetBase.addUserFollower(userID, follower.getId());
 			}
 
@@ -192,5 +192,10 @@ public class TwitterConnector {
 		} else {
 			twitterAPIAccount = newAccount;
 		}
+	}
+	
+	private TwitterUser convertUser(User user) {
+		return new TwitterUser(user.getId(), user.getScreenName(), user.getName(), user.getDescription(), user.getLocation(),
+				user.getFollowersCount(), user.getFriendsCount(), user.getStatusesCount(), user.getCreatedAt().getTime(), user.isProtected(), -1.0f, user.getProfileImageURL());
 	}
 }

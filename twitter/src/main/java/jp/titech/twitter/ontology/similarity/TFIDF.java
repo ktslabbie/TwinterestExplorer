@@ -1,4 +1,4 @@
-package jp.titech.twitter.ontology.similarity;
+/*package jp.titech.twitter.ontology.similarity;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.ontology.types.YAGOType;
 
 public class TFIDF extends WeightingScheme {
 
@@ -50,3 +49,4 @@ public class TFIDF extends WeightingScheme {
 		return dfMap;
 	}
 }
+*/

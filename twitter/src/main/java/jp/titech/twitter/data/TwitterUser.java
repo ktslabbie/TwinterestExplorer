@@ -1,19 +1,9 @@
 package jp.titech.twitter.data;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
-import jp.titech.twitter.db.TweetBase;
-import jp.titech.twitter.ontology.types.YAGOType;
-import jp.titech.twitter.util.Log;
-import jp.titech.twitter.util.Util;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Class to represent a Twitter user.
@@ -22,18 +12,37 @@ import jp.titech.twitter.util.Util;
  * @author Kristian
  *
  */
-public class TwitterUser implements Comparable<TwitterUser> {
+@JsonIgnoreProperties({ "tweets" })
+public class TwitterUser {
 
 	private long 					userID;
-	private String 					screenName, name, description, location, profileImageURL;
-	private int 					followersCount, friendsCount, statusesCount;
-	private Date 					createdAt;
-	private boolean 				isProtected;
-	private double					englishRate;
+	private String 					screenName;
+	private Properties				properties;
+	private float					englishRate;
 	private List<Tweet>				tweets;
+	private int						tweetCount;
 	private UserOntology			userOntology;
-	private Map<String, Integer>	termFrequencyMap;
-	private Map<String, Double>		tfidfMap;
+	//private Map<String, Integer>	termFrequencyMap;
+	//private Map<String, Double>		tfidfMap;
+
+	/**
+	 * Construct a TwitterUser with the given parameters.
+	 * 
+	 * @param userID
+	 * @param screenName
+	 * @param userProperties
+	 */
+	public TwitterUser(long userID, String screenName, Properties properties, float englishRate) {
+		this.userID = userID;
+		this.screenName = screenName;
+		this.properties = properties;
+		this.englishRate = englishRate;
+		this.tweets = new ArrayList<Tweet>();
+		this.tweetCount = 0;
+		this.userOntology = new UserOntology();
+		//this.termFrequencyMap = new HashMap<String, Integer>();
+		//this.tfidfMap = new HashMap<String, Double>();
+	}
 
 	/**
 	 * Construct a TwitterUser with the given parameters.
@@ -50,24 +59,17 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	 * @param isProtected
 	 */
 	public TwitterUser(long userID, String screenName, String name, String description, String location, 
-			int followersCount, int friendsCount, int statusesCount, Date createdAt, boolean isProtected, double englishRate, String profileImageURL) {
+			int followersCount, int friendsCount, int statusesCount, long createdAt, boolean isProtected, float englishRate, String profileImageURL) {
 
 		this.userID = userID;
 		this.screenName = screenName;
-		this.name = name;
-		this.description = description;
-		this.location = location;
-		this.followersCount = followersCount;
-		this.friendsCount = friendsCount;
-		this.statusesCount = statusesCount;
-		this.createdAt = createdAt;
-		this.isProtected = isProtected;
+		this.properties = new Properties(name, description, location, followersCount, friendsCount, statusesCount, createdAt, isProtected, profileImageURL);
 		this.englishRate = englishRate;
-		this.profileImageURL = profileImageURL.replace("normal", "200x200");
 		this.tweets = new ArrayList<Tweet>();
+		this.tweetCount = 0;
 		this.userOntology = new UserOntology();
-		this.termFrequencyMap = new HashMap<String, Integer>();
-		this.tfidfMap = new HashMap<String, Double>();
+		//this.termFrequencyMap = new HashMap<String, Integer>();
+		//this.tfidfMap = new HashMap<String, Double>();
 	}
 
 	public long getUserID() {
@@ -86,119 +88,60 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		this.screenName = screenName;
 	}
 
-	public String getName() {
-		return name;
+	/**
+	 * @return the properties
+	 */
+	public Properties getProperties() {
+		return properties;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	/**
+	 * @param properties the user properties to set
+	 */
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getLocation() {
-		return location;
-	}
-
-	public void setLocation(String location) {
-		this.location = location;
-	}
-
-	public int getFollowersCount() {
-		return followersCount;
-	}
-
-	public void setFollowersCount(int followersCount) {
-		this.followersCount = followersCount;
-	}
-
-	public int getFriendsCount() {
-		return friendsCount;
-	}
-
-	public void setFriendsCount(int friendsCount) {
-		this.friendsCount = friendsCount;
-	}
-
-	public int getStatusesCount() {
-		return statusesCount;
-	}
-
-	public void setStatusesCount(int statusesCount) {
-		this.statusesCount = statusesCount;
-	}
-
-	public Date getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-	
-	public boolean isProtected() {
-		return isProtected;
-	}
-
-	public void setProtected(boolean isProtected) {
-		this.isProtected = isProtected;
-	}
-	
-	public double getEnglishRate() {
+	public float getEnglishRate() {
 		return this.englishRate;
 	}
-	
-	public void setEnglishRate(double englishRate) {
-		this.englishRate = englishRate;
-	}
-	
-	/**
-	 * @return the profileImageURL
-	 */
-	public String getProfileImageURL() {
-		return profileImageURL;
-	}
 
-	/**
-	 * @param profileImageURL the profileImageURL to set
-	 */
-	public void setProfileImageURL(String profileImageURL) {
-		this.profileImageURL = profileImageURL.replace("normal", "200x200");
+	public void setEnglishRate(float englishRate) {
+		this.englishRate = englishRate;
 	}
 
 	public List<Tweet> getTweets() {
-		if(!this.hasTweets()) {
-			//Log.getLogger().info("Gathering tweets of user " + this.toString() + " from DB...");
-			this.tweets = TweetBase.getInstance().getTweets(this.userID);
-		}	
-		
 		return this.tweets;
 	}
 
 	public void setTweets(List<Tweet> tweets) {
 		this.tweets = tweets;
+		this.tweetCount = tweets.size();
 	}
-	
+
 	public void addTweet(Tweet tweet) {
 		this.tweets.add(tweet);
+		this.tweetCount++;
 	}
-	
-	public boolean hasTweet(long tweetID) {
+
+	/*public boolean hasTweet(long tweetID) {
 		for (Tweet tweet : tweets)
 			if(tweet.getTweetID() == tweetID) return true;
 		return false;
-	}
-	
+	}*/
+
 	public boolean hasTweets() {
 		return !tweets.isEmpty();
 	}
 	
+	public int getTweetCount() {
+		return this.tweetCount;
+	}
+
+	public void setTweetCount(int tweetCount) {
+		this.tweetCount = tweetCount;
+	}
+
 	/**
 	 * @return the userOntology
 	 */
@@ -212,14 +155,14 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	public void setUserOntology(UserOntology userOntology) {
 		this.userOntology = userOntology;
 	}
-	
+
 	public boolean hasUserOntology() {
-		return !userOntology.isEmpty();
+		return !userOntology.getOntology().isEmpty();
 	}
 
 	/**
 	 * Custom compareTo method to make it possible to check two TwitterUsers for equality (based on user ID).
-	 */
+	 *//*
 	public int compareTo(TwitterUser usr) {
 		if(this.userID == usr.userID) {
 			return 0;
@@ -228,7 +171,7 @@ public class TwitterUser implements Comparable<TwitterUser> {
 		} else {
 			return 1;
 		}
-	}
+	}*/
 
 	/**
 	 * Custom toString method (just print the Twitter screen name).
@@ -237,32 +180,32 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	public String toString() {
 		return "@" + screenName;
 	}
-	
-	@Override
+
+	/*@Override
 	public int hashCode() {
-        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
-            // if deriving: appendSuper(super.hashCode()).
-            append(userID).toHashCode();
-    }
-	
-	@Override
+		return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+				// if deriving: appendSuper(super.hashCode()).
+				append(userID).toHashCode();
+	}*/
+
+	/*@Override
 	public boolean equals(Object obj) {
 		if(obj == null) return false;
-		
+
 		if (getClass() != obj.getClass()) {
-	        return false;
-	    }
-	    final TwitterUser other = (TwitterUser) obj;
-	    if ((this.userID == 0) || other.userID == 0) {
-	        return false;
-	    }
-	    if (this.userID != other.userID) {
-	        return false;
-	    }
-	    return true;
-	}
-	
-	public Map<String, Integer> getTermFrequencyMap() {
+			return false;
+		}
+		final TwitterUser other = (TwitterUser) obj;
+		if ((this.userID == 0) || other.userID == 0) {
+			return false;
+		}
+		if (this.userID != other.userID) {
+			return false;
+		}
+		return true;
+	}*/
+
+	/*public Map<String, Integer> getTermFrequencyMap() {
 		return this.termFrequencyMap;
 	}
 
@@ -276,10 +219,10 @@ public class TwitterUser implements Comparable<TwitterUser> {
 				}
 			}
 		}
-		
+
 		return this.termFrequencyMap;
 	}
-	
+
 	public Map<String, Double> getTFIDFMap() {
 		return this.tfidfMap;
 	}
@@ -291,11 +234,132 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	public String tfidfMapString() {
 		Map<String, Double> tfidfSortedMap = Util.sortByValue(this.tfidfMap);
 		String out = "Term\tTF-IDF\n";
-		
+
 		for (String term : tfidfSortedMap.keySet()) {
 			out += term + "\t" + tfidfSortedMap.get(term) + "\n";
 		}
-		
+
 		return out;
+	}*/
+
+	public static class Properties {
+
+
+		private String 					name;
+		private String 					description;
+		private String 					location;
+		private int 					followersCount;
+		private int 					friendsCount;
+		private int 					statusesCount;
+		private long 					createdAt;
+		private boolean 				isProtectedUser;
+		private String					profileImageURL;
+
+		public Properties() {}
+
+		/**
+		 * Construct a UserProperties object with the given parameters.
+		 * 
+		 * @param name
+		 * @param description
+		 * @param location
+		 * @param followersCount
+		 * @param friendsCount
+		 * @param statusesCount
+		 * @param createdAt
+		 * @param isProtectedUser
+		 * @param profileImageURL
+		 */
+		public Properties(String name, String description, String location, 
+				int followersCount, int friendsCount, int statusesCount, long createdAt, boolean isProtectedUser, String profileImageURL) {
+
+			this.name = name;
+			this.description = description;
+			this.location = location;
+			this.followersCount = followersCount;
+			this.friendsCount = friendsCount;
+			this.statusesCount = statusesCount;
+			this.createdAt = createdAt;
+			this.isProtectedUser = isProtectedUser;
+			this.profileImageURL = profileImageURL.replace("normal", "200x200");
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		public String getLocation() {
+			return location;
+		}
+
+		public void setLocation(String location) {
+			this.location = location;
+		}
+
+		public int getFollowersCount() {
+			return followersCount;
+		}
+
+		public void setFollowersCount(int followersCount) {
+			this.followersCount = followersCount;
+		}
+
+		public int getFriendsCount() {
+			return friendsCount;
+		}
+
+		public void setFriendsCount(int friendsCount) {
+			this.friendsCount = friendsCount;
+		}
+
+		public int getStatusesCount() {
+			return statusesCount;
+		}
+
+		public void setStatusesCount(int statusesCount) {
+			this.statusesCount = statusesCount;
+		}
+
+		public long getCreatedAt() {
+			return createdAt;
+		}
+
+		public void setCreatedAt(long createdAt) {
+			this.createdAt = createdAt;
+		}
+
+		public boolean isProtectedUser() {
+			return isProtectedUser;
+		}
+
+		public void setProtectedUser(boolean isProtectedUser) {
+			this.isProtectedUser = isProtectedUser;
+		}
+
+		/**
+		 * @return the profileImageURL
+		 */
+		public String getProfileImageURL() {
+			return profileImageURL;
+		}
+
+		/**
+		 * @param profileImageURL the profileImageURL to set
+		 */
+		public void setProfileImageURL(String profileImageURL) {
+			this.profileImageURL = profileImageURL.replace("normal", "200x200");
+		}
 	}
 }

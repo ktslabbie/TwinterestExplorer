@@ -162,9 +162,8 @@ img.icon-twit {
 }
 
 .btn-get-network {
-	font-size: 20px;
+	font-size: 18px;
 	padding: 16px;
-	margin-top: 6px;
 	/* font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; */
 	background-color: #F9F9FD;
 	border-color: #DDDDDD;
@@ -179,7 +178,7 @@ img.icon-twit {
 
 div.panel-target-user {
 	margin-top: 16px;
-	line-height: 120%;
+	line-height: 100%;
 	max-height: 228px;
 	/* font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif; */
 	background-color: #F1F4FF;
@@ -196,7 +195,8 @@ div.panel-target-user {
 }
 
 .col-profile-img {
-	max-height: 180px;
+	max-height: 108px;
+	margin-bottom: 16px;
 }
 
 img.img-profile {
@@ -207,24 +207,30 @@ img.img-profile {
 }
 
 div.english-rate {
+	font-size: 14px;
 	margin-top: 4px;
 }
 
 .text-english-rate {
-	font-size: 20px;
+	font-size: 16px;
 }
 
 .text-english-rate-low {
-	font-size: 16px;
+	font-size: 12px;
 }
 
 .profile-panel {
 	margin-right: 0px;
 	padding-right: 12px;
+	font-size: 16px;
 }
 
 div.user-description {
-	height: 88px;
+	font-size: 14px;
+}
+
+.name-desc {
+	height: 140px;
 }
 
 .user-stats {
@@ -244,8 +250,16 @@ div.col-tweet {
 }
 
 .text-tweet-number {
-	font-size: 30px;
-	line-height: 130%;
+	font-size: 14px;
+	/* line-height: 130%; */
+	/* font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif; */
+	color: #000066;
+}
+
+
+.text-trait-number {
+	font-size: 18px;
+	margin-bottom: 8px;
 	/* font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif; */
 	color: #000066;
 }
@@ -272,7 +286,7 @@ div.col-tweet {
 
 .types-panel {
 	border-left: 1px solid #ccc;
-	line-height: 150%;
+	line-height: 140%;
 }
 
 .row-header {

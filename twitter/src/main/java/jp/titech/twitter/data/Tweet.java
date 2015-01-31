@@ -4,15 +4,10 @@
  * @since		16 okt. 2012
  */
 package jp.titech.twitter.data;
-import io.dropwizard.jackson.Jackson;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonSerializer;
-
-import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 
 /**
@@ -26,8 +21,10 @@ public class Tweet {
 	private long 			tweetID, userID;
 	private String 			content, locationName, language;
 	private boolean 		isRetweet;
-	private Date 			createdAt;
+	private long 			createdAt;
 	private List<String> 	userMentions, hashtags, URLs, media;
+	
+	public Tweet() {};
 	
 	/**
 	 * Constructor for a Tweet.
@@ -45,12 +42,11 @@ public class Tweet {
 	 * @param locationName
 	 * @param language
 	 */
-	public Tweet(long tweetID, long userID, Date createdAt, String content, boolean isRetweet, String locationName, String language,
+	public Tweet(long tweetID, long userID, long createdAt, String content, boolean isRetweet, String locationName, String language,
 			List<String> userMentions, List<String> hashtags, List<String> URLs, List<String> media) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
-		//this.screenName = screenName;
 		this.createdAt = createdAt;
 		this.content = content;
 		this.isRetweet = isRetweet;
@@ -62,12 +58,12 @@ public class Tweet {
 		this.media = media;
 	}
 
-	public Tweet(long tweetID, long userID, String screenName,  Date createdAt) {
+	public Tweet(long tweetID, long userID, long createdAt) {
 		
 		this.tweetID = tweetID;
 		this.userID = userID;
-		//this.screenName = screenName;
 		this.createdAt = createdAt;
+		this.isRetweet = false;
 		this.userMentions = new ArrayList<String>();
 		this.hashtags = new ArrayList<String>();
 		this.URLs = new ArrayList<String>();
@@ -101,20 +97,6 @@ public class Tweet {
 	public void setUserID(long userID) {
 		this.userID = userID;
 	}
-
-	/**
-	 * @return the screenName
-	 *//*
-	public String getScreenName() {
-		return screenName;
-	}
-
-	*//**
-	 * @param screenName the screenName to set
-	 *//*
-	public void setScreenName(String screenName) {
-		this.screenName = screenName;
-	}*/
 
 	/**
 	 * @return the content
@@ -175,14 +157,14 @@ public class Tweet {
 	/**
 	 * @return the createdAt
 	 */
-	public Date getCreatedAt() {
+	public long getCreatedAt() {
 		return createdAt;
 	}
 
 	/**
 	 * @param createdAt the createdAt to set
 	 */
-	public void setCreatedAt(Date createdAt) {
+	public void setCreatedAt(long createdAt) {
 		this.createdAt = createdAt;
 	}
 

@@ -13,12 +13,16 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		var nodes = []; 					// Ex. { name: "", group: 0, userIndex: 0, index: 0 }
 		var links = []; 					// Ex. { source: nodeA, target: nodeB, value: 0.00 }
 		var nodeNameMap = {};				// A screenName -> nodeIndex map to make node lookups faster (from O(n) to O(log n)).
+		var linkSigMap = {};				// A i-j -> linkIndex map to make link lookups faster. i < j always.
+		
+		var prevNodeNameMap = {};
+		var prevLinkSigMap = {};
 		
 		var force = d3.layout.force()
 			.nodes(nodes)
 			.links(links)
-			.charge(-280)
-			.linkDistance(90)
+			.charge(-150)
+			.linkDistance(60)
 			.size([width, height])
 			.on("tick", tick);
 
@@ -29,15 +33,21 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		var node = svg.selectAll(".node");
 		var link = svg.selectAll(".link");
 		var text = svg.selectAll(".node-text");
-		var legend = svg.selectAll(".legend");
 		
 		this.getColors = function() { return color.domain(); }
 		this.getNodes = function() { return nodes; }
 		this.getLinks = function() { return links; }
 		this.getNodeNameMap = function() { return nodeNameMap; }
+		this.getLinkSigMap = function() { return linkSigMap; }
 		this.getForce = function() { return force; }
 		
-		this.zoom = function(group) {
+		// Clone the maps, so we can tell what remaining nodes/links need to be deleted after updating the graph (if any).
+		this.cloneMaps = function() {
+			prevNodeNameMap = _.clone(nodeNameMap);
+			prevLinkSigMap = _.clone(linkSigMap);
+		}
+		
+		/*this.zoom = function(group) {
 			that.clearLinks();
 			nodeNameMap = {};
 			
@@ -58,8 +68,8 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			$rootScope.$broadcast('graphZoom', {
 				  group: group,
 			});
-		}
-
+		}*/
+		
 		/**
 		 * Add a node to the graph if not there yet. Returns the index of the new or existing node.
 		 */
@@ -67,7 +77,26 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			var index = nodeNameMap[pNode.name];
 			
 			if(index >= 0) {
+				delete prevNodeNameMap[pNode.name];
+				return index;
+			}
+				
+			// Node not contained. Add it.
+			nodes.push(pNode);
+			index = nodes.length-1;
+			nodeNameMap[pNode.name] = index;
+			return index;
+		}
+
+		/**
+		 * Add a node to the graph if not there yet. Otherwise update with the new group. Returns the index of the new or existing node.
+		 */
+		this.addOrUpdateNode = function(pNode) {
+			var index = nodeNameMap[pNode.name];
+			
+			if(index >= 0) {
 				nodes[index].group = pNode.group;
+				delete prevNodeNameMap[pNode.name];
 				return index;
 			}
 			
@@ -82,7 +111,61 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		 * Adds a link to the graph.
 		 */
 		this.addLink = function(pLink) {
+			var sig = pLink.source + "-" + pLink.target;
+			
+			var index = linkSigMap[sig];
+			
+			if(index >= 0) {
+				delete prevLinkSigMap[sig];
+				return index;
+			}
+			
+			var revSig = pLink.target + "-" + pLink.source;
+			
+			index = linkSigMap[revSig];
+			
+			if(index >= 0) {
+				delete prevLinkSigMap[revSig];
+				return index;
+			}
+			
+			// Link not contained. Add it.
 			links.push(pLink);
+			index = links.length-1;
+			linkSigMap[sig] = index;
+			return index;
+		}
+		
+		/** 
+		 * Adds a link to the graph, or updates it with the new similarity if existing.
+		 */
+		this.addOrUpdateLink = function(pLink) {
+			var sig = pLink.source + "-" + pLink.target;
+			var revSig = pLink.target + "-" + pLink.source;
+			
+			var index = linkSigMap[sig];
+			
+			if(index >= 0) {
+				links[index].value = pLink.value;
+				delete prevLinkSigMap[sig];
+				delete prevLinkSigMap[revSig];
+				return index;
+			}
+			
+			index = linkSigMap[revSig];
+			
+			if(index >= 0) {
+				links[index].value = pLink.value;
+				delete prevLinkSigMap[sig];
+				delete prevLinkSigMap[revSig];
+				return index;
+			}
+			
+			// Link not contained. Add it.
+			links.push(pLink);
+			index = links.length-1;
+			linkSigMap[sig] = index;
+			return index;
 		}
 
 		/** 
@@ -102,7 +185,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		
 		/** 
 		 * Removes all links connected to a certain node.
-		 */
+		 *//*
 		this.removeNodeLinks = function(nodeIndex) {
 			if(nodeIndex > -1) {
 				for(var i = links.length-1; i >= 0; i--) {
@@ -111,7 +194,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 					}
 				}
 			}
-		}
+		}*/
 		
 		/** 
 		 * Removes all nodes and links from the graph.
@@ -125,6 +208,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		 * Removes all nodes and links from the graph.
 		 */
 		this.clearLinks = function() {
+			linkSigMap = {};
 			while(links.length > 0) links.pop();
 		}
 		
@@ -133,10 +217,14 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 		 */
 		this.clearGraph = function() {
 			nodeNameMap = {};
+			linkSigMap = {};
 			while(links.length > 0) links.pop();
 			while(nodes.length > 0) nodes.pop();
 			//d3.select("g.legend").selectAll("*").remove();
-			svg.selectAll("g.legend").remove();
+			//svg.selectAll("g.legend").remove();
+			node.remove();
+			link.remove();
+			text.remove();
 			//while(color.domain().length > 0) color.domain().pop();
 			//legend.remove();
 		}
@@ -162,7 +250,46 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 			});
 		}
 		
-		this.removeLink = function(s, t) {
+		this.removeNode = function(name) {
+			var index = nodeNameMap[name];
+			
+			if(index > 0) {
+				for(var i = index+1; i < nodes.length; i++) {
+					nodeNameMap[nodes[i].name] = i-1;
+				}
+				
+				nodes.splice(index, 1);
+				delete nodeNameMap[name];
+			}
+		}
+		
+		this.removeLink = function(sig) {
+			var index = linkSigMap[sig];
+			
+			if(index > 0) {
+				for(var i = index+1; i < links.length; i++) {
+					linkSigMap[links[i].source.index + "-" + links[i].target.index] = i-1;
+				}
+				
+				links.splice(index, 1);
+				delete linkSigMap[sig];
+			}
+		}
+		
+		this.trim = function() {
+			var linkKeys = Object.keys(prevLinkSigMap);
+			var nodeKeys = Object.keys(prevNodeNameMap);
+			
+			_.each(linkKeys, function(sig) {
+				that.removeLink(sig);
+			});
+			
+			_.each(nodeKeys, function(name) {
+				that.removeNode(name);
+			});
+		}
+		
+		/*this.removeLink = function(s, t) {
 			var i = links.length;
 			while(i--) {
 				if( (s === links[i].source.userIndex && t === links[i].target.userIndex) || (t === links[i].source.userIndex && s === links[i].target.userIndex) ) {
@@ -170,7 +297,7 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 					return;
 				}
 			}
-		}
+		}*/
 		
 		this.start = function() {
 			link = link.data(force.links(), function(d) { return d.value; });
@@ -213,11 +340,20 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 					.text(function(d) { return scopeLegend[d]; });
 			}*/
 
+			//force.charge(-links.length/50);
+			
 			force.start();
 		}
 		
+		var ticker = 0;
+		
+		function tickLimiter() {
+			ticker++;
+			if(ticker % 2 == 0) tick();
+		}
+		
 		function tick() {
-			var k = 0.02;
+			/*var k = 0.02;
 
 			nodes.forEach(function(o, i) {
 				if(o.group % 5 == 0) {
@@ -234,15 +370,15 @@ graphService.factory('Graph', ['$rootScope', 'CFIUFService', function($rootScope
 				} 
 				//o.x += (o.group % 2 == 0) ? o.group*k : -o.group*k;
 				//o.y += (o.group % 3 == 0) ? o.group*k : -o.group*k;
-			});
+			});*/
 
 			node.attr("cx", function(d) { return d.x; })
 				.attr("cy", function(d) { return d.y; })
 
-			link.attr("x1", function(d) { return d.source.x; })
+			/*link.attr("x1", function(d) { return d.source.x; })
 				.attr("y1", function(d) { return d.source.y; })
 				.attr("x2", function(d) { return d.target.x; })
-				.attr("y2", function(d) { return d.target.y; });
+				.attr("y2", function(d) { return d.target.y; });*/
 
 			text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 		}

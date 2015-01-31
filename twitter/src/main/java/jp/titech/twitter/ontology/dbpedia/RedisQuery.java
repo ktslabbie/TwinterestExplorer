@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import jp.titech.twitter.data.UserOntology;
-import jp.titech.twitter.ontology.types.OntologyType;
-import jp.titech.twitter.ontology.types.YAGOType;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
 
@@ -31,14 +29,15 @@ public class RedisQuery {
 			DBpediaResourceOccurrence occ = occIt.next();
 			String resourceURI = occ.getResource().getFullUri();
 			
-			for(OntologyType type : occ.getResource().getTypes()) {
+			for(String type : occ.getResource().getTypes()) {
+				//Log.getLogger().info("Adding type: " + type);
 				userOntology.addClass(type);
 			}
 			
 			List<String> resultList = redis.query(resourceURI, "yago");
 			
 			for (String entry : resultList) {
-				userOntology.addClass(new YAGOType(entry.split("class/yago/")[1]));
+				userOntology.addClass("YAGO:" + entry.split("class/yago/")[1]);
 			}
 		}
 	}

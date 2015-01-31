@@ -1,0 +1,1 @@
+UPDATE Users SET tweets = ?, english_rate = ? WHERE user_id = ?

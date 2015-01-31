@@ -28,12 +28,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedMap;
 
-import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.ontology.dbpedia.RedisQuery;
-import jp.titech.twitter.ontology.types.*;
-
-import ch.qos.logback.core.status.WarnStatus;
-
 public class Util {
 
 	private static Set<String> stopWords = new HashSet<String>();
@@ -261,12 +255,12 @@ public class Util {
 		return returnTypes;
 	}*/
 
-	/**
+/*	*//**
 	 * Create an OntologyType object from a type URI.
 	 * 
 	 * @param string A type URI
 	 * @return
-	 */
+	 *//*
 	public static OntologyType determineOntologyType(String uri) {
 		if(uri.contains("dbpedia.org/class/yago/")){
 			return new YAGOType(uri.split("dbpedia.org/class/yago/")[1]);
@@ -284,7 +278,7 @@ public class Util {
 			Log.getLogger().error("Unknown ontology type: " + uri);
 			return null;
 		}
-	}
+	}*/
 
 	/**
 	 * Returns the file name without extension.
@@ -465,15 +459,15 @@ public class Util {
 		return entries;
 	}
 	
-	public static void writeUserTFIDFMap(TwitterUser user) {
+	/*public static void writeUserTFIDFMap(TwitterUser user) {
 		Util.writeToFile(user.tfidfMapString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/TF-IDF.txt"));
-	}
+	}*/
 	
-	public static void writeUserOntology(TwitterUser user) {
+	/*public static void writeUserOntology(TwitterUser user) {
 		Util.writeToFile(user.getUserOntology().toString(), new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/ontology.gb=[" + Vars.GENERALITY_BIAS + "].txt"));
 		if(!Vars.PRUNING_MODE.equals("NONE")) {
 			Util.writeToFile(user.getUserOntology().toString(), 
 					new File(Vars.USER_DIRECTORY + Vars.PARAMETER_STRING + "/" + user.getScreenName() + "/" + Vars.PRUNING_MODE + "/ontology.gb=[" + Vars.GENERALITY_BIAS + "].txt"));
 		}
-	}
+	}*/
 }

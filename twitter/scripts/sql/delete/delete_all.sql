@@ -1,10 +1,10 @@
-DELETE FROM hashtags;
-DELETE FROM locations;
-DELETE FROM urls;
-DELETE FROM media;
+--DELETE FROM hashtags;
+--DELETE FROM locations;
+--DELETE FROM urls;
+--DELETE FROM media;
 DELETE FROM friends;
 DELETE FROM followers;
-DELETE FROM usermentions;
+--DELETE FROM usermentions;
 DELETE FROM ontology;
-DELETE FROM tweets;
+--DELETE FROM tweets;
 DELETE FROM users;

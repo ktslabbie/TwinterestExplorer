@@ -31,7 +31,7 @@ public class TwitterUserListResource {
 
     @GET
     @Timed
-    public TwitterUserListJSON getNetwork(@QueryParam("list") String userRelevanceList) {
+    public List<TwitterUser> getNetwork(@QueryParam("list") String userRelevanceList) {
     	
     	if(userRelevanceList != null && !userRelevanceList.isEmpty()) {
     		List<TwitterUser> users = new ArrayList<TwitterUser>();
@@ -42,7 +42,7 @@ public class TwitterUserListResource {
     			users.add(connector.getTwitterUserWithScreenName(screenName));
     		}
     		
-    		return new TwitterUserListJSON(users);
+    		return users;
     		
     	} else {
     		return null;

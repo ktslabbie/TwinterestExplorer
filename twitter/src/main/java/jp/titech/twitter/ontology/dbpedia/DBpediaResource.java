@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.titech.twitter.ontology.types.OntologyType;
 import jp.titech.twitter.util.Vars;
 
 public class DBpediaResource implements Serializable {
@@ -13,9 +12,9 @@ public class DBpediaResource implements Serializable {
 	private String uri;
 	private int support = 0;
 	private double prior = 0.0;
-	private List<OntologyType> types;
+	private String[] types = new String[0];
 
-	public DBpediaResource(String uri, int support, double prior, List<OntologyType> types) {
+	public DBpediaResource(String uri, int support, double prior, String[] types) {
 		this.uri = uri.replace(Vars.DBPEDIA_NAMESPACE, "");
 		this.support = support;
 		this.prior = prior;
@@ -24,25 +23,22 @@ public class DBpediaResource implements Serializable {
 
 	public DBpediaResource(String uri) {
 		this.uri = uri.replace(Vars.DBPEDIA_NAMESPACE, "");
-		this.types = new ArrayList<OntologyType>();
 	}
 
 	@Override
 	public String toString() {
 		String typesString = "";
 
-		if (types != null && !types.isEmpty()) {
+		if (types != null && types.length > 0) {
 			typesString += "(";
 
-			for (OntologyType type : types) {
-				if(type != null && type.typeID() != null) {
-					typesString += type.typeID() + ",";
+			for (String type : types) {
+				if(type != null && !type.isEmpty()) {
+					typesString += type + ",";
 				}
 			}
-
 			typesString = typesString.substring(0, typesString.length()-1) + ")";
 		}
-
 		return "DBpediaResource[" + this.uri + typesString + "]";
 	}
 
@@ -98,18 +94,14 @@ public class DBpediaResource implements Serializable {
 	/**
 	 * @return the types
 	 */
-	public List<OntologyType> getTypes() {
+	public String[] getTypes() {
 		return types;
 	}
 
 	/**
 	 * @param types the types to set
 	 */
-	public void setTypes(List<OntologyType> types) {
+	public void setTypes(String[] types) {
 		this.types = types;
 	}
-
-
 }
-
-

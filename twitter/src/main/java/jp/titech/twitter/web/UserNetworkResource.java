@@ -34,7 +34,7 @@ public class UserNetworkResource {
 		TwitterConnector connector = new TwitterConnector();
 
 		TwitterUser seedUser = connector.getTwitterUserWithScreenName(name.or(defaultName));
-		if(seedUser.isProtected()) return null; // This should not be possible.
+		if(seedUser.getProperties().isProtectedUser()) return null; // This should not be possible.
 		
 		networkBuilder = new NetworkBuilder(seedUser, userCount.or(99), connector);
 		networkBuilder.build();

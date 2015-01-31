@@ -72,17 +72,20 @@ public class SpotlightQuery {
 			
 			try {
 
-				BufferedReader br = new BufferedReader(new InputStreamReader((urlc.getInputStream())));
+				BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream(), "UTF-8"));
 
 				String output, jsonString = "";
 				while ((output = br.readLine()) != null) {
 					jsonString += output;
 				}
-
+				
+				//Log.getLogger().info("Faulty string (?): " + jsonString);
 				json = new JSONObject(jsonString);
 
 			} catch (Exception e) {
 				Log.getLogger().error(e.getMessage());
+				e.printStackTrace();
+				
 				Log.getLogger().info("Returning empty occurrence map.");
 				return new ArrayList<DBpediaResourceOccurrence>();
 			}

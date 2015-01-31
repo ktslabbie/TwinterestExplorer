@@ -2,36 +2,38 @@ var workerService = angular.module('twitterWeb.WorkerServices', []);
 
 workerService.factory("CFIUFService", ['$q',  function($q) {
 
-	var worker = new Worker("js/cf-iuf_worker.js");	
+	var worker = new Worker("js/workers/cf-iuf_worker.js");	
 	var defer = $q.defer();
 
 	worker.addEventListener('message', function(e) {
-		 console.log("Worker returns. Resolve...");
-		defer.resolve(e.data.ontologies);
+		console.log("got message");
+		defer.resolve(e.data);
+		console.log("resolved");
 	}, false);
 	
 	return {
-        doWork : function(ev) {
+        doWork: function(event) {
             defer = $q.defer();
-            console.log("Sending event to worker...");
-            worker.postMessage(ev); // Send data to our worker. 
+            worker.postMessage(event); // Send data to our worker.
             return defer.promise;
+        },
+        
+        clear: function() {
+            worker.postMessage({ clear: true }); // Send data to our worker.
         }
     };
 }])
 
 .factory("SimilarityService", ['$rootScope', '$q',  function($rootScope, $q) {
 
-	var worker = new Worker("js/similarity_worker.js");	
+	var worker = new Worker("js/workers/similarity_worker.js");
 	var defer = $q.defer();
 
 	worker.addEventListener('message', function(e) {
-		if(e.data.finished) {
+		if(e.data.finished)
 			defer.resolve(e.data);
-			
-		} else {
+		else
 			$rootScope.$broadcast('simGraphUpdate', e.data);
-		}
 	}, false);
 	
 	return {
@@ -45,7 +47,7 @@ workerService.factory("CFIUFService", ['$q',  function($q) {
 
 .factory("HCSService", ['$q',  function($q) {
 
-	var worker = new Worker("js/hcs_kruskal_worker.js");	
+	var worker = new Worker("js/workers/hcs_kruskal_worker.js");	
 	var defer = $q.defer();
 
 	worker.addEventListener('message', function(e) {

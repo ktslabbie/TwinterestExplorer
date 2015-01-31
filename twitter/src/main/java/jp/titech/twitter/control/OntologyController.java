@@ -5,12 +5,10 @@
  */
 package jp.titech.twitter.control;
 
-import java.util.HashMap;
-
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.data.UserOntology;
+import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.ontology.OntologyBuilder;
-import jp.titech.twitter.ontology.types.OntologyType;
 
 /**
  * Class to control most of the functionality of the program.
@@ -22,64 +20,41 @@ import jp.titech.twitter.ontology.types.OntologyType;
  */
 public class OntologyController {
 
-	private static OntologyController controller;
-	private UserOntology fullUserOntology, prunedUserOntology;
+	private UserOntology userOntology;
+	private String ontologyKey;
 
-	private OntologyController() {}
-
-	/**
-	 * Create the ontology belonging to user by finding entities and doing some class pruning.
-	 * 
-	 * @param user
-	 */
-	public void createUserOntology(TwitterUser user, String spotlightUrl) {
-		
-		OntologyBuilder ob = new OntologyBuilder(user, spotlightUrl);
-		ob.build();
-		fullUserOntology = ob.getUserOntology();
-		//fullUserOntology.setOntology(new HashMap<OntologyType, Integer>());
-		user.setUserOntology(fullUserOntology);
-
-		/*if(!Vars.PRUNING_MODE.equals("NONE")) {
-			this.applyPruning(user);
-		}*/
+	public OntologyController(String ontologyKey) {
+		this.ontologyKey = ontologyKey;
 	}
 	
-	/*private void applyPruning(TwitterUser user) {
-		
-		Pruner pruner = null;
-		prunedUserOntology = user.getUserOntology();
-		
-		if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("LOW")) {
-			Log.getLogger().info("Applying low-occurrence pruning.");
-			
-			pruner = new LowOccurrencePruner(fullUserOntology);
-			pruner.prune();
-			prunedUserOntology = pruner.getPrunedUserOntology();
-		}
-		
-		if(Vars.PRUNING_MODE.equals("BOTH") || Vars.PRUNING_MODE.equals("HIGH")) {
-			Log.getLogger().info("Applying high-generality pruning.");
-			
-			if(Vars.PRUNING_MODE.equals("BOTH")) {
-				pruner = new HighGeneralityPruner(fullUserOntology, prunedUserOntology);
-			} else if(Vars.PRUNING_MODE.equals("HIGH")) {
-				pruner = new HighGeneralityPruner(fullUserOntology);
-			}
-			pruner.prune();
-			prunedUserOntology = pruner.getPrunedUserOntology();
-		}
-		
-		user.setUserOntology(prunedUserOntology);
- 	}*/
-	
 	/**
-	 * Retrieve the Controller singleton instance.
+	 * Get the ontology belonging to user. Return an empty map if not yet in DB.
 	 * 
-	 * @return the controller singleton
+	 * @param user The user
 	 */
-	public static OntologyController getInstance(){
-		if(controller == null){ controller = new OntologyController(); }
-		return controller;
+	public void getUserOntology(TwitterUser user) {
+		userOntology = TweetBase.getInstance().getUserOntology(ontologyKey);
+		user.setUserOntology(userOntology);
+	}
+
+	/**
+	 * Create the ontology belonging to user by finding entities.
+	 * 
+	 * @param user The user
+	 * @param spotlightUrl An instance of DBpedia Spotlight to connect to.
+	 */
+	public void getOrCreateUserOntology(TwitterUser user, String spotlightUrl) {
+		userOntology = TweetBase.getInstance().getUserOntology(ontologyKey);
+		
+		if(userOntology.getOntology().isEmpty()) {
+			OntologyBuilder ob = new OntologyBuilder(user, spotlightUrl);
+			ob.build();
+			userOntology = ob.getUserOntology();
+			if(!userOntology.getOntology().isEmpty()) {
+				TweetBase.getInstance().addUserOntology(ontologyKey, userOntology);
+			}
+		}
+		
+		user.setUserOntology(userOntology);
 	}
 }

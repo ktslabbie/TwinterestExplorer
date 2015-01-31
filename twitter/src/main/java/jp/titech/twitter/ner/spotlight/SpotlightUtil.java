@@ -6,21 +6,11 @@
 package jp.titech.twitter.ner.spotlight;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import jp.titech.twitter.ontology.types.DBpediaType;
-import jp.titech.twitter.ontology.types.FreebaseType;
-import jp.titech.twitter.ontology.types.OntologyType;
-import jp.titech.twitter.ontology.types.SchemaOrgType;
-import jp.titech.twitter.util.Log;
-import jp.titech.twitter.util.Util;
-import jp.titech.twitter.util.Vars;
 import jp.titech.twitter.ontology.dbpedia.DBpediaResource;
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
+import jp.titech.twitter.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -100,43 +90,18 @@ public class SpotlightUtil {
 			DBpediaResource dbpediaResource = new DBpediaResource(jsonResource.getString("@uri"));
 			dbpediaResource.setPrior(jsonResource.getDouble("@priorScore"));
 			dbpediaResource.setSupport(jsonResource.getInt("@support"));
+			String typeStr = jsonResource.getString("@types");
+			//dbpediaResource.setTypes(typeStr.split(", "));
 			
-			//TODO: fix ontology types from Spotlight!
-			String[] types = jsonResource.getString("@types").split(", ");
-			
-			List<OntologyType> typeList = new ArrayList<OntologyType>();
-			
-			for (int k = 0; k < types.length; k++) {
-				OntologyType type = determineNativeOntologyType(types[k]);
-				if(type != null)
-					typeList.add(type);
+			if(!typeStr.isEmpty()) {
+				String[] types = typeStr.split(", ");
+				dbpediaResource.setTypes(types);
 			}
-			dbpediaResource.setTypes(typeList);
+			
 			return dbpediaResource;
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return null;
 		}
-	}
-	
-	/**
-	 * @param string
-	 * @return
-	 */
-	private static OntologyType determineNativeOntologyType(String string) {
-		String[] split = string.split(":");
-		if(split.length != 2) return null;
-
-		OntologyType returnType = null;
-		String type = split[0];
-		if(type.equals("DBpedia")){
-			returnType = new DBpediaType(split[1]);
-		} else if(type.equals("Schema")){
-			returnType = new SchemaOrgType(split[1]);
-		} else if(type.equals("Freebase")){
-			String[] domainSplit = split[1].split("/");
-			returnType = (domainSplit.length == 2) ? new FreebaseType(domainSplit[1]) : new FreebaseType(domainSplit[1], domainSplit[2]);
-		}
-		return returnType;
 	}
 }
