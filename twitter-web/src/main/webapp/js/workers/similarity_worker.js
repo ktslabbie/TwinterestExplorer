@@ -1,6 +1,8 @@
 /**
  * Web Worker for calculating the similarity graph of users.
  */
+importScripts('../vendor/lodash.min.js');
+
 self.addEventListener('message', function(e) {
 	var ret = { finished: false };
 	var N = e.data.cfiufMaps.length;
@@ -11,16 +13,7 @@ self.addEventListener('message', function(e) {
 
 		for(var j = i+1; j < N; j++) {
 			var curUserMap = e.data.cfiufMaps[j];
-			var similarity = 0;
-			
-			//if(Object.keys(prevUserMap).length > 0 && Object.keys(curUserMap).length > 0) {
-			for(var key in prevUserMap) {
-				if(curUserMap[key]) {
-					similarity += curUserMap[key]*prevUserMap[key];
-					//console.log(key + " contained! (" + curUserMap[key] + " and " + prevUserMap[key] + "). New similarity: " + similarity);
-				}
-			}
-			//}
+			var similarity = _.reduce(prevUserMap, function(simSum, n, key) { return (curUserMap[key]) ? simSum + curUserMap[key]*n : simSum; });
 
 			if(similarity >= e.data.minSim) {
 				ret.similarity = similarity;

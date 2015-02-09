@@ -14,16 +14,15 @@ import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.mining.api.TwitterConnector;
-import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
-@Path("/api/get-user-ontology")
+@Path("/api/get-user")
 @Produces(MediaType.APPLICATION_JSON)
-public class UserOntologyResource {
+public class UserResource {
 	
     private final String defaultName;
 
-    public UserOntologyResource(String defaultName) {
+    public UserResource(String defaultName) {
         this.defaultName = defaultName;
     }
 

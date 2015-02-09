@@ -130,16 +130,16 @@ padding-right: 0px !important;
 
 div.page-title {
 	background-color: #0D1231;
-	padding-top: 1px;
-	padding-bottom: 1px;
+	padding-top: 0px;
+	padding-bottom: 0px;
 }
 
 h1.text-title {
 	font-family: "Roboto", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
 	font-weight: 300;
 	color: #FFFFFF;
-	margin-top: 4px;
-	margin-bottom: 1px;
+	margin-top: 0px;
+	margin-bottom: -2px;
 }
 
 .it {
@@ -157,8 +157,7 @@ img.icon-twit {
 }
 
 .row-settings {
-	margin-top: 8px;
-	height: 64px;
+	margin-bottom: 0px;
 }
 
 .btn-get-network {

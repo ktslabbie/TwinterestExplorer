@@ -16,19 +16,19 @@ import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
-@Path("/api/get-twitter-user")
+@Path("/api/get-simple-user")
 @Produces(MediaType.APPLICATION_JSON)
-public class TwitterUserResource {
+public class SimpleUserResource {
 
 	private final String defaultName;
 
-	public TwitterUserResource(String defaultName) {
+	public SimpleUserResource(String defaultName) {
 		this.defaultName = defaultName;
 	}
 
 	@GET
 	@Timed
-	public TwitterUser getUser(@QueryParam("id") Optional<Long> id, @QueryParam("screenName") Optional<String> screenName, 
+	public TwitterUser getSimpleUser(@QueryParam("id") Optional<Long> id, @QueryParam("screenName") Optional<String> screenName, 
 								@QueryParam("concatenation") Optional<Integer> concatenation, 
 								@QueryParam("confidence") Optional<Float> confidence, @QueryParam("support") Optional<Integer> support) {
 

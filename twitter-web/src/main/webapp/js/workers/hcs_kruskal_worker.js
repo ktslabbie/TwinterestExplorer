@@ -1,7 +1,7 @@
 /**
  * Web Worker for the HCS algorithm to cluster a network.
  */
-importScripts('//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js');
+importScripts('../vendor/lodash.min.js');
 
 var allClusters = [];
 
@@ -65,14 +65,15 @@ function hcs(nodes, edges) {
 		
 		var subEdges = [];
 		
-		_.each(edges, function(edge){
+		_.each(edges, function(edge) {
 			if(_.where(cluster, edge.source).length && _.where(cluster, edge.target).length)
 				subEdges.push(edge);
 		});
 		
 		// Check for highly-connectedness. If so, we're done with this cluster, else call this function again with the subgraph.
 		if(isHighlyConnected(cluster, subEdges))
-			allClusters.push({ nodes: cluster, edges: subEdges });
+			self.postMessage( { finished: false, nodes: cluster, edges: subEdges } );
+			//allClusters.push({ nodes: cluster, edges: subEdges });
 		else
 			hcs(cluster, subEdges);
 	});
@@ -86,6 +87,7 @@ self.addEventListener('message', function(e) {
 	hcs(e.data.nodes, e.data.links);
 	
 	// We're done. Return all clusters.
-	self.postMessage( { finished: false,  clusters: allClusters } );
+	//self.postMessage( { finished: false,  clusters: allClusters } );
+	self.postMessage( { finished: true } );
 	
 }, false);

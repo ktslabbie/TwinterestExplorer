@@ -1,30 +1,18 @@
 var twitterAPIService = angular.module('twitterWeb.APIService', ['ngResource']);
 
-twitterAPIService.factory('SimpleTwitterUser', ['$resource', function($resource) {
-	return $resource('/api/get-twitter-user', { }, {
+twitterAPIService.factory('SimpleUser', ['$resource', function($resource) {
+	return $resource('/api/get-simple-user', { }, {
 						get: { isArray: false, method: 'get'}
 	});
 }]);
 
-twitterAPIService.factory('Tweets', ['$resource', function($resource) {
-	return $resource('/api/get-user-tweets', { }, {
-						list: { isArray: true, method: 'get'}
-	});
-}]);
-
-twitterAPIService.factory('TwitterUser', ['$resource', function($resource) {
-	return $resource('/api/get-user-ontology', { }, {
+twitterAPIService.factory('User', ['$resource', function($resource) {
+	return $resource('/api/get-user', { }, {
 						get: { isArray: false, method: 'get'}
 	});
 }]);
 
-twitterAPIService.factory('TwitterUserNetwork', ['$resource', function($resource) {
-	return $resource('/api/get-user-network', { }, {
-						network: { isArray: false, method: 'get'}
-	});
-}]);
-
-twitterAPIService.factory('TwitterUserList', ['$resource', function($resource) {
+twitterAPIService.factory('UserList', ['$resource', function($resource) {
 	return $resource('/api/get-user-list', { }, {
 						list: { isArray: false, method: 'get'}
 	});

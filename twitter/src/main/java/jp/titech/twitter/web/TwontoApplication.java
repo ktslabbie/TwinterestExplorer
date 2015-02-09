@@ -3,7 +3,6 @@ package jp.titech.twitter.web;
 import jp.titech.twitter.config.Configuration;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.mining.api.TwitterAPIAccountManager;
-import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.ontology.dbpedia.RedisClient;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
@@ -30,18 +29,14 @@ public class TwontoApplication extends Application<TwontoConfiguration> {
 
 	@Override
 	public void run(TwontoConfiguration configuration, Environment environment) {
-		final TwitterUserResource twitterUserResource = new TwitterUserResource(configuration.getDefaultName());
-		//final UserTweetsResource userTweetsResource = new UserTweetsResource();
-		final UserOntologyResource userOntologyResource = new UserOntologyResource(configuration.getDefaultName());
-		final UserNetworkResource userNetworkResource = new UserNetworkResource(configuration.getDefaultName());
-		final TwitterUserListResource twitterUserListResourceResource = new TwitterUserListResource();
+		final SimpleUserResource simpleUserResource = new SimpleUserResource(configuration.getDefaultName());
+		final UserResource userResource = new UserResource(configuration.getDefaultName());
+		final UserListResource userListResource = new UserListResource();
 		final APIHealthCheck healthCheck = new APIHealthCheck();
 		
-		environment.jersey().register(twitterUserResource);
-		//environment.jersey().register(userTweetsResource);
-		environment.jersey().register(userOntologyResource);
-		environment.jersey().register(userNetworkResource);
-		environment.jersey().register(twitterUserListResourceResource);
+		environment.jersey().register(simpleUserResource);
+		environment.jersey().register(userResource);
+		environment.jersey().register(userListResource);
 		environment.healthChecks().register("template", healthCheck);
 	}
 }

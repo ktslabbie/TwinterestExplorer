@@ -3,8 +3,84 @@ var evalService = angular.module('twitterWeb.EvaluationServices', []);
 evalService.factory("EvaluationService", function() {
 	
 	var relevanceScores = {};
+	var GT_USERS = {};
+	var GT_TOPICS = {};
+	var GT_SUBTOPICS = {};
+	var pia = [];
+	var subPia = [];
+	var groundGroups = [];
+	var groundSubGroups = [];
 	
 	return {
+		
+		randomClustering: function(groups, userCount) {
+			
+			var randomGroups = [];
+			var k = groups.length;
+			while(k--) randomGroups.push( { users: [] });
+			
+			_.each(groups, function(group) {
+				var users = group.users;
+				_.each(users, function(user) {
+					var i = Math.floor(Math.random()*randomGroups.length);
+					randomGroups[i].users.push(user);
+				});
+			});
+			
+			EvaluationService.mcc(randomGroups, userCount);
+		},
+		
+		/* Converts an uploaded ground truth file to a collection of sets for easy lookup. */
+		convertGTToJSON: function(file) {
+			var results;
+
+			var currentTopic = "";
+			var currentSubTopic = "";
+			var topicIndex = 0, subTopicIndex = 0;
+			var cnt = 0;
+
+			if (file && file.length) {
+				results = file.split("\n");
+
+				_.each(results, function(result) {
+					result = result.trim();
+
+					if(result == "") return;
+
+					else if(result.charAt(0) == ":") {
+						currentTopic = result.substring(1,result.length-1);
+						GT_TOPICS[currentTopic] = {};
+						groundGroups.push(0);
+						topicIndex++;
+					} else if(result.charAt(0) == "-") {
+						currentSubTopic = result.substring(1,result.length-1);
+						GT_SUBTOPICS[currentSubTopic] = {};
+						groundSubGroups.push(0);
+						subTopicIndex++;
+					} else {
+						var currentUser = result.split(",")[0];
+						var currentScore = result.split(",")[1];
+						pia.push(topicIndex); cnt++;
+						subPia.push(subTopicIndex);
+						groundGroups[topicIndex-1]++;
+						groundSubGroups[subTopicIndex-1]++;
+						
+
+						if(GT_USERS[currentUser] == null) {
+							GT_USERS[currentUser] = {};
+							//userCount++;
+						}
+						GT_USERS[currentUser][currentTopic] = currentScore;
+						GT_USERS[currentUser][currentSubTopic] = currentScore;
+						GT_TOPICS[currentTopic][currentUser] = currentScore;
+						GT_SUBTOPICS[currentSubTopic][currentUser] = currentScore;
+					}
+				});
+			}
+			console.log("Added " + cnt + " users in total.");
+			//console.log("Topics: " + JSON.stringify(GT_TOPICS));
+			//console.log("Sub-topics: " + JSON.stringify(GT_SUBTOPICS));
+		},
 		
 		getRelevanceScores: function() {
 			return relevanceScores;
@@ -270,5 +346,33 @@ evalService.factory("EvaluationService", function() {
 
         	console.log(output);
         },
+        
+        prepareTMTData: function(users) {
+    		console.log("Preparing TMT data.");
+    		
+    		var allCount = 0;
+    		var userCount = 0;
+    		var csv = "";
+    		var lastUser;
+    		
+    		_.each(users, function(user) {
+    			userCount++;
+    			if(user.screenName === "gslgmcity") { lastUser = user; return; }
+    			//console.log("Tweet count for " + user.screenName + ":\t" + user.tweets.length);
+    			_.each(user.tweets, function (tweet) {
+    				allCount++;
+    				csv += '' + allCount + ',' + user.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
+    			});
+    		});
+    		
+    		_.each(lastUser.tweets, function (tweet) {
+    			allCount++;
+    			csv += '' + allCount + ',' + lastUser.screenName + ',"' + tweet.content.replace(/(\r\n|\n|\r|")/gm,"").trim() + '"\n';
+    		});
+    		
+    		
+    		console.log(csv);
+    		//console.log("UserCount: " + userCount);
+    	}
     };
 });

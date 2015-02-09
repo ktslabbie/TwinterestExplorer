@@ -1,16 +1,17 @@
 /**
  * Web Worker for calculating the CF-IUF vectors of users.
  */
-importScripts('//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js');
+importScripts('../vendor/lodash.min.js');
 
 var ufMap = {};
+var gfMap = {};
 var userOntologies = [];
+var groupOntologies = [];
 
 /**
  * Extracts a more readable name from a YAGO type.
  */
 function getTypeName(yagoType) {
-	
 	var typeName = yagoType.split(":")[1];
 	var wordnetCode = typeName.substr(typeName.length - 9);
 	
@@ -24,7 +25,7 @@ function getTypeName(yagoType) {
  * Return the top-k types sorted by their value.
  */
 function getTopTypes(map, k) {
-	return _.map(_.first(_.sortBy(_.pairs(map), function(tuple) { return -tuple[1]; }), k), function(tup) { tup[0] = getTypeName(tup[0]); return tup; });
+	return _.map(_.take(_.sortBy(_.pairs(map), function(tuple) { return -tuple[1]; }), k), function(tup) { tup[0] = getTypeName(tup[0]); return tup; });
 }
 
 /**
@@ -46,8 +47,16 @@ self.addEventListener('message', function(e) {
 	// If the clear flag is set, clear the maps and return.
 	if(e.data.clear) {
 		ufMap = {};
+		gfMap = {};
 		userOntologies = [];
+		groupOntologies = [];
 		return;
+	}
+	
+	// TODO: proper separation between user/group ontologies so we can step back without recalcing everything.
+	if(e.data.groups) {
+		ufMap = {};
+		userOntologies = [];
 	}
 	
 	var ret = { ontologies: [] };
@@ -56,14 +65,16 @@ self.addEventListener('message', function(e) {
 	// Since we only send new ontologies, add them to the full list and update the user frequency map.
 	_.each(data.ontologies, function(ontology) {
 		userOntologies.push(ontology);
-		updateUFMap(ontology.ontology);
+		updateUFMap(ontology);
 	});
 	
 	var N = userOntologies.length;
 	
+	console.log("CF-IUF: N: " + N);
+	
 	// Calculate CF-IUF weights wrt. all previous users.
 	for(var i = 0; i < N; i++) {
-		var currentOntology = userOntologies[i];
+		var currentOntology = { ontology: userOntologies[i] };
 		var types = currentOntology.ontology;
 		
 		entityCFIUFMap = {};
@@ -78,19 +89,16 @@ self.addEventListener('message', function(e) {
 				var cfIuf = (Math.pow(cf, 1 + parseFloat(data.generalityBias)))*(Math.pow(iuf, 1 - parseFloat(data.generalityBias)));
 				cfIufSum += Math.pow(cfIuf, 2);
 				entityCFIUFMap[type] = cfIuf;
-			} else {
-				entityCFIUFMap[type] = 0;
 			}
 		});
 		
 		var euclidLength = Math.sqrt(cfIufSum);
 		
 		currentOntology.cfiufMap = normalizeCFIUF(entityCFIUFMap, euclidLength);
-		currentOntology.topTypes = getTopTypes(currentOntology.cfiufMap, 5); // TODO: this is slow (25% slowdown). Try to do it during the loop somehow. 
+		currentOntology.topTypes = getTopTypes(currentOntology.cfiufMap, 5); // TODO: this is slow (25% slowdown). Try to do it during the loop somehow.
 		//currentOntology.topTypes = [["lolewqtqwe", 0.99], ["lorweqrewrl2", 0.98], ["lofasdfdsafl", 0.99], ["lbcvxbvxcol2", 0.98], ["lfewfweewfqol", 0.99]];
-		ret.ontologies.push(currentOntology);
+		ret.ontologies.push({ cfiufMap: currentOntology.cfiufMap, topTypes: currentOntology.topTypes });
 	}
 	
-	console.log("post message");
 	self.postMessage(ret);
 });
