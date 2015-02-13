@@ -12,14 +12,14 @@ twitterAPIService.factory('User', ['$resource', function($resource) {
 	});
 }]);
 
-twitterAPIService.factory('UserList', ['$resource', function($resource) {
-	return $resource('/api/get-user-list', { }, {
-						list: { isArray: false, method: 'get'}
+twitterAPIService.factory('FollowersList', ['$resource', function($resource) {
+	return $resource('/api/get-followers-list', { }, {
+						list: { isArray: true, method: 'get'}
 	});
 }]);
 
-twitterAPIService.factory('KeywordUsers', ['$resource', function($resource) {
-	return $resource('https://twitter.com/search', { }, {
-						list: { isArray: false, method: 'JSONP'}
+twitterAPIService.factory('KeywordUserList', ['$resource', function($resource) {
+	return $resource('/api/get-keyword-user-list', { }, {
+						list: { isArray: true, method: 'get'}
 	});
 }]);

@@ -1,6 +1,31 @@
-var workerService = angular.module('twitterWeb.WorkerServices', []);
+var workerService = angular.module('twitterWeb.WorkerServices', [])
 
-workerService.factory("CFIUFService", ['$q',  function($q) {
+.factory("CFIUFService", ['$q',  function($q) {
+
+	var worker = new Worker("js/workers/cf-iuf_worker.js");
+	var defer = $q.defer();
+
+	worker.addEventListener('message', function(e) {
+		defer.resolve(e.data);
+	});
+	
+	return {
+        doWork: function(event) {
+        	defer = $q.defer();
+        	
+        	if(event.ontologies.length > 0) worker.postMessage(event);
+        	else defer.resolve(event);
+        	
+        	return defer.promise;
+        },
+        
+        clear: function() {
+            worker.postMessage({ clear: true }); // Tell our worker we want to clear its data.
+        }
+    };
+}])
+
+.factory("CFIUFGroupService", ['$q',  function($q) {
 
 	var worker = new Worker("js/workers/cf-iuf_worker.js");
 	var defer = $q.defer();
@@ -12,13 +37,9 @@ workerService.factory("CFIUFService", ['$q',  function($q) {
 	return {
         doWork: function(event) {
             defer = $q.defer();
-            worker.postMessage(event); // Send data to our worker.
+            worker.postMessage(event);
             return defer.promise;
         },
-        
-        //cancel: function() {
-        	//worker.postMessage({ cancel: true }); // Tell our worker we want to cancel the current calculation.
-        //},
         
         clear: function() {
             worker.postMessage({ clear: true }); // Tell our worker we want to clear its data.
@@ -48,12 +69,14 @@ workerService.factory("CFIUFService", ['$q',  function($q) {
 	return {
         doWork: function(ev){
             defer = $q.defer();
-            worker.postMessage(ev); // Send data to our worker. 
+            worker.postMessage(ev);
             return defer.promise;
         },
         
         restart: function() {
+        	console.log("Terminate simworker.");
         	worker.terminate();
+        	console.log("Terminated?");
         	createWorker();
         }
     };
@@ -61,22 +84,33 @@ workerService.factory("CFIUFService", ['$q',  function($q) {
 
 .factory("HCSService", ['$rootScope', '$q',  function($rootScope, $q) {
 
-	var worker = new Worker("js/workers/hcs_kruskal_worker.js");	
-	var defer = $q.defer();
-
-	worker.addEventListener('message', function(e) {
-		if(e.data.finished)
-			defer.resolve(e.data);
-		else
-			$rootScope.$broadcast('hcsUpdate', e.data);
+	var worker;
+	var defer;
+	
+	function createWorker() {
+		worker = new Worker("js/workers/hcs_kruskal_worker.js");
+		defer = $q.defer();
 		
-	}, false);
+		worker.addEventListener('message', function(e) {
+			if(e.data.finished)
+				defer.resolve(e.data);
+			else
+				$rootScope.$broadcast('hcsUpdate', e.data);
+		}, false);
+	}
+
+	createWorker();
 	
 	return {
         doWork : function(ev){
             defer = $q.defer();
-            worker.postMessage(ev); // Send data to our worker. 
+            worker.postMessage(ev);
             return defer.promise;
+        },
+        
+        restart: function() {
+        	worker.terminate();
+        	createWorker();
         }
     };
 }]);

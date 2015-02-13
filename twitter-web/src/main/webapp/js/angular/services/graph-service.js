@@ -14,17 +14,17 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		var that = this;
 		
 		var color = d3.scale.category20();
+		var fullNodes = [];
+		var fullLinks = [];
 		var nodes = []; 					// Ex. [ { name: somename, group: 0, userIndex: 0, index: 0 } ]
 		var links = []; 					// Ex. [ { source: nodeAName, target: nodeBName, value: 0.00 } ]
-		var nodeNameMap = {};				// A name -> nodeIndex map to make node lookups faster.
-		var linkSigMap = {};				// A i-j -> linkIndex map to make link lookups faster. i < j always.
 		
 		var force = d3.layout.force()
 			.nodes(nodes)
 			.links(links)
 			.charge(-180)
 			.chargeDistance(300)
-			.linkStrength(0.5)
+			.linkStrength(0.4)
 			.friction(0.8)
 			.linkDistance(60)
 			.gravity(0.2)
@@ -42,124 +42,138 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		this.getColors = function() { return color.domain(); }
 		this.getNodes = function() { return nodes; }
 		this.getLinks = function() { return links; }
-		this.getLinkSigMap = function() { return linkSigMap; }
 		this.getForce = function() { return force; }
 		
 		/**
-		 *  Clone the maps, so we can tell what remaining nodes/links need to be deleted after updating the graph (if any).
+		 *  Clone the nodes and links, so we can restore the graph to its original form.
 		 */
-		/*this.cloneMaps = function() {
-			prevNodeNameMap = _.clone(nodeNameMap);
-			prevLinkSigMap = _.clone(linkSigMap);
-		}*/
+		this.cloneGraph = function() {
+			fullNodes = _.cloneDeep(nodes);
+			fullLinks = _.cloneDeep(links);
+		}
+		
+		/**
+		 * Restore the graph to its former glory.
+		 */
+		this.restoreGraph = function() {
+			that.clearGraph();
+			var newNodes = _.cloneDeep(fullNodes);
+			var newLinks = _.cloneDeep(fullLinks);
+			
+			_.each(newNodes, function(node) {
+				that.addNode(node);
+			});
+			
+			_.each(newLinks, function(link) {
+				that.addLink(link.source.index, link.target.index, link.value);
+			});
+		}
 		
 		/**
 		 * Zoom into the graph by clustering the double-clicked cluster (group).
 		 */
-		/*this.zoom = function(group) {
+		this.zoom = function(group) {
 			that.clearLinks();
-			nodeNameMap = {};
 			
-			for(var i = nodes.length-1; i >= 0; i--) {
-				if(nodes[i].group != group) {
-					nodes.splice(i, 1);
-				}
+			var i = nodes.length;
+			while(i--) {
+				var nd = nodes[i];
+				if(nd.group != group) nodes.splice(i, 1);
+				else nodes[i].group = 0;
 			}
-			
-			for(var i = nodes.length-1; i >= 0; i--) {
-				nodeNameMap[nodes[i].name] = i;
-				console.log("zoom: adding to nodeNameMap: " + nodes[i].name);
-			}
-			
-			//legend.remove();
 			
 			that.start();
-			
-			console.log("zoom: Remaining nodes #: " + nodes.length);
-			console.log("zoom: Remaining links #: " + links.length);
 			
 			$rootScope.$broadcast('graphZoom', {
 				  group: group,
 			});
-		}*/
+		}
 		
 		/**
-		 * Add a node to the graph if not there yet. Return the new or old node.
+		 * Add a node to the graph.
 		 */
 		this.addNode = function(pNode) {
-			var nd = nodeNameMap[pNode.name];
-			
-			if(!nd) {
-				nodes.push(pNode);
-				nodeNameMap[pNode.name] = pNode;
-				nodeNameMap[pNode.name].index = nodes.length-1;
-				
-				return nodeNameMap[pNode.name].index;
-			} else {
-				nd.group = pNode.group;
-				return nd.index;
-			}
+			nodes.push(pNode);
 		}
 		
 		/** 
 		 * Adds a link to the graph.
 		 */
 		this.addLink = function(sourceIndex, targetIndex, value) {
-			var sig = nodes[sourceIndex].name + "-" + nodes[targetIndex].name;
-			var ln = linkSigMap[sig];
-
+			links.push({ source: sourceIndex, target: targetIndex, value: value });
+		}
+		
+		/** 
+		 * Adds a link to the graph, or updates it if it already exists.
+		 */
+		this.addOrUpdateLink = function(sourceIndex, targetIndex, value) {
+			var ln = _.find(links, function(l) { return (l.source === sourceIndex && l.target === targetIndex) || (l.source === targetIndex && l.target === sourceIndex) });
+			
 			if(!ln) {
-				var pLink = { source: sourceIndex, target: targetIndex, value: value };
-				
-				links.push(pLink);
-				linkSigMap[sig] = pLink;
-				nodeNameMap[nodes[sourceIndex].name].degree++;
-				nodeNameMap[nodes[targetIndex].name].degree++;
-			} else {
-				ln.value = value;
-			}
+				ln = { source: sourceIndex, target: targetIndex, value: value };
+				links.push(ln);
+			} else ln.value = value;
 		}
 
 		/** 
-		 * Set a node to a group given the name node.
+		 * Set a node to a group given the index of the node.
 		 */
-		this.setGroup = function(name, group) {
-			nodeNameMap[name].group = group;
+		this.setGroup = function(index, group) {
+			nodes[i].group = group;
+		}
+		
+		/**
+		 * Replace the entire graph of nodes and links.
+		 */
+		this.initializeGraph = function(nodeCnt, pLinks, users) {
+			that.clearGraph();
+			
+			for(var i = 0; i < nodeCnt; i++) {
+				that.addNode({ name: users[i].screenName, group: 0 });
+			}
+			
+			/*_.each(pLinks, function(ln) {
+				that.addLink(ln[0], ln[1], ln[2]);
+			});*/
+		}
+		
+		/**
+		 * Replace the entire graph of nodes and links.
+		 */
+		this.updateGraph = function(pNodes, pLinks, group) {
+			_.each(pNodes, function(nodeIndex) {
+				nodes[nodeIndex].group = group;
+			});
+			
+			_.each(pLinks, function(ln) {
+				that.addLink(ln[0], ln[1], ln[2]);
+			});
 		}
 
 		/** 
-		 * Removes a node given a name.
+		 * Removes a node given an index.
 		 */
-		this.removeNode = function(name) {
-			var nd = nodeNameMap[name];
-			
-			if(nd) {
-				nodes.splice(nd.index, 1);
-				delete(nodeNameMap[name]);
-			}
+		this.removeNode = function(index) {
+			nodes.splice(index, 1);
 		}
 		
 		/** 
-		 * Removes a link given a signature.
+		 * Removes a link given source and target index.
 		 */
-		this.removeLink = function(sig) {
-			var ln = linkSigMap[sig];
-			
-			if(ln) {
-				links.splice(ln.index, 1);
-				delete(linkSigMap[sig]);
-			}
+		this.removeLink = function(sourceIndex, targetIndex) {
+			var ln = _.find(links, function(l) { return (l.source.index === sourceIndex && l.target.index === targetIndex) || 
+															(l.source.index === targetIndex && l.target.index === sourceIndex) });
+			if(ln) links.splice(ln.index, 1);
 		}
 		
 		/** 
-		 * Removes all nodes and their links belonging to a certain group.
+		 * Removes all links belonging to a certain group and set this group to 0.
 		 */
 		this.removeGroup = function(group) {
 			for(var i = nodes.length-1; i >= 0; i--) {
 				if(nodes[i].group === group) {
-					var nm = nodes[i].name;
-					that.removeNodeLinks(nm);
-					that.removeNode(nodes[i].name);
+					that.removeNodeLinks(i);
+					nodes[i].group = 0;
 				}
 			}
 		}
@@ -167,15 +181,11 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		/** 
 		 * Removes all links connected to a certain node.
 		 */
-		this.removeNodeLinks = function(name) {
-			for(var i = links.length-1; i >= 0; i--) {
-				if(links[i].source.name === name || links[i].target.name === name) {
-					links[i].source.degree--;
-					links[i].target.degree--;
-					var sig = links[i].source.name + "-" + links[i].target.name;
-					links.splice(i, 1);
-					delete(linkSigMap[sig]);
-				}
+		this.removeNodeLinks = function(nodeIndex) {
+			var i = links.length;
+			while(i--) {
+				var l = links[i];
+				if(l.source.index === nodeIndex || l.target.index === nodeIndex) links.splice(i, 1);
 			}
 		}
 		
@@ -184,7 +194,6 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		 */
 		this.clearNodes = function() {
 			while(nodes.length > 0) nodes.pop();
-			nodeNameMap = {};
 		}
 		
 		/** 
@@ -192,7 +201,14 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		 */
 		this.clearLinks = function() {
 			while(links.length > 0) links.pop();
-			linkSigMap = {};
+		}
+		
+		/** 
+		 * Set all groups to zero (and thereby hiding all nodes).
+		 */
+		this.clearGroups = function() {
+			var i = nodes.length;
+			while(i--) { nodes[i].group = 0; }
 		}
 		
 		/** 
@@ -202,32 +218,6 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			that.clearNodes();
 			that.clearLinks();
 		}
-		
-		/** 
-		 * Adds a cluster (given nodes and links) to the graph and assigns it a group number.
-		 */
-		this.addCluster = function(pNodes, pLinks, group) {
-			_.each(pLinks, function(pLink) {
-				pLink.source.group = group;
-				pLink.target.group = group;
-				that.addNode(pLink.source);
-				that.addNode(pLink.target);
-				that.addLink(pLink.source.index, pLink.target.index, pLink.value);
-			});
-		}
-		
-		/*this.trim = function() {
-			var linkKeys = Object.keys(prevLinkSigMap);
-			var nodeKeys = Object.keys(prevNodeNameMap);
-			
-			_.each(linkKeys, function(sig) {
-				that.removeLink(sig);
-			});
-			
-			_.each(nodeKeys, function(name) {
-				that.removeNode(name);
-			});
-		}*/
 		
 		this.start = function() {
 			
@@ -239,9 +229,10 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			node = node.data(force.nodes(), function(d) {  return d.name; } );
 			node.enter().append("circle").attr("class", function(d) { return "node " + d.name; }).attr("r", 9);
 			node.exit().remove();
+			node.style("visibility", function(d) { return d.group === 0 ? "hidden" : "visible"; });
 			node.style("fill", function(d) { return color(d.group); });
 			node.call(force.drag);
-			//node.on("dblclick",function(d){ that.zoom(d.group); });
+			node.on("dblclick", function(d) { that.zoom(d.group); });
 
 			text = text.data(force.nodes());
 			text.enter().append("text");
@@ -249,7 +240,8 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			text.attr("x", 9);
 			text.attr("y", ".31em");
 			text.attr("style", "font-weight: 300; font-size: 14px;");
-			text.text(function(d) { return "@" + d.name; });
+			//text.text(function(d) { return "@" + d.name; });
+			text.text(function(d) { if(d.group != 0) return "@" + d.name; });
 			
 			force.start();
 		}

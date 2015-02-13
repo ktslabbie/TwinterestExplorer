@@ -46,7 +46,7 @@ public class UserOntology {
 	 */
 	public void addClass(String type, int cardinality) {
 		this.ontology.put(type, cardinality);
-		this.typeCount += cardinality;
+		this.typeCount++;
 	}
 
 	/**

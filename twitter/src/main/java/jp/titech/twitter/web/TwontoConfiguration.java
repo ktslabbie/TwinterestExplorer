@@ -8,6 +8,9 @@ public class TwontoConfiguration extends Configuration {
 
     @NotEmpty
     private String defaultName = "BarackObama";
+    
+    @NotEmpty
+    private String defaultKeyword = "programming";
 
     @JsonProperty
     public String getDefaultName() {
@@ -17,5 +20,15 @@ public class TwontoConfiguration extends Configuration {
     @JsonProperty
     public void setDefaultName(String name) {
         this.defaultName = name;
+    }
+    
+    @JsonProperty
+    public String getDefaultKeyword() {
+        return defaultKeyword;
+    }
+
+    @JsonProperty
+    public void setDefaultKeyword(String keyword) {
+        this.defaultKeyword = keyword;
     }
 }

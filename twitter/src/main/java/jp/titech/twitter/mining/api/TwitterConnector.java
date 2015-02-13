@@ -4,13 +4,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import com.sun.jersey.impl.ApiMessages;
 
 import twitter4j.PagableResponseList;
 import twitter4j.Paging;
+import twitter4j.Query;
+import twitter4j.QueryResult;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -137,6 +141,39 @@ public class TwitterConnector {
 		}
 
 		return users;
+	}
+	
+	public Set<TwitterUser> getKeywordUsersList(String keyword) {
+		Set<TwitterUser> twitterUsers = new HashSet<TwitterUser>();
+		
+		try {
+			Query q = new Query();
+			q.setLang("en"); q.setCount(100); q.setQuery(keyword);
+			if(nextCursor > 0) q.setMaxId(nextCursor);
+			
+			QueryResult res = twitterAPIAccount.getTwitterAccount().search(q);
+			
+			List<Status> statuses = res.getTweets();
+			nextCursor = statuses.get(0).getId();
+			
+			for(Status s : statuses) {
+				twitterUsers.add(tweetBase.addUser(convertUser(s.getUser())));
+				if(s.getId() < nextCursor) nextCursor = s.getId();
+			}
+			
+			nextCursor--;
+			return twitterUsers;
+
+		} catch (TwitterException e) {
+			if(e.getErrorCode() == 88){
+				int secondsUntil = e.getRateLimitStatus().getSecondsUntilReset();
+				Log.getLogger().error("Error getting keyword users (rate limit exceeded). Retry with a new account...");
+				retry(secondsUntil);
+				return getKeywordUsersList(keyword);
+			}
+		}
+
+		return twitterUsers;
 	}
 
 	public void resetNextCursor() {

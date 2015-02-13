@@ -4,6 +4,7 @@ import jp.titech.twitter.util.Log;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.OAuth2Token;
 import twitter4j.conf.ConfigurationBuilder;
 
 class TwitterAPIAccount {
@@ -15,13 +16,20 @@ class TwitterAPIAccount {
 	public TwitterAPIAccount(String consumerKey, String cosumerSecret, String accessToken, String accessTokenSecret, int index) {
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		
-		cb.setDebugEnabled(true)
+		cb.setDebugEnabled(true).setApplicationOnlyAuthEnabled(true)
 		  .setOAuthConsumerKey(consumerKey)
-		  .setOAuthConsumerSecret(cosumerSecret)
-		  .setOAuthAccessToken(accessToken)
-		  .setOAuthAccessTokenSecret(accessTokenSecret);
+		  .setOAuthConsumerSecret(cosumerSecret);
 		
 		twitterAccount = new TwitterFactory(cb.build()).getInstance();
+		
+		try {
+			OAuth2Token token = twitterAccount.getOAuth2Token();
+			twitterAccount.setOAuth2Token(token);
+			
+		} catch (TwitterException e) {
+			e.printStackTrace();
+		}
+		
 		this.index = index;
 	}
 	
@@ -46,8 +54,8 @@ class TwitterAPIAccount {
 		String ret = "";
 		
 		try {
-			ret = "API Account (" + this.index + "): @" + this.twitterAccount.getScreenName() + ". Reset in: " + this.secondsUntilReset;
-		} catch (IllegalStateException | TwitterException e) {
+			ret = "Application-only API Account (" + this.index + "). Reset in: " + this.secondsUntilReset;
+		} catch (IllegalStateException e) {
 			Log.getLogger().error("Cannot obtain screenname. API authentication error?");
 			e.printStackTrace();
 		}

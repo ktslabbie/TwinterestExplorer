@@ -3,6 +3,8 @@ package jp.titech.twitter.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -13,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  *
  */
 @JsonIgnoreProperties({ "tweets" })
-public class TwitterUser {
+public class TwitterUser implements Comparable<TwitterUser> {
 
 	private long 					userID;
 	private String 					screenName;
@@ -22,8 +24,6 @@ public class TwitterUser {
 	private List<Tweet>				tweets;
 	private int						tweetCount;
 	private UserOntology			userOntology;
-	//private Map<String, Integer>	termFrequencyMap;
-	//private Map<String, Double>		tfidfMap;
 
 	/**
 	 * Construct a TwitterUser with the given parameters.
@@ -40,8 +40,6 @@ public class TwitterUser {
 		this.tweets = new ArrayList<Tweet>();
 		this.tweetCount = 0;
 		this.userOntology = new UserOntology();
-		//this.termFrequencyMap = new HashMap<String, Integer>();
-		//this.tfidfMap = new HashMap<String, Double>();
 	}
 
 	/**
@@ -68,8 +66,6 @@ public class TwitterUser {
 		this.tweets = new ArrayList<Tweet>();
 		this.tweetCount = 0;
 		this.userOntology = new UserOntology();
-		//this.termFrequencyMap = new HashMap<String, Integer>();
-		//this.tfidfMap = new HashMap<String, Double>();
 	}
 
 	public long getUserID() {
@@ -124,12 +120,6 @@ public class TwitterUser {
 		this.tweetCount++;
 	}
 
-	/*public boolean hasTweet(long tweetID) {
-		for (Tweet tweet : tweets)
-			if(tweet.getTweetID() == tweetID) return true;
-		return false;
-	}*/
-
 	public boolean hasTweets() {
 		return !tweets.isEmpty();
 	}
@@ -162,7 +152,7 @@ public class TwitterUser {
 
 	/**
 	 * Custom compareTo method to make it possible to check two TwitterUsers for equality (based on user ID).
-	 *//*
+	 */
 	public int compareTo(TwitterUser usr) {
 		if(this.userID == usr.userID) {
 			return 0;
@@ -171,7 +161,7 @@ public class TwitterUser {
 		} else {
 			return 1;
 		}
-	}*/
+	}
 
 	/**
 	 * Custom toString method (just print the Twitter screen name).
@@ -181,14 +171,14 @@ public class TwitterUser {
 		return "@" + screenName;
 	}
 
-	/*@Override
+	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
 				// if deriving: appendSuper(super.hashCode()).
 				append(userID).toHashCode();
-	}*/
+	}
 
-	/*@Override
+	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) return false;
 
@@ -203,44 +193,7 @@ public class TwitterUser {
 			return false;
 		}
 		return true;
-	}*/
-
-	/*public Map<String, Integer> getTermFrequencyMap() {
-		return this.termFrequencyMap;
 	}
-
-	public Map<String, Integer> computeAndGetTermFrequencyMap() {
-		if(this.termFrequencyMap.isEmpty()) {
-			for (Tweet tweet : this.getTweets()) {
-				for (String term : tweet.tokenize().split("\\s+")) {
-					//Log.getLogger().info("Current term: " + term);
-					if(this.termFrequencyMap.get(term) != null) this.termFrequencyMap.put(term, this.termFrequencyMap.get(term)+1);
-					else this.termFrequencyMap.put(term, 1);
-				}
-			}
-		}
-
-		return this.termFrequencyMap;
-	}
-
-	public Map<String, Double> getTFIDFMap() {
-		return this.tfidfMap;
-	}
-
-	public void setTFIDFMap(Map<String, Double> userTFIDFMap) {
-		this.tfidfMap = userTFIDFMap;
-	}
-
-	public String tfidfMapString() {
-		Map<String, Double> tfidfSortedMap = Util.sortByValue(this.tfidfMap);
-		String out = "Term\tTF-IDF\n";
-
-		for (String term : tfidfSortedMap.keySet()) {
-			out += term + "\t" + tfidfSortedMap.get(term) + "\n";
-		}
-
-		return out;
-	}*/
 
 	public static class Properties {
 

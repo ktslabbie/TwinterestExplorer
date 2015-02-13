@@ -31,12 +31,14 @@ public class TwontoApplication extends Application<TwontoConfiguration> {
 	public void run(TwontoConfiguration configuration, Environment environment) {
 		final SimpleUserResource simpleUserResource = new SimpleUserResource(configuration.getDefaultName());
 		final UserResource userResource = new UserResource(configuration.getDefaultName());
-		final UserListResource userListResource = new UserListResource();
+		final UserFollowersListResource userFollowersListResource = new UserFollowersListResource(configuration.getDefaultName());
+		final KeywordUserListResource keywordUserListResource = new KeywordUserListResource(configuration.getDefaultKeyword());
 		final APIHealthCheck healthCheck = new APIHealthCheck();
 		
 		environment.jersey().register(simpleUserResource);
 		environment.jersey().register(userResource);
-		environment.jersey().register(userListResource);
+		environment.jersey().register(userFollowersListResource);
+		environment.jersey().register(keywordUserListResource);
 		environment.healthChecks().register("template", healthCheck);
 	}
 }

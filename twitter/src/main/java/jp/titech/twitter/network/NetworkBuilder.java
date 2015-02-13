@@ -1,23 +1,17 @@
 package jp.titech.twitter.network;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-import org.jgrapht.graph.SimpleGraph;
-import org.jgrapht.graph.SimpleWeightedGraph;
-
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.data.WeightedEdge;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
-import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 
 /**
@@ -32,54 +26,24 @@ public class NetworkBuilder {
 	private Queue<TwitterUser> 	processQueue;
 	private int					maxUsers;					// Maximum number of users to collect
 	private Set<Long>			processed;					// Set of IDs already processed (to speed things up)
-	private boolean				restrictToLocal = false;	// Set true to disable contacting the Twitter API
 	private boolean				getFollowers = true;
 	private int					userCount;
 	private TwitterConnector 	connector;
 
-	DirectedGraph<TwitterUser, DefaultWeightedEdge> graph;
-
-	public NetworkBuilder(TwitterUser seedUser) {
-		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		this.seedUser = seedUser;
-		processQueue = new PriorityQueue<TwitterUser>();
-		processQueue.add(this.seedUser);
-		processed = new HashSet<Long>();
-		userCount = 0;
-		connector = new TwitterConnector();
-	}
+	List<String> 				screenNames;
 
 	public NetworkBuilder(TwitterUser seedUser, int maxSize, TwitterConnector connector) {
-		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		this.screenNames = new ArrayList<String>();
 		this.seedUser = seedUser;
-		processQueue = new PriorityQueue<TwitterUser>();
+		processQueue = new LinkedList<TwitterUser>();
 		processQueue.add(this.seedUser);
 		this.maxUsers = maxSize;
-		processed = new HashSet<Long>();
-		userCount = 0;
+		this.processed = new HashSet<Long>();
+		this.userCount = 1;
 		this.connector = connector;
-	}
-	
-	public NetworkBuilder(TwitterUser seedUser, Set<TwitterUser> otherUsers) {
-		graph = new SimpleDirectedWeightedGraph<TwitterUser, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		this.seedUser = seedUser;
-		this.getFollowers = false;
-		processQueue = new PriorityQueue<TwitterUser>();
-		processQueue.add(this.seedUser);
-		
-		for (TwitterUser otherUser : otherUsers) {
-			processQueue.add(otherUser);
-		}
-
-		this.restrictToLocal = true;
-		this.maxUsers = otherUsers.size()+1;
-		processed = new HashSet<Long>();
-		userCount = 0;
-		connector = new TwitterConnector();
 	}
 
 	public void build() {
-		userCount = 1;
 		boolean seedUser = true;
 		TwitterUser currentUser;
 
@@ -92,8 +56,8 @@ public class NetworkBuilder {
 				seedUser = false;
 				
 				if(!processed.contains(currentUser.getUserID())) {
-					Log.getLogger().info("Adding user # " + userCount + " (@" + currentUser.getScreenName() + ") to graph.");
-					graph.addVertex(currentUser);
+					Log.getLogger().info("Adding user # " + userCount + " (@" + currentUser.getScreenName() + ") to list.");
+					screenNames.add(currentUser.getScreenName());
 					userCount++;
 				} else {
 					Log.getLogger().info("User (@" + currentUser.getScreenName() + ") already exists. Skipping.");
@@ -104,20 +68,16 @@ public class NetworkBuilder {
 				
 				Log.getLogger().info("Getting followers of @" + currentUser.getScreenName() + "...");
 				
-				if(!restrictToLocal) {
-					processLocalUsers(currentUser);
-					
-					if(userCount <= maxUsers) {
-						processRemoteUsers(currentUser, -1);
-					}
-				} else {
-					processLocalUsers(currentUser);
+				processLocalUsers(currentUser);
+				
+				if(userCount <= maxUsers) {
+					processRemoteUsers(currentUser, -1);
 				}
+				
 			} else {
 				Log.getLogger().info("User (@" + currentUser.getScreenName() + ") not valid. Skipping.");
 			}
 		}
-		//connectAllUsers();
 	}
 	
 	private void processLocalUsers(TwitterUser currentUser) {
@@ -126,19 +86,8 @@ public class NetworkBuilder {
 		for (long id : followerIDs) {
 			if(!processed.contains(id)) {
 				follower = connector.getTwitterUserWithID(id);
-
-				if(isValidUser(follower) && !follower.equals(currentUser)) {
-					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
-					processQueue.add(follower);
-					graph.addVertex(follower);
-					userCount++;
-
-					if(graph.addEdge(follower, currentUser) != null)
-						Log.getLogger().info("Adding new edge: (" + follower.getScreenName() + ") -> (" + currentUser.getScreenName() + ").");
-
-					if(userCount > maxUsers) break;
-				}
-				if(follower != null) processed.add(follower.getUserID());
+				processFollower(follower, currentUser);
+				if(userCount > maxUsers) break;
 			}
 		}
 	}
@@ -148,22 +97,8 @@ public class NetworkBuilder {
 		
 		for (TwitterUser follower : followers) {
 			if(!processed.contains(follower.getUserID())) {
-
-				if(isValidUser(follower) && !follower.equals(currentUser)) {
-					Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to graph.");
-					
-					
-					
-					processQueue.add(follower);
-					graph.addVertex(follower);
-					userCount++;
-
-					if(graph.addEdge(follower, currentUser) != null)
-						Log.getLogger().info("Adding new edge: (" + follower.getScreenName() + ") -> (" + currentUser.getScreenName() + ").");
-
-					if(userCount > maxUsers) break;
-				}
-				if(follower != null) processed.add(follower.getUserID());
+				processFollower(follower, currentUser);
+				if(userCount > maxUsers) break;
 			}
 		}
 		
@@ -173,50 +108,16 @@ public class NetworkBuilder {
 			processRemoteUsers(currentUser, cursor);
 		}
 	}
-
-	/**
-	 * Finish up the graph by connecting unconnected users.
-	 * 
-	 * @param graph
-	 * @return the updated graph
-	 */
-//	private void connectAllUsers() {
-//
-//		Log.getLogger().info("Finishing up the graph by connecting all users by follow relation...");
-//
-//		Set<TwitterUser> users = graph.vertexSet();
-//
-//		for (TwitterUser user : users) {
-//			List<Long> ids = TweetBaseUtil.getFollowersIDs(user.getUserID(), -1);
-//			for (long id : ids)
-//				for (TwitterUser follower : users)
-//					if(id == follower.getUserID() && !user.equals(follower))
-//						graph.addEdge(follower, user);
-//		}
-//	}
-
-	public SimpleGraph<String, DefaultWeightedEdge> buildSimilarityGraphFromFile(String filePath) {
-
-		SimpleGraph<String, DefaultWeightedEdge> graph = 
-				new SimpleWeightedGraph<String, DefaultWeightedEdge>(WeightedEdge.class);
-
-		String content = Util.readFile(filePath);
-		String[] lines = content.split("\n");
-
-		for (int i = 0; i < lines.length; i++) {
-			String line = lines[i];
-			String[] parts = line.split("\t");
-			String from = "@" + parts[0].split("-")[0];
-			String to = "@" + parts[1].split("-")[0];
-
-			graph.addVertex(from);
-			graph.addVertex(to);
-			DefaultWeightedEdge edge = graph.addEdge(from, to);
-			graph.setEdgeWeight(edge, Double.parseDouble(parts[2]));
-
+	
+	private void processFollower(TwitterUser follower, TwitterUser currentUser) {
+		if(isValidUser(follower) && follower.getUserID() != currentUser.getUserID()) {
+			Log.getLogger().info("Adding user # " + userCount + " (@" + follower.getScreenName() + ") to list.");
+			
+			processQueue.add(follower);
+			screenNames.add(follower.getScreenName());
+			userCount++;
 		}
-
-		return graph;
+		if(follower != null) processed.add(follower.getUserID());
 	}
 
 	/**
@@ -279,16 +180,18 @@ public class NetworkBuilder {
 	}
 
 	/**
-	 * @return the graph
+	 * @return the screenNames
 	 */
-	public DirectedGraph<TwitterUser, DefaultWeightedEdge> getGraph() {
-		return graph;
+	public List<String> getScreenNames() {
+		return screenNames;
 	}
 
 	/**
-	 * @param graph the graph to set
+	 * @param screenNames the screenNames to set
 	 */
-	public void setGraph(DirectedGraph<TwitterUser, DefaultWeightedEdge> graph) {
-		this.graph = graph;
+	public void setScreenNames(List<String> screenNames) {
+		this.screenNames = screenNames;
 	}
+	
+	
 }

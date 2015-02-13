@@ -48,8 +48,13 @@
 				<input type="file" id="gtfile">
 				<button id="gtupload" class="btn btn-default" type="button" gt-button>Upload a ground truth file</button>
 			</div>
-			<div class="col-md-2" style="padding-top: 32px;">
-	    		Generality bias (-1-1): <input type="text" ng-model="generalityBias" class="form-control">
+			<div class="col-md-1" style="padding-top: 40px; font-size: 16px;">
+	    		Generality bias
+	    		<input style="padding-top: 4px;" type="range" id="genbias" min=-1 value=0.4 max=1 step=0.1 ng-model="generalityBias">
+	    		
+	    	</div>
+	    	<div class="col-md-1" style="padding-top: 32px;">
+	    		<output style="font-size: 24px; font-weight: 300" for="genbias" id=volume ng-bind="generalityBias"></output>
 	    	</div>
 			<!-- <div class="col-md-2" style="padding-top: 32px;">
 				<input type="file" id="ldafile">
@@ -65,11 +70,20 @@
 		</div>
 
 		<div class="row row-settings" ng-cloak>
-	    	<div class="col-md-push-5 col-md-7 animate-show-hide text-center" style="padding-top: 0px;" ng-show="visibleUsers.length > 0 && !clusteringFinished" ng-cloak>
-	    		<h3>Mutual class uniqueness graph</h3>
+			<div class="col-md-6 animate-show-hide" style="padding-top: 0px;" ng-show="visibleUsers.length > 0" ng-cloak>
+	    		<h3>Got <span ng-bind="visibleUsers.length"></span> valid users (with enough English tweets)</h3>
 	    	</div>
-	    	<div class="col-md-push-5 col-md-7 animate-show-hide text-center" style="padding-top: 0px;" ng-show="clusteringFinished" ng-cloak>
+	    	<div class="col-md-3 animate-show-hide text-right" style="padding-top: 0px;" ng-show="visibleUsers.length > 1 && (loadingUsers || updatingCFIUF || updatingSimilarityGraph || clusteringNetwork)" ng-cloak>
+	    		<h3>Calculating topic clusters...</h3>
+	    	</div>
+	    	<div class="col-md-3 animate-show-hide text-right" style="padding-top: 0px;" ng-show="visibleUsers.length > 1 && !(loadingUsers || updatingCFIUF || updatingSimilarityGraph || clusteringNetwork)" ng-cloak>
 	    		<h3>Topic clusters</h3>
+	    	</div>
+	    	<div class="col-md-3 animate-show-hide text-right" style="padding-top: 32px; font-size: 16px;" ng-show="visibleUsers.length > 1 && clusteringFinished && !zoomed" ng-cloak>
+	    		Double-click a cluster to zoom in
+	    	</div>
+	    	<div class="col-md-3 animate-show-hide text-right" style="padding-top: 32px; font-size: 18px;" ng-show="visibleUsers.length > 1 && clusteringFinished && zoomed" ng-cloak>
+	    		<a href="" ng-click="restoreGraph()">Restore original graph</a>
 	    	</div>
 
 		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="noUserFound">No user found with that screen name.</h1>
@@ -81,7 +95,7 @@
 			    </div>
 		    	
 		    	<div ng-if="users[0].valid" class="col-md-2 text-right">
-			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getTargetUserNetwork(users[0])" href="#">
+			    	<a class="btn btn-lg btn-success btn-get-network" ng-click="getUserListFromSeed(users[0])" href="#">
 							<i class="fa fa-2x"></i>Collect followers</a>
 	    		</div>
 	    	</div>
@@ -91,16 +105,16 @@
 			<div class="col-md-5 user-area">
 				<div class="col-md-12 spinner-large text-center" ng-if="loadingSeedUser"><i class="fa fa-spinner fa-spin"></i></div>
 				<div infinite-scroll="loadMore()" infinite-scroll-disabled="pageSize >= 300" infinite-scroll-distance='0' ng-cloak>
-		   				<div class="row panel-target-user" ng-include="'templates/user-panel.html'" ng-repeat="targetUser in users | limitTo:pageSize"></div>
+		   				<div class="row panel-target-user" ng-include="'templates/user-panel.html'" ng-repeat="targetUser in visibleUsers | limitTo:pageSize"></div>
 		   		</div>
 		   	</div>
 			
 			<div class="col-md-7 graph-area">
 				<div class="row text-center animate-show-hide" ng-show="visibleUsers.length > 0" ng-cloak>
 					<div id="graph" class="graph col-md-12"></div>
-					<div class="col-md-12 text-left" ng-repeat="entry in legend">
+					<div class="col-md-12 text-left" ng-repeat="entry in legend track by $index">
 						<div class="col-md-12" style="font-size: 16px; display: inline;">
-							<div style="display: inline; background-color: {{ colors[$index+1] }}; width: 48px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;&nbsp;<div style="display: inline;" ng-bind="entry"></div>
+							<div style="display: inline; background-color: {{ colors[entry.group] }}; width: 48px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;&nbsp;<div style="display: inline;" ng-bind="entry.text"></div>
 						</div>
 					</div>
 				</div>

@@ -735,11 +735,14 @@ public class TweetBase {
 			if(resultSet.next()) {
 				Properties props = mapper.readValue(resultSet.getString(3), Properties.class);
 				
-				Log.getLogger().info("Props: " + props);
+				//Log.getLogger().info("Props: " + props);
 				
-				List<Tweet> tweets = mapper.readValue(resultSet.getString(4), new TypeReference<List<Tweet>>(){});
+				List<Tweet> tweets = new ArrayList<Tweet>();
+				if(resultSet.getString(4) != null) {
+					tweets = mapper.readValue(resultSet.getString(4), new TypeReference<List<Tweet>>(){});
+				}
 				
-				Log.getLogger().info("Tweets: " + tweets);
+				//Log.getLogger().info("Tweets: " + tweets);
 				
 				user = new TwitterUser(resultSet.getLong(1), resultSet.getString(2), props, resultSet.getFloat(5));
 				user.setTweets(tweets);

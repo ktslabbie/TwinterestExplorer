@@ -4,9 +4,7 @@
 importScripts('../vendor/lodash.min.js');
 
 var ufMap = {};
-var gfMap = {};
 var userOntologies = [];
-var groupOntologies = [];
 
 /**
  * Extracts a more readable name from a YAGO type.
@@ -47,9 +45,7 @@ self.addEventListener('message', function(e) {
 	// If the clear flag is set, clear the maps and return.
 	if(e.data.clear) {
 		ufMap = {};
-		gfMap = {};
 		userOntologies = [];
-		groupOntologies = [];
 		return;
 	}
 	
@@ -89,6 +85,8 @@ self.addEventListener('message', function(e) {
 				var cfIuf = (Math.pow(cf, 1 + parseFloat(data.generalityBias)))*(Math.pow(iuf, 1 - parseFloat(data.generalityBias)));
 				cfIufSum += Math.pow(cfIuf, 2);
 				entityCFIUFMap[type] = cfIuf;
+			} else {
+				entityCFIUFMap[type] = 0;
 			}
 		});
 		

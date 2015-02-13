@@ -114,6 +114,10 @@ body {
 	font-weight: 400;
 }
 
+h1,h2,h3,h4,h5,h6 {
+	font-weight: 300;
+}
+
 .modal-open[style] {
 padding-right: 0px !important;
 }
@@ -143,7 +147,7 @@ h1.text-title {
 }
 
 .it {
-	font-weight: 400;
+	font-weight: 300;
 	font-size: 24px;
 }
 
@@ -281,6 +285,14 @@ div.col-tweet {
 
 .text-tags {
 	font-size: 10px;
+}
+
+.user-area {
+	margin-top: -16px;
+}
+
+.graph-area {
+	margin-top: 0px;
 }
 
 .types-panel {
