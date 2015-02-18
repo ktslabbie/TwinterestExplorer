@@ -18,13 +18,14 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		var fullLinks = [];
 		var nodes = []; 					// Ex. [ { name: somename, group: 0, userIndex: 0, index: 0 } ]
 		var links = []; 					// Ex. [ { source: nodeAName, target: nodeBName, value: 0.00 } ]
+		var zoomed = false;
 		
 		var force = d3.layout.force()
 			.nodes(nodes)
 			.links(links)
 			.charge(-180)
 			.chargeDistance(300)
-			.linkStrength(0.4)
+			.linkStrength(0.7)
 			.friction(0.8)
 			.linkDistance(60)
 			.gravity(0.2)
@@ -43,6 +44,8 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		this.getNodes = function() { return nodes; }
 		this.getLinks = function() { return links; }
 		this.getForce = function() { return force; }
+		this.isZoomed = function() { return zoomed; }
+		this.setZoomed = function(b) { zoomed = b; }
 		
 		/**
 		 *  Clone the nodes and links, so we can restore the graph to its original form.
@@ -59,6 +62,7 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			that.clearGraph();
 			var newNodes = _.cloneDeep(fullNodes);
 			var newLinks = _.cloneDeep(fullLinks);
+			zoomed = false;
 			
 			_.each(newNodes, function(node) {
 				that.addNode(node);
@@ -82,11 +86,13 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 				else nodes[i].group = 0;
 			}
 			
-			that.start();
+			that.start(true);
 			
 			$rootScope.$broadcast('graphZoom', {
 				  group: group,
 			});
+			
+			zoomed = true;
 		}
 		
 		/**
@@ -119,28 +125,32 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		 * Set a node to a group given the index of the node.
 		 */
 		this.setGroup = function(index, group) {
-			nodes[i].group = group;
+			nodes[index].group = group;
 		}
 		
 		/**
 		 * Replace the entire graph of nodes and links.
 		 */
 		this.initializeGraph = function(nodeCnt, pLinks, users) {
-			that.clearGraph();
+			/*for(var i = 0; i < nodes.length; i++) {
+				that.setGroup(i, 0);
+			}*/
 			
-			for(var i = 0; i < nodeCnt; i++) {
+			for(var i = nodes.length; i < nodeCnt; i++) {
 				that.addNode({ name: users[i].screenName, group: 0 });
 			}
 			
-			/*_.each(pLinks, function(ln) {
+			that.clearLinks();
+			
+			_.each(pLinks, function(ln) {
 				that.addLink(ln[0], ln[1], ln[2]);
-			});*/
+			});
 		}
 		
 		/**
 		 * Replace the entire graph of nodes and links.
 		 */
-		this.updateGraph = function(pNodes, pLinks, group) {
+		this.updateGraph = function(pNodes, pLinks, group, users) {
 			_.each(pNodes, function(nodeIndex) {
 				nodes[nodeIndex].group = group;
 			});
@@ -169,11 +179,25 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		/** 
 		 * Removes all links belonging to a certain group and set this group to 0.
 		 */
-		this.removeGroup = function(group) {
+		this.removeNodesByGroup = function(group) {
+			for(var i = nodes.length-1; i >= 0; i--) {
+				if(nodes[i].group === group) {
+					//hat.removeNodeLinks(i);
+					nodes.splice(i, 1);
+					//nodes[i].group = 0;
+				}
+			}
+		}
+		
+		/** 
+		 * Removes all links belonging to a certain group and set this group to 0.
+		 */
+		this.removeLinksByGroup = function(group) {
 			for(var i = nodes.length-1; i >= 0; i--) {
 				if(nodes[i].group === group) {
 					that.removeNodeLinks(i);
-					nodes[i].group = 0;
+					//nodes.splice(i, 1);
+					//nodes[i].group = 0;
 				}
 			}
 		}
@@ -215,25 +239,28 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		 * Removes all nodes and links from the graph.
 		 */
 		this.clearGraph = function() {
-			that.clearNodes();
 			that.clearLinks();
+			that.clearNodes();
 		}
 		
-		this.start = function() {
+		this.start = function(singleNodesVisible) {
 			
-			link = link.data(force.links(), function(d) { return d.value; });
-			link.enter().insert("line", ".node").attr("class", "link");
-			link.exit().remove();
-			link.style("stroke-width", function(d) { var width = (Math.pow(d.value*3, 2)); return (width < 0.5) ? 0.5 : (width > 3) ? 3 : width; });
-			
+			node = svg.selectAll(".node");
 			node = node.data(force.nodes(), function(d) {  return d.name; } );
 			node.enter().append("circle").attr("class", function(d) { return "node " + d.name; }).attr("r", 9);
 			node.exit().remove();
-			node.style("visibility", function(d) { return d.group === 0 ? "hidden" : "visible"; });
+			node.style("visibility", function(d) { return d.group === 0 ? singleNodesVisible ? "visible" : "hidden" : "visible"; });
 			node.style("fill", function(d) { return color(d.group); });
 			node.call(force.drag);
 			node.on("dblclick", function(d) { that.zoom(d.group); });
+			
+			link = svg.selectAll(".link");
+			link = link.data(force.links(), function(d) {  return d.value; });
+			link.enter().insert("line", ".node").attr("class", "link");
+			link.exit().remove();
+			link.style("stroke-width", function(d) { return 1; });
 
+			//text = svg.selectAll(".node-text");
 			text = text.data(force.nodes());
 			text.enter().append("text");
 			text.exit().remove();
@@ -241,7 +268,7 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			text.attr("y", ".31em");
 			text.attr("style", "font-weight: 300; font-size: 14px;");
 			//text.text(function(d) { return "@" + d.name; });
-			text.text(function(d) { if(d.group != 0) return "@" + d.name; });
+			text.text(function(d) { return d.group === 0 ? singleNodesVisible ? "@" + d.name : "" : "@" + d.name; });
 			
 			force.start();
 		}
@@ -250,10 +277,12 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			node.attr("cx", function(d) { return d.x; })
 				.attr("cy", function(d) { return d.y; })
 
-			/*link.attr("x1", function(d) { return d.source.x; })
-				.attr("y1", function(d) { return d.source.y; })
-				.attr("x2", function(d) { return d.target.x; })
-				.attr("y2", function(d) { return d.target.y; });*/
+			if(zoomed) { 
+				link.attr("x1", function(d) { return d.source.x; })
+					.attr("y1", function(d) { return d.source.y; })
+					.attr("x2", function(d) { return d.target.x; })
+					.attr("y2", function(d) { return d.target.y; });
+			}
 
 			text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 		}

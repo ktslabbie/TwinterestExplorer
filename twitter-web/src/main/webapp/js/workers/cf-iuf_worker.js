@@ -37,7 +37,7 @@ function updateUFMap(typeMap) {
  * Normalize the CF-IUF map to values between 0 and 1 given the Euclidian length of all CF-IUF scores.
  */
 function normalizeCFIUF(userCFIUFMap, euclidLength) {
-	return map = (euclidLength === 0) ? userCFIUFMap : _.mapValues(userCFIUFMap, function(val) { return val/euclidLength; });
+	return (euclidLength === 0) ? userCFIUFMap : _.mapValues(userCFIUFMap, function(val) { return val/euclidLength; });
 }
 
 self.addEventListener('message', function(e) {
@@ -65,6 +65,7 @@ self.addEventListener('message', function(e) {
 	});
 	
 	var N = userOntologies.length;
+	var bias = parseFloat(data.generalityBias);
 	
 	console.log("CF-IUF: N: " + N);
 	
@@ -74,7 +75,8 @@ self.addEventListener('message', function(e) {
 		var types = currentOntology.ontology;
 		
 		entityCFIUFMap = {};
-		var cfIufSum = 0;
+		
+		var cfiufSum = 0;
 		
 		_.each(_.keys(types), function(type) {
 			var iuf = Math.log(N / ufMap[type]);  // TODO: experiment with non-zero error delta thingy
@@ -82,15 +84,15 @@ self.addEventListener('message', function(e) {
 			// Shortcut. If this is 0, the result will be 0, so no need to continue calculating.
 			if(iuf != 0) {
 				var cf = types[type];
-				var cfIuf = (Math.pow(cf, 1 + parseFloat(data.generalityBias)))*(Math.pow(iuf, 1 - parseFloat(data.generalityBias)));
-				cfIufSum += Math.pow(cfIuf, 2);
-				entityCFIUFMap[type] = cfIuf;
+				var cfiuf = Math.pow(cf, 1 + bias) * Math.pow(iuf, 1 - bias);
+				cfiufSum += Math.pow(cfiuf, 2);
+				entityCFIUFMap[type] = cfiuf;
 			} else {
 				entityCFIUFMap[type] = 0;
 			}
 		});
 		
-		var euclidLength = Math.sqrt(cfIufSum);
+		var euclidLength = Math.sqrt(cfiufSum);
 		
 		currentOntology.cfiufMap = normalizeCFIUF(entityCFIUFMap, euclidLength);
 		currentOntology.topTypes = getTopTypes(currentOntology.cfiufMap, 5); // TODO: this is slow (25% slowdown). Try to do it during the loop somehow.

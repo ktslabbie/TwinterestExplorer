@@ -102,66 +102,118 @@ textarea {
   display: none !important;
 }
 
+.modal-open[style] {
+	padding-right: 0px !important;
+}
+
 html {
 	overflow-y: scroll;
 }
 
 body {
-	background-color: #FFF;
-	/* background-color: #FFFFFF; */
 	font-family: "Source Sans Pro", Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif;
 	padding-bottom: 64px;
-	font-weight: 400;
+}
+
+.container {
+	width: 98%;
+	overflow: visible;
 }
 
 h1,h2,h3,h4,h5,h6 {
 	font-weight: 300;
 }
 
-.modal-open[style] {
-padding-right: 0px !important;
-}
+.pad-md-top { padding-top: 32px; }
+.col-no-pad-top { padding-top: 0px; }
 
-.container {
-	width: 95%;
-	overflow: visible;
-}
-
-.spinner-large {
-	margin-top: 80px;
-	font-size: 96px;
-}
-
-div.page-title {
+/* Title styles */
+.title-bar {
 	background-color: #0D1231;
 	padding-top: 0px;
 	padding-bottom: 0px;
 }
 
-h1.text-title {
+.title {
 	font-family: "Roboto", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif;
 	font-weight: 300;
-	color: #FFFFFF;
+	color: #FFF;
 	margin-top: 0px;
 	margin-bottom: -2px;
 }
 
-.it {
-	font-weight: 300;
-	font-size: 24px;
-}
-
-img.icon-twit {
+.twitter-icon {
 	margin-bottom: 6px;
 }
 
-.form-target-user {
-	padding-left: 0px;
-	padding-right: 0px;
+.title-beta {
+	font-size: 24px;
 }
 
-.row-settings {
-	margin-bottom: 0px;
+.title-settings {
+	color: #FFF;
+	font-size: 36px;
+	padding-top: 8px;
+	max-width: 27px;
+}
+
+/* Settings */
+.modal-settings {
+	max-width: 70%;
+	min-width: 960px;
+}
+
+
+
+/* Main styles */
+input[type="file"]#gtfile {
+  visibility: hidden;
+  width: 0;
+  height: 0;
+}
+
+.col-loading {
+	padding-top: 16px;
+}
+
+.spinner-large {
+	font-size: 96px;
+}
+
+.col-spinner {
+	color: #000;
+	font-size: 52px;
+	padding-top: 8px;
+}
+
+.col-list-upload {
+	padding-top: 39px;
+}
+
+.btn-list-upload {
+	font-size: 16px;
+	padding: 9px 9px 10px 9px;
+	background-color: #F9F9FD;
+	border-color: #DDDDDD;
+	color: #111111;
+}
+
+.header-bias {
+	margin-bottom: 24px;
+}
+
+.col-bias-value {
+	padding-top: 37px;
+}
+
+.output-bias {
+	font-size: 26px;
+	font-weight: 300;
+}
+
+.col-graph-header {
+	padding-top: 22px;
+	font-size: 18px;
 }
 
 .btn-get-network {
@@ -179,12 +231,10 @@ img.icon-twit {
 	color: #000000;
 }
 
-div.panel-target-user {
-	margin-top: 16px;
-	line-height: 100%;
+.panel-target-user {
+	margin-bottom: 16px;
 	max-height: 228px;
-	/* font-family: "Segoe UI", Frutiger, "Frutiger Linotype", "Dejavu Sans", "Helvetica Neue", Arial, sans-serif; */
-	background-color: #F1F4FF;
+	background-color: #F5F8FF;
 	font-size: 12pt;
 	color: #222;
 	padding: 12px 6px 12px 6px;
@@ -288,7 +338,7 @@ div.col-tweet {
 }
 
 .user-area {
-	margin-top: -16px;
+	
 }
 
 .graph-area {
@@ -314,7 +364,7 @@ div.col-tweet {
 }
 
 .text-loading {
-	font-size: 40px;
+	
 }
 
 a:hover {
@@ -380,8 +430,6 @@ a:hover {
 .animate-show-hide {
   
 }
-
-
  
 .animate-if.ng-enter {
   -webkit-transition:all linear 0.2s;

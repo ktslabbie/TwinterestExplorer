@@ -7,6 +7,8 @@ self.addEventListener('message', function(e) {
 	var ret = { finished: false };
 	var N = e.data.cfiufMaps.length;
 	
+	console.log("Simgraph N: " + N);
+	
 	// Calculate cosine similarity wrt. all previous users.
 	for(var i = 0; i < N-1; i++) {
 		var prevUserMap = e.data.cfiufMaps[i];
@@ -17,15 +19,11 @@ self.addEventListener('message', function(e) {
 
 			if(similarity >= e.data.minSim) {
 				ret.similarity = similarity;
-				ret.i = i;
-				ret.j = j;
-				
+				ret.i = i; ret.j = j;
 				self.postMessage(ret);
 			}
 		}
 	}
-
-	ret.finished = true;
 	
-	self.postMessage(ret);
+	self.postMessage({ finished: true });
 }, false);

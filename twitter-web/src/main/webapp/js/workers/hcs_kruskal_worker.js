@@ -3,6 +3,13 @@
  */
 importScripts('../vendor/lodash.min.js');
 
+/**
+ * Calculate the minimum spanning tree using Kruskal's algorithm.
+ * 
+ * @param nodes
+ * @param edges
+ * @returns forest The clusters.
+ */
 function kruskal(nodes, edges) {
     var forest = _.map(nodes, function(node) { return [node]; });
     var i = edges.length;
@@ -22,49 +29,51 @@ function kruskal(nodes, edges) {
     return forest;
 }
 
-function isHighlyConnected(degreeObj, edges) {
-	var degrees = _.values(degreeObj);
-	var n = degrees.length;
-	var k = edges.length;
-	
-	// Get the node with the lowest degree.
-	var minDegree = _.min(degrees);
-	console.log("# of edges: " + k + ", # of nodes: " + n + ", min. degree: " + minDegree);
-
-	return (minDegree >= n/3);
-}
-
+/**
+ * Recursive function to apply the HCS algorithm, given the current graph as input.
+ * 
+ * @param nodes
+ * @param edges
+ */
 function hcs(nodes, edges) {
 	
 	// A graph with one or two nodes is ignored.
-	if(edges.length <= 1) return;
+	//if(edges.length <= 1) return;
 	
+	// Get the clusters by calculating the minimum spanning tree (Kruskal).
 	var clusters = kruskal(nodes, edges);
 	
 	// Split clusters into subgraphs.
 	_.each(clusters, function(cluster, i) {
 		var clusterSize = cluster.length;
-		if(clusterSize <= 2) return;	// Drop single, isolated nodes from the result.
 		
+		// Drop clusters too small from the result.
+		if(clusterSize <= 2) {
+			self.postMessage( { finished: false, nodes: cluster } );
+			return;
+		}
 		var clusterEdges = [];
-		var degrees = {};
-
-		while(clusterSize--) degrees[cluster[clusterSize]] = 0;
+		var degrees = _.map(cluster, function() { return 0; });
 		
+		// Find the edges within the cluster, as well as the degrees of the edges.
 		_.each(edges, function(edge) {
 			var s = _.indexOf(cluster, edge[0]);
 			if(s >= 0) {
 				var t = _.indexOf(cluster, edge[1]);
 				if(t >= 0) {
 					clusterEdges.push(edge);
-					degrees[cluster[s]]++;
-					degrees[cluster[t]]++;
+					degrees[s]++;
+					degrees[t]++;
 				}
 			}
 		});
 		
+		// Calculate the minimum degree.
+		var minDegree = _.min(degrees);
+		console.log("# of edges: " + clusterEdges.length + ", # of nodes: " + clusterSize + ", min. degree: " + minDegree);
+		
 		// Check for highly-connectedness. If so, we're done with this cluster, else call this function again with the subgraph.
-		if(isHighlyConnected(degrees, clusterEdges))
+		if(minDegree > clusterSize/2)
 			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges } );
 		else
 			hcs(cluster, clusterEdges);
@@ -72,7 +81,6 @@ function hcs(nodes, edges) {
 }
 
 self.addEventListener('message', function(e) {	
-	
 	// Generate the nodes.
 	var nodes = _.range(e.data.nodeCount);
 	// Sort the edges by similarity score.

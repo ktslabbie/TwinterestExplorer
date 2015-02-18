@@ -13,10 +13,10 @@
 		</div>
 		<div class="row english-rate">
 			<div class="col-md-12 text-center">
-				<span class="text-muted">English rate: </span>
-				<strong ng-if="targetUser.englishRate >= minimumEnglishRate" class="animate-if"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
-				<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < minimumEnglishRate" class="animate-if"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
-				<strong ng-if="targetUser.englishRate == -1"><em>-</em></strong>
+				<span class="text-muted">English rate: 
+				<strong ng-if="targetUser.englishRate >= minimumEnglishRate" class="animate-show-hide"><em class="text-success text-english-rate"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+				<strong ng-if="targetUser.englishRate >= 0 && targetUser.englishRate < minimumEnglishRate" class="animate-show-hide"><em class="text-danger text-english-rate-low"><span ng-bind="targetUser.englishRate*100 | number:0"></span>%</em></strong>
+				<strong ng-if="targetUser.englishRate == -1"><em>-</em></strong></span>
 			</div>
 		</div>
 	</div>
@@ -59,7 +59,7 @@
 		<div class="row types-panel text-center" style="font-size: 16px; margin-top: 12px;" ng-if="targetUser.loading">
 			<h3 class="text-muted">Getting tweets/interests...</h3>
 			<br>
-			<i class="fa fa-spinner fa-spin text-loading"></i>
+			<i class="fa fa-spinner fa-spin col-spinner"></i>
 		</div>
 		
 		<div class="row types-panel" ng-show="targetUser.userOntology.topTypes && targetUser.userOntology.topTypes.length > 0">

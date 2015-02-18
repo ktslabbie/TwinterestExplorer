@@ -45,8 +45,6 @@ public class SimpleUserResource {
         	int concat = concatenation.or(Vars.CONCATENATION_WINDOW);
         	String ontologyKey = Joiner.on(":").join(name.toLowerCase(), c, s, concat);
         	
-        	Log.getLogger().info("Ontology key: " + ontologyKey);
-        	
         	// Get  the user ontology if present.
 			OntologyController ontologyController = new OntologyController(ontologyKey);
 			ontologyController.getUserOntology(targetUser);
