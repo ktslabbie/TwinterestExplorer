@@ -25,7 +25,7 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			.links(links)
 			.charge(-180)
 			.chargeDistance(300)
-			.linkStrength(0.7)
+			.linkStrength(0.3)
 			.friction(0.8)
 			.linkDistance(60)
 			.gravity(0.2)
@@ -132,9 +132,6 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 		 * Replace the entire graph of nodes and links.
 		 */
 		this.initializeGraph = function(nodeCnt, pLinks, users) {
-			/*for(var i = 0; i < nodes.length; i++) {
-				that.setGroup(i, 0);
-			}*/
 			
 			for(var i = nodes.length; i < nodeCnt; i++) {
 				that.addNode({ name: users[i].screenName, group: 0 });
@@ -142,9 +139,9 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			
 			that.clearLinks();
 			
-			_.each(pLinks, function(ln) {
+			/*_.each(pLinks, function(ln) {
 				that.addLink(ln[0], ln[1], ln[2]);
-			});
+			});*/
 		}
 		
 		/**
@@ -258,7 +255,7 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			link = link.data(force.links(), function(d) {  return d.value; });
 			link.enter().insert("line", ".node").attr("class", "link");
 			link.exit().remove();
-			link.style("stroke-width", function(d) { return 1; });
+			//link.style("stroke-width", function(d) { var width = (Math.pow(d.value*3, 2)); return (width < 0.5) ? 0.5 : (width > 3) ? 3 : width; });
 
 			//text = svg.selectAll(".node-text");
 			text = text.data(force.nodes());
@@ -277,12 +274,12 @@ graphService.factory('Graph', ['$rootScope', function($rootScope) {
 			node.attr("cx", function(d) { return d.x; })
 				.attr("cy", function(d) { return d.y; })
 
-			if(zoomed) { 
+			/*if(zoomed) { 
 				link.attr("x1", function(d) { return d.source.x; })
 					.attr("y1", function(d) { return d.source.y; })
 					.attr("x2", function(d) { return d.target.x; })
 					.attr("y2", function(d) { return d.target.y; });
-			}
+			}*/
 
 			text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 		}

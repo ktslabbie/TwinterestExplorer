@@ -30,7 +30,8 @@ public class UserResource {
     @Timed
     public TwitterUser getUser(@QueryParam("id") Optional<Long> id, @QueryParam("englishRate") Optional<Float> englishRate, 
     							@QueryParam("screenName") Optional<String> screenName, @QueryParam("concatenation") Optional<Integer> concatenation,
-    							@QueryParam("confidence") Optional<Float> confidence, @QueryParam("support") Optional<Integer> support) {
+    							@QueryParam("confidence") Optional<Float> confidence, @QueryParam("support") Optional<Integer> support,
+    							@QueryParam("tweetCount") Optional<Integer> tweetCount) {
     	
     	String name = screenName.or(defaultName);
     	TwitterConnector connector = new TwitterConnector(-1);
@@ -40,9 +41,9 @@ public class UserResource {
     	if(targetUser == null) return null;
     	
     	if(!targetUser.hasTweets()) {
-    		
+    		int timelineTweetCount = tweetCount.or(Vars.TIMELINE_TWEET_COUNT);
     		// User has no tweets yet, so mine some.
-    		UserMiner miner = new UserMiner(targetUser, UserMiner.MINE_NONE, connector);
+    		UserMiner miner = new UserMiner(targetUser, UserMiner.MINE_NONE, timelineTweetCount, connector);
     		miner.mineUser();
     	}
     	

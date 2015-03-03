@@ -67,6 +67,7 @@ self.addEventListener('message', function(e) {
 	var N = userOntologies.length;
 	var bias = parseFloat(data.generalityBias);
 	
+	
 	console.log("CF-IUF: N: " + N);
 	
 	// Calculate CF-IUF weights wrt. all previous users.

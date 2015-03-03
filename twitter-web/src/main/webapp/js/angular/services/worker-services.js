@@ -13,8 +13,7 @@ var workerService = angular.module('twitterWeb.WorkerServices', [])
         doWork: function(event) {
         	defer = $q.defer();
         	
-        	if(event.ontologies.length > 0) worker.postMessage(event);
-        	else defer.resolve(event);
+        	worker.postMessage(event);
         	
         	return defer.promise;
         },
@@ -49,35 +48,71 @@ var workerService = angular.module('twitterWeb.WorkerServices', [])
 
 .factory("SimilarityService", ['$rootScope', '$q',  function($rootScope, $q) {
 
-	var worker;
+	var workers = [];
+	var workerCount = 6;
 	var defer;
+	var resolvedCount;
 	
-	function createWorker() {
-		worker = new Worker("js/workers/similarity_worker.js");
-		defer = $q.defer();
+	function createWorkers() {
 		
-		worker.addEventListener('message', function(e) {
-			if(e.data.finished)
-				defer.resolve(e.data);
-			else
-				$rootScope.$broadcast('simGraphUpdate', e.data);
-		}, false);
+		defer = $q.defer();
+		resolvedCount = workerCount;
+		var cnt = workerCount;
+		
+		while(cnt--) {
+			var worker = new Worker("js/workers/similarity_worker.js");
+			
+			worker.addEventListener('message', function(e) {
+				if(e.data.finished) {
+					resolvedCount--;
+					if(resolvedCount <= 0) defer.resolve(e.data);
+				} else $rootScope.$broadcast('simGraphUpdate', e.data);
+			}, false);
+			
+			workers[cnt] = worker;
+		}
 	}
 
-	createWorker();
+	createWorkers();
 	
 	return {
-        doWork: function(ev){
+        doWork: function(ev) {
             defer = $q.defer();
-            worker.postMessage(ev);
+            
+            
+            if(ev.userCount >= 100) {
+            	resolvedCount = workerCount;
+            	var currentIndex = 0;
+            	var parts = Math.round(ev.userCount / workerCount)
+            	
+            	for(var i = 0; i < workerCount-1; i++) {
+            		ev.start = currentIndex;
+            		currentIndex += parts;
+            		ev.end = currentIndex;
+            		workers[i].postMessage(ev);
+            	}
+            	
+            	ev.start = currentIndex;
+            	ev.end = ev.userCount-1;
+            	workers[workerCount-1].postMessage(ev);
+            	
+            } else {
+            	resolvedCount = 1;
+            	ev.start = 0;
+            	ev.end = ev.userCount-1;
+            	workers[0].postMessage(ev);
+            }
+            
             return defer.promise;
         },
         
         restart: function() {
-        	console.log("Terminate simworker.");
-        	worker.terminate();
+        	console.log("Terminate simworkers.");
+        	for(var i = 0; i < workerCount; i++) {
+        		workers[i].terminate();
+        	}
         	console.log("Terminated?");
-        	createWorker();
+        	createWorkers();
         }
     };
 }])

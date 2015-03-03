@@ -23,7 +23,7 @@ import twitter4j.UserMentionEntity;
 public class UserMiner {
 
 	private TwitterUser twitterUser;
-	private int tweetCount, englishCount;
+	private int timelineTweetCount, tweetCount, englishCount;
 	private int miningMode;
 	private boolean finished;
 	private TwitterConnector connector;
@@ -32,8 +32,9 @@ public class UserMiner {
 	public static final int MINE_NEW 	= 1;
 	public static final int MINE_ALL 	= 2;
 
-	public UserMiner(TwitterUser user, int miningMode, TwitterConnector connector){
+	public UserMiner(TwitterUser user, int miningMode, int timelineTweetCount, TwitterConnector connector){
 		this.twitterUser = user;
+		this.timelineTweetCount = timelineTweetCount;
 		this.tweetCount = 0;
 		this.englishCount = 0;
 		this.finished = false;
@@ -48,10 +49,10 @@ public class UserMiner {
 	    tweetCount = 0;
 	    englishCount = 0;
 	    
-	    int pages = (Vars.TIMELINE_TWEET_COUNT/200) + 1;
-	    int rest  = Vars.TIMELINE_TWEET_COUNT % 200;
+	    int pages = ((timelineTweetCount-1)/200) + 1; // -1 to make it exclusive the 200, 400, 600, etc. edge cases.
+	    int rest  = timelineTweetCount % 200;
 	    
-		Log.getLogger().info("Mining user: @" + twitterUser.getScreenName() + ". Mining " + Vars.TIMELINE_TWEET_COUNT + " tweets.");
+		Log.getLogger().info("Mining user: @" + twitterUser.getScreenName() + ". Mining " + timelineTweetCount + " tweets.");
 	    
 		for (int page = 1; page <= pages; page++) {
 			
@@ -64,8 +65,6 @@ public class UserMiner {
 			if(page == pages && rest > 0 && rest <= statuses.size()) {
 				statuses = statuses.subList(0, rest-1);
 			}
-			
-			//Log.getLogger().info("Retrieved page " + page + ". " + statuses.size() + " statuses found.");
 			
 			processStatuses(statuses);
 			if(finished) break;
@@ -99,10 +98,6 @@ public class UserMiner {
 			tweetCount++;
 			if(status.getLang().equals("en")) englishCount++;
 			
-			/*if(miningMode == MINE_NEW) {
-				if(status.getId()twitterUser.getTweets().get(0).getTweetID())
-			}*/
-			
 			//if(!twitterUser.hasTweet(status.getId())) {  // This check is too slow. TODO: good way to deal with miningmode = 1
 			Tweet tweet = new Tweet(status.getId(), twitterUser.getUserID(), status.getCreatedAt().getTime());
 		
@@ -114,14 +109,12 @@ public class UserMiner {
 				hashtagEntities = retweetedStatus.getHashtagEntities();
 				urlEntities = retweetedStatus.getURLEntities();
 				mediaEntities = retweetedStatus.getMediaEntities();
-				//Log.getLogger().info("Retweeted on: " + status.getCreatedAt() + ", Language: " + status.getLang() + ", Content: " + tweetText);
 			} else {
 				tweet.setContent(status.getText());
 				userMentionEntities = status.getUserMentionEntities();
 				hashtagEntities = status.getHashtagEntities();
 				urlEntities = status.getURLEntities();
 				mediaEntities = status.getMediaEntities();
-				//Log.getLogger().info("Tweeted on: " + status.getCreatedAt() + ", Language: " + status.getLang() + ", Content: " + tweetText);
 			}
 			
 			if(status.getPlace() != null) tweet.setLocationName(status.getPlace().getFullName());
@@ -145,15 +138,6 @@ public class UserMiner {
 			
 			tweet.stripNonHashtagElements();
 			twitterUser.addTweet(tweet);
-			//TweetBase.getInstance().addTweet(tweet);
-				
-			/*} else {
-				if(miningMode == MINE_NEW) {
-					Log.getLogger().info("Found an already existing tweet. We are done.");
-					finished = true;
-				}
-				//return;
-			}*/
 		}
 	}
 }

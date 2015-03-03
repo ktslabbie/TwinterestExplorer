@@ -24,10 +24,16 @@
 
     <div class="container" ng-controller="TwitterController">
    		<div class="row">
-   			<div class="col-md-offset-1 col-md-3">
+   			<div class="col-md-1">
+   				<h4>Sample size:</h4>
+   				<div class="input-group input-group-lg">
+			    	<input type="text" ng-model="userCount" class="form-control">
+			    </div>
+			</div>
+   			<div class="col-md-3">
     			<h4>Explore by seed user:</h4>
 	    		<form ng-submit="getSeedUser(screenName)">
-				    <div class="input-group input-group-lg text-muted">
+				    <div class="input-group input-group-lg">
 				    	<span class="input-group-addon">@</span>
 						<input ng-model="screenName" type="text" class="form-control">
 						<span class="input-group-btn"><button class="btn btn-default" ng-click="getSeedUser(screenName)" type="button">Go!</button></span>
@@ -52,7 +58,7 @@
 			
 			<div class="col-md-1">
 	    		<h4 class="header-bias">Generality bias:</h4>
-	    		<input type="range" id="genbias" min=-1 max=1 step=0.1 ng-model="generalityBias">
+	    		<input type="range" id="genbias" min=-1 max=1 step=0.1 ng-model="generalityBias" ng-mouseup="updateBias()">
 	    	</div>
 	    	
 	    	<div class="col-md-1 col-bias-value">

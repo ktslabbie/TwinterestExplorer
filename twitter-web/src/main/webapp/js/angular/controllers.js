@@ -5,8 +5,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
                                   function($scope, $timeout, SimpleUser, User, FollowersList, KeywordUserList, SimilarityService, 
                                 		   CFIUFService, CFIUFGroupService, HCSService, EvaluationService, Graph) {
 	
-	$scope.status = { loadingInitialData: false, noUserFound: false, loadingUsers: false, updatingCFIUF: false, 
-						updatingSimilarityGraph: false, clusteringNetwork: false, clusteringFinished: false, finalUpdate: false, zoomed: false };
+	$scope.status = { loadingInitialData: false, noUserFound: false, loadingUsers: false, updatingCFIUF: false, updatingSimilarityGraph: false, 
+						clusteringNetwork: false, clusteringFinished: false, finalUpdate: false, awaitingFinalClustering: false, zoomed: false };
 	
 	$scope.users = [];
 	$scope.validUsers = [];
@@ -17,18 +17,18 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.keyword = "machine learning";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
-	$scope.tweetsPerUser = 195;
-	$scope.userCount = 300;
+	$scope.tweetsPerUser = 200;
+	$scope.userCount = 200;
 	$scope.minimumEnglishRate = 0.7;
 	
 	// Named Entity Recognition settings.
 	$scope.nerConfidence = 0;
 	$scope.nerSupport = 0;
-	$scope.generalityBias = 0;
+	$scope.generalityBias = 0.4;
 	$scope.concatenation = 25;
 	
 	// Minimum similarity threshold.
-	$scope.minimumSimilarity = 0.2;
+	$scope.minimumSimilarity = 0.05;
 	
 	// Twitter user restrictions.
 	$scope.maxSeedUserFollowers = 9990000;
@@ -59,8 +59,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Initialize the state of the application.
 	 */
 	$scope.init = function() {
-		$scope.status = { loadingInitialData: false, noUserFound: false, loadingUsers: false, updatingCFIUF: false, 
-				updatingSimilarityGraph: false, clusteringNetwork: false, clusteringFinished: false, finalUpdate: false, zoomed: false };
+		$scope.status = { loadingInitialData: false, noUserFound: false, loadingUsers: false, updatingCFIUF: false, updatingSimilarityGraph: false, 
+							clusteringNetwork: false, clusteringFinished: false, finalUpdate: false, awaitingFinalClustering: false, zoomed: false };
 		
 		while($scope.users.length > 0) $scope.users.pop();
 		while($scope.validUsers.length > 0) $scope.validUsers.pop();
@@ -113,6 +113,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Function the go from a zoomed view of the graph back to the original view.
 	 */
 	$scope.restoreGraph = function() {
+		if(!$scope.status.clusteringFinished) return;
+		
 		graph.restoreGraph();
 		$scope.status.zoomed = false;
 		$scope.legend = fullLegend;
@@ -121,18 +123,61 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		graph.start();
 	}
 	
-	/**
-	 * Watch for valid user additions. When we get a new user we may want to update the CF-IUF matrix.
-	 */
-	$scope.$on('userUpdated', function () {
-		// New user has been added. Check that we're not waiting for the final update and still loading users.
-		if($scope.status.loadingUsers && !$scope.status.updatingSimilarityGraph) {
-			updateCFIUF($scope.validUsers, false);
-		} else if(!$scope.status.loadingUsers) {
-			console.log("Final 'userUpdated' has been broadcast (we're done collecting). Add a watcher for the final CF-IUF, or just do it if the final update is pending.");
-			finalize();
+	$scope.updateBias = function() {
+		if(!$scope.status.clusteringFinished) return;
+		
+		$scope.status.updatingCFIUF = true;
+		
+		if(!$scope.status.zoomed) {
+			$scope.status.clusteringFinished = false;
+			
+			// Setup the event to send to the Web Worker.
+			var event = {};
+			event.groups = false;
+			event.ontologies = [];
+			event.generalityBias = $scope.generalityBias;
+			
+			CFIUFService.doWork(event).then(function(data) {
+				var cfiufMaps = [];
+				
+				if(data.ontologies.length > 0) {
+					// The new CF-IUF matrix has been calculated and returned. Update the users and CF-IUF maps with the new ontologies.
+					
+					_.each(data.ontologies, function(newOntology, i) {
+						$scope.validUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
+						$scope.validUsers[i].userOntology.topTypes = newOntology.topTypes;
+						cfiufMaps.push(newOntology.cfiufMap);
+					});
+					
+					$scope.status.updatingCFIUF = false;
+					updateSimilarityGraph(cfiufMaps.length, cfiufMaps, true);
+				}
+			});
+			
+		} else {
+			graph.clearLinks();
+			graph.start(true);
+			
+			var event = {};
+			event.groups = true;
+			event.generalityBias = $scope.generalityBias;
+			event.ontologies = _.map($scope.visibleUsers, function(user) { return user.userOntology.ontology; });
+			
+			CFIUFGroupService.doWork(event).then(function(newOntologies) {
+				var cfiufMaps = [];
+				
+				_.each(newOntologies.ontologies, function(newOntology, i) {
+					$scope.visibleUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
+					$scope.visibleUsers[i].userOntology.topTypes = newOntology.topTypes;
+					cfiufMaps.push(newOntology.cfiufMap);
+				});
+				
+				$scope.status.updatingCFIUF = false;
+				updateSimilarityGraph($scope.visibleUsers.length, cfiufMaps);
+			});
 		}
-	});
+		
+	}
 	
 	/**
 	 * Update the CF-IUF scores for all entities (can be users or groups of users) up to entities[userIndex].
@@ -154,22 +199,36 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		event.generalityBias = $scope.generalityBias;
 		
 		// Send the ontologies.
-		CFIUFService.doWork(event).then(function(data) {
-			var cfiufMaps = [];
-			
-			if(data.ontologies.length > 0) {
-				// The new CF-IUF matrix has been calculated and returned. Update the users and CF-IUF maps with the new ontologies.
+		if(event.ontologies.length > 0) {
+			CFIUFService.doWork(event).then(function(data) {
+				var cfiufMaps = [];
 				
-				$scope.completedCFIUFCount = data.ontologies.length;
-				
-				_.each(data.ontologies, function(newOntology, i) {
-					$scope.validUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
-					$scope.validUsers[i].userOntology.topTypes = newOntology.topTypes;
-					cfiufMaps.push(newOntology.cfiufMap);
-				});
+				if(data.ontologies.length > 0) {
+					// The new CF-IUF matrix has been calculated and returned. Update the users and CF-IUF maps with the new ontologies.
+					
+					$scope.completedCFIUFCount = data.ontologies.length;
+					
+					_.each(data.ontologies, function(newOntology, i) {
+						$scope.validUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
+						$scope.validUsers[i].userOntology.topTypes = newOntology.topTypes;
+						cfiufMaps.push(newOntology.cfiufMap);
+					});
+					
+					if(finalizing) $scope.status.updatingSimilarityGraph = false;
+					updateSimilarityGraph($scope.completedCFIUFCount, cfiufMaps, finalizing);
+				} 
 
-				if(finalizing) $scope.status.updatingSimilarityGraph = false;
-				if(!$scope.status.finalUpdate || finalizing) updateSimilarityGraph($scope.completedCFIUFCount, cfiufMaps, finalizing);
+				$scope.status.updatingCFIUF = false;
+				
+				// Get the execution time for profiling purposes.
+				var endTime = new Date().getTime();
+				console.log("CF-IUF execution time: " + (endTime - startTime));
+			});
+		} else {
+			if(finalizing) {
+				$scope.status.updatingSimilarityGraph = false;
+				var allMaps = _.map(entities, function(e) { return e.userOntology.cfiufMap; });
+				updateSimilarityGraph($scope.completedCFIUFCount, allMaps, finalizing);
 			}
 			
 			$scope.status.updatingCFIUF = false;
@@ -177,7 +236,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			// Get the execution time for profiling purposes.
 			var endTime = new Date().getTime();
 			console.log("CF-IUF execution time: " + (endTime - startTime));
-		});
+		}
+		
 	}
 	
 	/**
@@ -194,6 +254,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Build the event to send to the Web Worker.
 		var similarityLinks = [];
 		var ev = {};
+		ev.userCount = userCount;
 		ev.minSim = $scope.minimumSimilarity;
 		ev.cfiufMaps = cfiufMaps;
 		
@@ -207,21 +268,34 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			removeOnUpdate();
 			
 			// Simgraph done. Let's update the CF-IUF in parallel with clustering.
-			$scope.status.updatingSimilarityGraph = false;
+			
+			if(!$scope.status.zoomed && !finalizing) {
+				$timeout(function() {
+					$scope.status.updatingSimilarityGraph = false;
+				}, 3000);
+			} else {
+				$scope.status.updatingSimilarityGraph = false;
+			}
 			
 			var endTime = new Date().getTime();
 			console.log("Similarity graph execution time: " + (endTime - startTime));
 			
 			// Finally, cluster the similarity graph.
 			if(!$scope.status.clusteringNetwork) {
-				$scope.clusterNetwork(userCount, similarityLinks);
+				$scope.clusterNetwork(userCount, similarityLinks, finalizing);
 			} else {
 				if(finalizing) {
+					$scope.status.awaitingFinalClustering = true;
+					
 					// Add a watcher:  we want to cluster the final graph, but must wait for the current clustering operation to finish.
 					var removeWatchClusteringNetwork = $scope.$watch('status.clusteringNetwork', function() {
 						if(!$scope.status.clusteringNetwork) {
+							$scope.status.awaitingFinalClustering = false;
+							
 							// clusteringNetwork has changed to false. Final update.
-							$scope.clusterNetwork(userCount, similarityLinks);
+							$scope.clusterNetwork(userCount, similarityLinks, finalizing);
+							
+							
 							
 							// Remove this watcher.
 							removeWatchClusteringNetwork();
@@ -235,7 +309,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	/**
 	 * Function to cluster the network, assuming we have a completed similarity graph.
 	 */
-	$scope.clusterNetwork = function(userCount, similarityLinks) {
+	$scope.clusterNetwork = function(userCount, similarityLinks, finalizing) {
 		
 		// If we're already updating, return (this shouldn't happen).
 		if($scope.status.clusteringNetwork) return;
@@ -244,8 +318,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Get the nodes and links from the current graph.
 		if(!$scope.status.zoomed) {
 			graph.initializeGraph(userCount, similarityLinks, $scope.visibleUsers);
-			graph.start(false);
+			//graph.start(false);
 		}
+		
 		$scope.groups = [];
 		var clusters = [];
 		
@@ -272,7 +347,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				});
 				
 				// Release the nodes from the rest of the graph (and temporarily from each other).
-				if(!$scope.status.zoomed) graph.removeNodeLinks(nodeIndex);
+				//if(!$scope.status.zoomed) graph.removeNodeLinks(nodeIndex);
 			});
 			
 			// Update the groups.
@@ -291,15 +366,15 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			removeOnHCSUpdate();
 			
 			// We've finished calculating the cluster graph. Render the final version by removing any leftover nodes.
-			graph.removeLinksByGroup(0);
-			if($scope.status.finalUpdate && !$scope.status.updatingCFIUF && !$scope.status.updatingSimilarityGraph) {
-				graph.removeNodesByGroup(0);
-			}
+			//graph.removeLinksByGroup(0);
+			//if(finalizing) {
+				//graph.start(false);
+				//console.log("Final update? Removing 0 nodes!");
+				//graph.removeNodesByGroup(0);
+			//}
 			
 			if($scope.status.zoomed) graph.start(true);
 			else graph.start(false);
-			
-			//graph.start(true);
 			
 			// Build the event for CF-IUF.
 			var ev = {};
@@ -325,22 +400,32 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					labelString += legendText + "\n";
 				});
 				
-				if(i == 0) $scope.legend.push( {text: "No further clusters could be determined.", group: 0} ); 
+				if(i == 0) $scope.legend.push( {text: "No further clusters could be determined.", group: 0} );
 				
-				if(!$scope.status.zoomed && $scope.status.finalUpdate && !$scope.status.updatingCFIUF && !$scope.status.updatingSimilarityGraph) {
-					$scope.status.finalUpdate = false;
-					
-					$timeout(function() {
-						graph.cloneGraph();
-						fullGroups = _.cloneDeep($scope.groups);
-						fullLegend = _.clone($scope.legend);
-					}, 1000);
+				if($scope.status.awaitingFinalClustering) {
+					$scope.status.clusteringNetwork = false;
+				} else {
+					if(!$scope.status.zoomed && finalizing && !$scope.status.updatingCFIUF && !$scope.status.updatingSimilarityGraph) {
+						$scope.status.clusteringFinished = true;
+						$scope.status.clusteringNetwork = false;
+						
+						$timeout(function() {
+							graph.cloneGraph();
+							fullGroups = _.cloneDeep($scope.groups);
+							fullLegend = _.clone($scope.legend);
+						}, 1000);
+						
+					} else if($scope.status.zoomed) {
+						$scope.status.clusteringFinished = true;
+						$scope.status.clusteringNetwork = false;
+					} else {
+						$timeout(function() {
+							$scope.status.clusteringNetwork = false;
+						}, 3000);
+					}
 				}
-				
+
 				console.log(labelString);
-				
-				$scope.status.clusteringFinished = true;
-				$scope.status.clusteringNetwork = false;
 				
 				// Evaluate the accuracy of the clustering result (if ground truth present).
 				//if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
@@ -353,8 +438,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 */
 	function finalize() {
 		console.log("Finalizing.");
-		
-		$scope.status.finalUpdate = true;
 		
 		// Reset and apply final update.
 		SimilarityService.restart();
@@ -375,33 +458,17 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	}
 	
 	/**
-	 * Check to see a user is protected or has too little tweets.
-	 * Set the user error value if so.
+	 * Watch for valid user additions. When we get a new user we may want to update the CF-IUF matrix.
 	 */
-	function isValidUser(user) {
-		if(user.properties.protectedUser) {
-			user.error = "This user is protected.";
-			return false;
-		} else if(user.properties.statusesCount < $scope.minTweets) {
-			user.error = "This user does not have enough tweets.";
-			return false;
+	$scope.$on('userUpdated', function () {
+		// New user has been added. Check that we're not waiting for the final update and still loading users.
+		if($scope.status.loadingUsers && !$scope.status.updatingSimilarityGraph) {
+			updateCFIUF($scope.validUsers, false);
+		} else if(!$scope.status.loadingUsers) {
+			console.log("Final 'userUpdated' has been broadcast (we're done collecting). Add a watcher for the final CF-IUF, or just do it if the final update is pending.");
+			finalize();
 		}
-		
-		user.valid = true;
-		return true;
-	}
-	
-	/**
-	 * Check to see a user has enough English tweets.
-	 * Set the user error value if not.
-	 */
-	function isEnglishUser(user) {
-		if(user.englishRate < $scope.minimumEnglishRate) {
-			user.error = "This user's English rate is too low.";
-			return false;
-		}
-		return true;
-	}
+	});
 	
 	/**
 	 * Function to get the initial user. We want this to be fast, so we get just the user first (without tweets/traits unless already in DB).
@@ -454,7 +521,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		
 		// Get a full user: get tweets/traits from Twitter/DBepdia if needed.
 		User.get({ screenName: user.screenName, confidence: $scope.nerConfidence, support: $scope.nerSupport, 
-			concatenation: $scope.concatenation, englishRate: $scope.minimumEnglishRate },
+			concatenation: $scope.concatenation, englishRate: $scope.minimumEnglishRate, tweetCount: $scope.tweetsPerUser },
 			function(userData) {
 				// Set the basic updated user info. We can't replace the entire user object because reasons.
 				user.userID = userData.userID;
@@ -562,6 +629,35 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			$scope.updateUsers(0);
 		});
 	};
+	
+	/**
+	 * Check to see a user is protected or has too little tweets.
+	 * Set the user error value if so.
+	 */
+	function isValidUser(user) {
+		if(user.properties.protectedUser) {
+			user.error = "This user is protected.";
+			return false;
+		} else if(user.properties.statusesCount < $scope.minTweets) {
+			user.error = "This user does not have enough tweets.";
+			return false;
+		}
+		
+		user.valid = true;
+		return true;
+	}
+	
+	/**
+	 * Check to see a user has enough English tweets.
+	 * Set the user error value if not.
+	 */
+	function isEnglishUser(user) {
+		if(user.englishRate < $scope.minimumEnglishRate) {
+			user.error = "This user's English rate is too low.";
+			return false;
+		}
+		return true;
+	}
 	
 	/**
 	 * Function to update page size (used for infinite scrolling).
