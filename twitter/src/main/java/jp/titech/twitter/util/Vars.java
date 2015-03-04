@@ -29,6 +29,11 @@ public class Vars {
 	
 	public static final int 	QUERY_RETRY 					= Integer.parseInt(c.getProperty("io.queryRetry"));				// Retry time in case of query failure
 	
+	public static final String  POSTGRES_SERVER_NAME			= c.getProperty("postgres.serverName");
+	public static final String  POSTGRES_DATABASE_NAME			= c.getProperty("postgres.databaseName");
+	public static final String  POSTGRES_USER					= c.getProperty("postgres.user");
+	public static final String  POSTGRES_PASSWORD				= c.getProperty("postgres.password");
+	
 	public static final String  REDIS_URL						= c.getProperty("redis.url");
 	
 	public static final String  DBPEDIA_NAMESPACE				= c.getProperty("dbpedia.namespace");

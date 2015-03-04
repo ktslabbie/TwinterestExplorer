@@ -72,10 +72,10 @@ public class TweetBase {
 		try {
 			pool = new PGPoolingDataSource();
 			pool.setDataSourceName("TweetBase Data Source");
-			pool.setServerName("localhost");
-			pool.setDatabaseName("TweetBase");
-			pool.setUser("postgres");
-			pool.setPassword("9564");
+			pool.setServerName(Vars.POSTGRES_SERVER_NAME);
+			pool.setDatabaseName(Vars.POSTGRES_DATABASE_NAME);
+			pool.setUser(Vars.POSTGRES_USER);
+			pool.setPassword(Vars.POSTGRES_PASSWORD);
 			pool.setMaxConnections(10);
 			
 			Log.getLogger().info("Initialized connection pool: " + pool.toString());
