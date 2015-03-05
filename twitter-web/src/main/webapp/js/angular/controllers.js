@@ -17,14 +17,14 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.keyword = "machine learning";
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
-	$scope.tweetsPerUser = 200;
+	$scope.tweetsPerUser = 100;
 	$scope.userCount = 200;
 	$scope.minimumEnglishRate = 0.7;
 	
 	// Named Entity Recognition settings.
 	$scope.nerConfidence = 0;
 	$scope.nerSupport = 0;
-	$scope.generalityBias = 0.4;
+	$scope.generalityBias = 0;
 	$scope.concatenation = 25;
 	
 	// Minimum similarity threshold.
@@ -44,7 +44,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.maxProcesses = 6;
 	$scope.activeProcesses = 1;
 	
-	var graph = new Graph(1080, 540, "#graph");
+	var graph = new Graph(640, 540, "#graph");
 	
 	$scope.legend = [];
 	var fullLegend = [];

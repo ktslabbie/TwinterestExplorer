@@ -1,1 +1,1 @@
-DELETE FROM ontology;
+DELETE FROM ontology WHERE ontology_key = 'gb:0.0:0:25';
