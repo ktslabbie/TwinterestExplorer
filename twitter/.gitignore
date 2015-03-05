@@ -1,5 +1,6 @@
 /bin
 /data
+/docs
 /target
 /server
 /TweetBase
@@ -7,5 +8,8 @@
 /TwitterMiner.log.1
 /derby.log
 
-config
+twitterminer.properties
 .settings
+
+**/.idea/workspace.xml
+**/.idea/tasks.xml
