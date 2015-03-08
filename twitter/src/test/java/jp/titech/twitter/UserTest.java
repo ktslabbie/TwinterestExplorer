@@ -13,6 +13,7 @@ import jp.titech.twitter.util.Util;
 import junit.framework.TestCase;
 
 import org.apache.log4j.PropertyConfigurator;
+import org.junit.Test;
 
 public class UserTest extends TestCase {
 	
@@ -35,10 +36,10 @@ public class UserTest extends TestCase {
 		Util.loadStopwords();
 	}
 
-	/*@Test
+	@Test
 	public void testUser() {
 		//testUser = new TwitterUser(1, "TestName", new UserProperties("hello", "desc", "loc", 2, 3, 4, date, false, "http://lol.lol.lol"), 0.9);
-		TweetBase.getInstance().addUser(new TwitterUser(1, "test", "test", "testdesc", "testloc", 2, 3, 4, date.getTime(), false, 0.9f, "http://test.test.test"));
+		/*TweetBase.getInstance().addUser(new TwitterUser(1, "test", "test", "testdesc", "testloc", 2, 3, 4, date.getTime(), false, 0.9f, "http://test.test.test"));
 
 		Log.getLogger().info("Hi, what");
 		//TweetBase.getInstance().getUser(1);
@@ -64,6 +65,6 @@ public class UserTest extends TestCase {
 			ontologyController.createUserOntology(targetUser, spotlightUrl);
     	}
     	
-    	Log.getLogger().info("USER: " + targetUser);
-	}*/
+    	Log.getLogger().info("USER: " + targetUser);*/
+	}
 }
