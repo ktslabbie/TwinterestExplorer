@@ -7,43 +7,41 @@ package jp.titech.twitter.tools;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
-import jp.titech.twitter.ontology.dbpedia.RedisQuery;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
-import jp.titech.twitter.util.Vars;
 
 /**
  * @author Kristian Slabbekoorn
  *
  */
-public class CalculateDCG {
+class CalculateDCG {
 
-	public static final String KEYWORD = "malware"; 
-	public static final String EVALUATION_PATH = "../twitter/data/Twitter ranking/evaluation/"; // rover.result.dup.turkeys.tweet_user
-	public static final int[] TOP_K = {5, 10, 20};
+	private static final String KEYWORD = "old.evaluation";
+	private static final String EVALUATION_PATH = "../twitter/data/evaluation/"; // rover.result.dup.turkeys.tweet_user
+	private static final int[] TOP_K = {5, 10, 20};
 
 	public static void main( String[] args ) {
 
 		for (int k : TOP_K) {
 			ArrayList<File> files = new ArrayList<File>();
 			File dir = new File(EVALUATION_PATH + KEYWORD);
-			for (File file : dir.listFiles()) {
-				files.add(file);
-			}
+            if(dir.listFiles() != null) {
+                Collections.addAll(files, dir.listFiles());
 
-			File outputFile = new File(EVALUATION_PATH + KEYWORD + ".results/" + KEYWORD + ".top" + k + ".dcg.results");
-			String log = "Filename:\tDCG (top-" + k + ")\tnDCG (top-" + k + ")\n";
+                File outputFile = new File(EVALUATION_PATH + KEYWORD + ".results/" + KEYWORD + ".top" + k + ".dcg.results");
+                String log = "Filename:\tDCG (top-" + k + ")\tnDCG (top-" + k + ")\n";
 
-			for (int i = 0; i < files.size(); i++) {
-				File file = files.get(i);
-				log += file.getName() + ":\t" + calculateDCG(Util.readFile(file), k) + "\n";
-			}
-			Util.writeToFile(log, outputFile);
+                for (File file : files) {
+                    log += file.getName() + ":\t" + calculateDCG(Util.readFile(file), k) + "\n";
+                }
+                Util.writeToFile(log, outputFile);
+            }
 		}
 	}
 
-	public static String calculateDCG(String ranking, int k){
+	private static String calculateDCG(String ranking, int k){
 
 		String output = "";
 
@@ -58,7 +56,7 @@ public class CalculateDCG {
 		}
 
 		double rel1 = Integer.parseInt(lines[0].split("\t")[2]);
-		double reli = 0.0;
+		double reli;
 		double dcg = rel1;
 		double idcg = 2;
 

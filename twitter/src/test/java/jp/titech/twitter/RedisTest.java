@@ -4,14 +4,15 @@ import java.util.List;
 
 import jp.titech.twitter.ontology.dbpedia.RedisClient;
 import jp.titech.twitter.util.Log;
-import junit.framework.TestCase;
 
+import org.junit.Before;
 import org.junit.Test;
 
-public class RedisTest extends TestCase {
+public class RedisTest {
 	
 	
-	protected void setUp() {
+	@Before
+    public void setUp() {
 		
 	}
 

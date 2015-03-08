@@ -14,16 +14,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
 
 import org.json.JSONObject;
 
-import jp.titech.twitter.data.Tweet;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
@@ -34,7 +30,7 @@ import jp.titech.twitter.util.Vars;
  */
 public class SpotlightQuery {
 	
-	private String spotlightURL;
+	private final String spotlightURL;
 
 	public SpotlightQuery(String pSpotlightURL){
 		spotlightURL = pSpotlightURL;

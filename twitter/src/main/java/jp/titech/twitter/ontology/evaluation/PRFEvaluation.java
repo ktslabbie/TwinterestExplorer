@@ -17,8 +17,8 @@ import jp.titech.twitter.util.Vars;
  */
 public class PRFEvaluation {
 
-	private String targetUser;
-	private SortedMap<String, Double> userSimilarityMap;
+	private final String targetUser;
+	private final SortedMap<String, Double> userSimilarityMap;
 	private String evaluationString = "Threshold\tPrecision\tRecall\tF-score\n";
 	
 	public double THRESH_START = 0.01;

@@ -9,14 +9,14 @@ import jp.titech.twitter.util.Log;
 
 public abstract class SimilarityFunction {
 
-	protected SortedSet<UserSimilarity> userSimilaritySet;
-	protected WeightingScheme weightingScheme;
+	SortedSet<UserSimilarity> userSimilaritySet;
+	final WeightingScheme weightingScheme;
 	
 	SimilarityFunction(WeightingScheme weightingScheme) {
 		this.weightingScheme = weightingScheme;
-	};
+	}
 	
-	public abstract SortedSet<UserSimilarity> calculate();
+	public abstract void calculate();
 	public abstract String getName();
 	
 	public String getUserSimilarityString(String screenName) {

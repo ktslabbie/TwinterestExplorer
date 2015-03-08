@@ -24,9 +24,9 @@ import jp.titech.twitter.util.Log;
  */
 public class TwitterConnector {
 
-	private TweetBase tweetBase;
+	private final TweetBase tweetBase;
 	private long nextCursor = -1;
-	private TwitterAPIAccountManager accountManager;
+	private final TwitterAPIAccountManager accountManager;
 	private TwitterAPIAccount twitterAPIAccount;
 	
 	public TwitterConnector() {
@@ -50,10 +50,10 @@ public class TwitterConnector {
 	 */
 	public TwitterUser getTwitterUserWithID(long userID) {
 
-		TwitterUser twitterUser = null;
+		TwitterUser twitterUser;
 
 		if((twitterUser = tweetBase.getUser(userID)) == null) {
-			User user = null;
+			User user;
 
 			try {
 				user = twitterAPIAccount.getTwitterAccount().showUser(userID);
@@ -78,12 +78,12 @@ public class TwitterConnector {
 
 	public TwitterUser getTwitterUserWithScreenName(String screenName) {
 
-		TwitterUser twitterUser = null;
+		TwitterUser twitterUser;
 
 		if((twitterUser = tweetBase.getUser(screenName)) == null) {
 
 			Log.getLogger().info("User @" + screenName + " not in DB! Try to get from Twitter API...");
-			User user = null;
+			User user;
 
 			try {
 				user = twitterAPIAccount.getTwitterAccount().showUser(screenName);
@@ -107,7 +107,7 @@ public class TwitterConnector {
 	}
 
 	public List<TwitterUser> getFollowersList(long userID, long cursor) {
-		PagableResponseList<User> followers = null;
+		PagableResponseList<User> followers;
 		List<TwitterUser> users = new ArrayList<TwitterUser>();
 
 		try {
@@ -182,7 +182,7 @@ public class TwitterConnector {
 	 * @return
 	 */
 	public List<Status> getUserTimeline(long userID, Paging paging) {
-		List<Status> statusList = new ArrayList<Status>();
+		List<Status> statusList;
 		
 		try {
 			statusList = twitterAPIAccount.getTwitterAccount().getUserTimeline(userID, paging);

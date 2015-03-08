@@ -55,8 +55,7 @@ public class UserSimilarity implements Comparable<UserSimilarity> {
 	}
 	
 	public boolean contains(String screenName) {
-		if(this.userA.getScreenName().equals(screenName) || this.userB.getScreenName().equals(screenName)) return true;
-		else return false;
+		return (this.userA.getScreenName().equals(screenName) || this.userB.getScreenName().equals(screenName));
 	}
 	
 	@Override

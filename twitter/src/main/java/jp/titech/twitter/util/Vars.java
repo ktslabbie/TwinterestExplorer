@@ -9,7 +9,7 @@ import jp.titech.twitter.config.Configuration;
 
 public class Vars {
 
-	private static Configuration c = Configuration.getInstance();
+	private static final Configuration c = Configuration.getInstance();
 	
 	/**
 	 * Twitter variables
@@ -46,10 +46,10 @@ public class Vars {
 	
 	public static final String	SQL_SCRIPT_DIRECTORY			= c.getProperty("sql.scriptDirectory");
 
-	public static final String 	SPOTLIGHT_BASE_URL				= c.getProperty("spotlight.baseURL");
+	public static final String 	 SPOTLIGHT_BASE_URL				= c.getProperty("spotlight.baseURL");
 	public static final String[] SPOTLIGHT_PORTS				= c.getProperty("spotlight.ports").split(",");
-	public static float 		SPOTLIGHT_CONFIDENCE			= Float.valueOf(c.getProperty("spotlight.confidence"));
-	public static int 			SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
+	public static final float 	 SPOTLIGHT_CONFIDENCE			= Float.valueOf(c.getProperty("spotlight.confidence"));
+	public static final int 	 SPOTLIGHT_SUPPORT				= Integer.parseInt(c.getProperty("spotlight.support"));
 
 	public static float  		GENERALITY_BIAS 					=  Float.valueOf(c.getProperty("similarity.generalityBias"));
 }

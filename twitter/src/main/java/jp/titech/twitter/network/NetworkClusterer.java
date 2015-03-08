@@ -8,9 +8,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.network.clustering.ClusteringAlgorithm;
 
-public class NetworkClusterer {
+class NetworkClusterer {
 
-	private ClusteringAlgorithm algorithm;
+	private final ClusteringAlgorithm algorithm;
 	
 	public NetworkClusterer(ClusteringAlgorithm algorithm) {
 		this.algorithm = algorithm;

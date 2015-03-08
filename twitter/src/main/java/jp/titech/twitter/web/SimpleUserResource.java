@@ -13,12 +13,11 @@ import javax.ws.rs.core.MediaType;
 import jp.titech.twitter.control.OntologyController;
 import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.mining.api.TwitterConnector;
-import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
 
 @Path("/api/get-simple-user")
 @Produces(MediaType.APPLICATION_JSON)
-public class SimpleUserResource {
+class SimpleUserResource {
 
 	private final String defaultName;
 

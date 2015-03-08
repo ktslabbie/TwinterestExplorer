@@ -10,7 +10,6 @@ import java.util.List;
 
 import jp.titech.twitter.ontology.dbpedia.DBpediaResource;
 import jp.titech.twitter.ontology.dbpedia.DBpediaResourceOccurrence;
-import jp.titech.twitter.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,7 +19,7 @@ import org.json.JSONObject;
  * @author Kristian Slabbekoorn
  *
  */
-public class SpotlightUtil {
+class SpotlightUtil {
 
 	public static List<DBpediaResourceOccurrence> jsonToResourceOccurrences(JSONObject json){
 
@@ -28,7 +27,7 @@ public class SpotlightUtil {
 		//List<DBpediaResourceOccurrence> resourceOccurrenceMap = new LinkedHashMap<String, List<DBpediaResourceOccurrence>>();
 
 		try {
-			DBpediaResourceOccurrence occurrence = null;
+			DBpediaResourceOccurrence occurrence;
 			if(json == null) return bestCandidates;
 
 			JSONObject jsonMain = json.getJSONObject("annotation");

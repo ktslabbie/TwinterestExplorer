@@ -17,7 +17,7 @@ import jp.titech.twitter.network.NetworkBuilder;
 
 @Path("/api/get-followers-list")
 @Produces(MediaType.APPLICATION_JSON)
-public class UserFollowersListResource {
+class UserFollowersListResource {
 	
 	private final String defaultName;
 

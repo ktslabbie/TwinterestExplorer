@@ -9,9 +9,9 @@ import twitter4j.conf.ConfigurationBuilder;
 
 class TwitterAPIAccount {
 	
-	private Twitter twitterAccount;
+	private final Twitter twitterAccount;
 	private int secondsUntilReset = -1;
-	private int index;
+	private final int index;
 
 	public TwitterAPIAccount(String consumerKey, String cosumerSecret, String accessToken, String accessTokenSecret, int index) {
 		ConfigurationBuilder cb = new ConfigurationBuilder();

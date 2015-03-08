@@ -4,7 +4,7 @@ import jp.titech.twitter.util.Util;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class WeightedEdge extends DefaultWeightedEdge{
+class WeightedEdge extends DefaultWeightedEdge{
 
 	/**
 	 * 

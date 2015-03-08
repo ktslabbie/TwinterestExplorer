@@ -1,8 +1,6 @@
 package jp.titech.twitter.ontology.dbpedia;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import jp.titech.twitter.util.Vars;
 

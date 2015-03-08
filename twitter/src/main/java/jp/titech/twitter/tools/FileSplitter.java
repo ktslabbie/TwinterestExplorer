@@ -11,15 +11,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 import jp.titech.twitter.config.Configuration;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
-import jp.titech.twitter.util.Vars;
 
 import org.apache.log4j.PropertyConfigurator;
-import org.openrdf.rio.RDFFormat;
 
 /**
  * @author Kristian Slabbekoorn
@@ -27,14 +24,14 @@ import org.openrdf.rio.RDFFormat;
  * This tool is used to split huge files into manageable chunks by reading it line-by-line and saving into a new file after x lines.
  *
  */
-public class FileSplitter {
+class FileSplitter {
 	
 	/*
 	 * Variables
 	 */
-	static final String RDF_DIRECTORY = "../data/";									// Directory with RDF files
-	static final String EXTENSION = "nt";											// Extension of RDF files
-	static final int LINES_PER_FILE = 10000;										// Number of lines per split file
+	private static final String RDF_DIRECTORY = "../data/";									// Directory with RDF files
+	private static final String EXTENSION = "nt";											// Extension of RDF files
+	private static final int LINES_PER_FILE = 10000;										// Number of lines per split file
 	
 	public static void main( String[] args ) {
 		PropertyConfigurator.configure(Configuration.PROPERTIES);
@@ -42,25 +39,26 @@ public class FileSplitter {
 
 		File directory = new File(RDF_DIRECTORY);
 		File[] files = directory.listFiles();
-		
-		for (File file : files) {
-			String extension = Util.getExtension(file);
-			if(extension.equals(EXTENSION)){
-				Log.getLogger().info("Splitting " + file.getName() + "...");
-				splitHugeFile(file, LINES_PER_FILE);
-			}
-		}
+
+        if(files != null) {
+            for (File file : files) {
+                String extension = Util.getExtension(file);
+                if (extension.equals(EXTENSION)) {
+                    Log.getLogger().info("Splitting " + file.getName() + "...");
+                    splitHugeFile(file);
+                }
+            }
+        }
 	}
 	
 	/**
 	 * Read a text file and split it into chunks of lines.
 	 * 
 	 * @param file The file
-	 * @param lines The number of lines per split file
 	 * @return The (text) file contents
 	 */
-	public static void splitHugeFile(File file, int lines) {
-		BufferedReader br = null;
+	private static void splitHugeFile(File file) {
+		BufferedReader br;
 		String out = "";
 		try {
 			br = new BufferedReader(new FileReader(file), 1000000);
@@ -72,7 +70,7 @@ public class FileSplitter {
 				out += currentLine + "\n";
 				count++;
 				//showProgress(count, lines);
-				if(count == lines) {
+				if(count == LINES_PER_FILE) {
 					//String subfix = (fileIndex < 10) ? "_0" : "_";
 					Log.getLogger().info("Writing " + file.getAbsolutePath() + "_" + fileIndex + "." + Util.getExtension(file) + " to disk...");
 					fw = new FileWriter(new File(file.getAbsolutePath() + "_" + fileIndex + "." + Util.getExtension(file)));

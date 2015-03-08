@@ -11,7 +11,6 @@ import java.util.SortedMap;
 import jp.titech.twitter.ontology.evaluation.DCGEvaluation;
 import jp.titech.twitter.ontology.evaluation.PRFEvaluation;
 import jp.titech.twitter.ontology.similarity.SimilarityFunction;
-import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Util;
 import jp.titech.twitter.util.Vars;
 

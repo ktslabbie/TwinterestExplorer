@@ -2,7 +2,7 @@ package jp.titech.twitter.web;
 
 import com.codahale.metrics.health.HealthCheck;
 
-public class APIHealthCheck extends HealthCheck {
+class APIHealthCheck extends HealthCheck {
     
 	/**
 	 * TODO: skipping health checking for now. Always return true.

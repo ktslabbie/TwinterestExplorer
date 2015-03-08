@@ -16,7 +16,7 @@ import jp.titech.twitter.network.KeywordUserBuilder;
 
 @Path("/api/get-keyword-user-list")
 @Produces(MediaType.APPLICATION_JSON)
-public class KeywordUserListResource {
+class KeywordUserListResource {
 	
 	private final String defaultKeyword;
 

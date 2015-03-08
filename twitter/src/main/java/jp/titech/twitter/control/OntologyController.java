@@ -21,7 +21,7 @@ import jp.titech.twitter.ontology.OntologyBuilder;
 public class OntologyController {
 
 	private UserOntology userOntology;
-	private String ontologyKey;
+	private final String ontologyKey;
 
 	public OntologyController(String ontologyKey) {
 		this.ontologyKey = ontologyKey;

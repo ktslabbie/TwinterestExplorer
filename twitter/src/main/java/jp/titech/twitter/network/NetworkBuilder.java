@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
@@ -25,12 +24,10 @@ public class NetworkBuilder {
 	private TwitterUser 		seedUser;					// The seed user to start out with
 	private Queue<TwitterUser> 	processQueue;
 	private int					maxUsers;					// Maximum number of users to collect
-	private Set<Long>			processed;					// Set of IDs already processed (to speed things up)
-	private boolean				getFollowers = true;
+	private final Set<Long>			processed;					// Set of IDs already processed (to speed things up)
 	private int					userCount;
-	private TwitterConnector 	connector;
-
-	List<String> 				screenNames;
+	private final TwitterConnector 	connector;
+	private List<String> 		screenNames;
 
 	public NetworkBuilder(TwitterUser seedUser, int maxSize, TwitterConnector connector) {
 		this.screenNames = new ArrayList<String>();
@@ -64,7 +61,6 @@ public class NetworkBuilder {
 				}
 
 				if(userCount > maxUsers) break;
-				if(!getFollowers) continue;
 				
 				Log.getLogger().info("Getting followers of @" + currentUser.getScreenName() + "...");
 				
@@ -173,7 +169,7 @@ public class NetworkBuilder {
 	}
 
 	/**
-	 * @param maxUsers the maxUsers to set
+	 * @param maxSize the maxSize to set
 	 */
 	public void setMaxUsers(int maxSize) {
 		this.maxUsers = maxSize;

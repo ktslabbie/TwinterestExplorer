@@ -16,17 +16,17 @@ public class TwitterAPIAccountManager {
 	private List<TwitterAPIAccount> twitterAPIAccounts;
 	private int poolSize = 0;
 
-	public TwitterAPIAccountManager() {
-		initTwitterAccounts(Vars.API_ACCOUNTS_FILE);
+	private TwitterAPIAccountManager() {
+		initTwitterAccounts();
 	}
 	
-	public void initTwitterAccounts(String path) {
+	void initTwitterAccounts() {
 		Log.getLogger().info("Initializing Twitter API accounts.");
 		twitterAPIAccounts = new ArrayList<TwitterAPIAccount>();
 
 		try {
-			Scanner scanner = new Scanner(new FileReader(new File(path)));
-			String next = "";
+			Scanner scanner = new Scanner(new FileReader(new File(Vars.API_ACCOUNTS_FILE)));
+			String next;
 			int index = 0;
 			
 			while(scanner.hasNext()) {

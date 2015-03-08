@@ -30,7 +30,7 @@ import java.util.SortedMap;
 
 public class Util {
 
-	private static Set<String> stopWords = new HashSet<>();
+	private static final Set<String> stopWords = new HashSet<>();
 
 	/** 
 	 * Write a String to a file
@@ -87,13 +87,11 @@ public class Util {
 
 	/**
 	 * Loads stopwords from a stopword file
-	 * 
-	 * @param path The stopword file path
 	 */
-	public static void loadStopwords(String path){
+	public static void loadStopwords(){
 		try {
-			Scanner scanner = new Scanner(new FileReader(new File(path)));
-			String next = "";
+			Scanner scanner = new Scanner(new FileReader(new File(Vars.STOPWORDS_FILE)));
+			String next;
 			while(scanner.hasNext())
 				if(!(next = scanner.next()).isEmpty())
 					stopWords.add(next);
@@ -110,21 +108,21 @@ public class Util {
 	 */
 	public static String removeNetslang(String text) {
 		// Load the stopwords file if it hasn't been loaded yet
-		if(stopWords.isEmpty()) loadStopwords(Vars.STOPWORDS_FILE);
+		if(stopWords.isEmpty()) loadStopwords();
 		
 		// If there are stopwords, strip them.
 		if(!stopWords.isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			Scanner scanner = new Scanner(text);
-			String next = "";
+			String next;
 			while(scanner.hasNext()){
 				if(!(next = scanner.nextLine()).isEmpty()){
 					String[] strs = next.split("\\s+");
-					for (int i = 0; i < strs.length; i++) {
-						if(!stopWords.contains(removeSymbols(strs[i]).toLowerCase())) {
-							builder.append(strs[i] + " ");
-						}
-					}
+                    for (String str : strs) {
+                        if (!stopWords.contains(removeSymbols(str).toLowerCase())) {
+                            builder.append(str + " ");
+                        }
+                    }
 				}
 				builder.append("\n");
 			}
@@ -153,9 +151,9 @@ public class Util {
 	 */
 	public static String arrayToString(String[] ngram) {
 		String ret = "";
-		for (int i = 0; i < ngram.length; i++) {
-			ret += ngram + " ";
-		}
+        for (String aNgram : ngram) {
+            ret += ngram + " ";
+        }
 		return ret.trim();
 	}
 
@@ -417,15 +415,14 @@ public class Util {
 		Map<String, Integer> map = new HashMap<String, Integer>();
 		String lines[] = text.split("\n");
 
-		for (int i = 0; i < lines.length; i++) {
-			String line = lines[i];
-			String[] parts = line.split("\t");
-			if(parts.length < 2) {
-				Log.getLogger().warn("Relevance map is missing a score. Assigning a default of 0.");
-				map.put(parts[0], 0);
-			} else 
-				map.put(parts[0], Integer.parseInt(parts[1]));
-		}
+        for (String line : lines) {
+            String[] parts = line.split("\t");
+            if (parts.length < 2) {
+                Log.getLogger().warn("Relevance map is missing a score. Assigning a default of 0.");
+                map.put(parts[0], 0);
+            } else
+                map.put(parts[0], Integer.parseInt(parts[1]));
+        }
 
 		return map;
 	}

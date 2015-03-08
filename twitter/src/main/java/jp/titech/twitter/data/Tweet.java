@@ -5,7 +5,6 @@
  */
 package jp.titech.twitter.data;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import jp.titech.twitter.util.Util;
@@ -24,14 +23,13 @@ public class Tweet {
 	private long 			createdAt;
 	private List<String> 	userMentions, hashtags, URLs, media;
 	
-	public Tweet() {};
+	public Tweet() {}
 	
 	/**
 	 * Constructor for a Tweet.
 	 * 
 	 * @param tweetID
 	 * @param userID
-	 * @param screenName
 	 * @param createdAt
 	 * @param content
 	 * @param isRetweet
@@ -356,7 +354,7 @@ public class Tweet {
 	/**
 	 *  Strips JSON-breaking characters.
 	 */
-	public String removeStrangeChars() {
+	String removeStrangeChars() {
 		setContent(getContent().replaceAll("[@,—.:;<>\"“”{}\\[\\]()’‘]", "").trim());
 		return this.getContent();
 	}

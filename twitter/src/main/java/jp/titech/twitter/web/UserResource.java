@@ -18,7 +18,7 @@ import jp.titech.twitter.util.Vars;
 
 @Path("/api/get-user")
 @Produces(MediaType.APPLICATION_JSON)
-public class UserResource {
+class UserResource {
 	
     private final String defaultName;
 

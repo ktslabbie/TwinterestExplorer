@@ -7,7 +7,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
  * Hello world!
  *
  */
-public class App {
+class App {
 	public static void main(String[] args) throws Exception {
         // The simple Jetty config here will serve static content from the webapp directory
         String webappDirLocation = "twitter-web/src/main/webapp/";

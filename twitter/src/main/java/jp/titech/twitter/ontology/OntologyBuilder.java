@@ -17,10 +17,10 @@ import jp.titech.twitter.util.Vars;
 
 public class OntologyBuilder {
 
-	private TwitterUser user;
-	private UserOntology userOntology;
+	private final TwitterUser user;
+	private final UserOntology userOntology;
 	private String spotlightURL;
-	private int totalTweetCount;
+	private final int totalTweetCount;
 	//private boolean ontologyExists;
 	private long startDate = -1, endDate = -1;
 

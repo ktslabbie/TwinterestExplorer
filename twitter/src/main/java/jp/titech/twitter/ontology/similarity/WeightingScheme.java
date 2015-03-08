@@ -8,9 +8,9 @@ import jp.titech.twitter.data.TwitterUser;
 
 public abstract class WeightingScheme {
 
-	protected Set<TwitterUser> users;
-	protected Map<TwitterUser, Map<?, Double>>	userWeightingMaps;
-	private String weightingName;
+	private final Set<TwitterUser> users;
+	private final Map<TwitterUser, Map<?, Double>>	userWeightingMaps;
+	private final String weightingName;
 
 	WeightingScheme(Set<TwitterUser> users, String weightingName) {
 		this.users = users;

@@ -21,9 +21,9 @@ import jp.titech.twitter.util.Vars;
  */
 public class DCGEvaluation {
 
-	private String targetUser;
-	private SortedMap<String, Double> userSimilarityMap;
-	private int[] topK;
+	private final String targetUser;
+	private final SortedMap<String, Double> userSimilarityMap;
+	private final int[] topK;
 	private String evaluationString = "Top-k\tnDCG\tBinDCG\n";
 	
 	public DCGEvaluation(String targetUser, SortedMap<String, Double> userSimilarityMap, int[] topK) {
@@ -34,7 +34,7 @@ public class DCGEvaluation {
 	
 	public void calculate() {
 		Map<String, Integer> relevanceMap = Util.stringToRelevanceMap(Util.readFile(Vars.EVALUATION_DIRECTORY + targetUser + "/dcg.relevance.txt"));
-		String currentUser = null;
+		String currentUser;
 		
 		List<Entry<String, Double>> sortedEntries = Util.sortSimilarityMapByValue(userSimilarityMap);
 		
@@ -50,8 +50,8 @@ public class DCGEvaluation {
 				return;
 			}
 
-			double reli = 0.0;
-			double binreli = 0.0;
+			double reli;
+			double binreli;
 			double dcg = relevanceMap.get(currentUser);
 			double binDCG = (relevanceMap.get(currentUser) > 0) ? 2 : 0;
 			double idcg = 2;

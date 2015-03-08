@@ -3,16 +3,10 @@ package jp.titech.twitter.network;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-
 import jp.titech.twitter.data.TwitterUser;
-import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
@@ -25,9 +19,9 @@ import jp.titech.twitter.util.Vars;
  */
 public class KeywordUserBuilder {
 
-	private String		 		keyword;					// The keyword to search for
+	private final String		 		keyword;					// The keyword to search for
 	private int					maxUsers;					// Maximum number of users to collect
-	private TwitterConnector 	connector;
+	private final TwitterConnector 	connector;
 	private List<String>	 	screenNames;
 
 	public KeywordUserBuilder(String keyword, int maxSize, TwitterConnector connector) {
@@ -52,7 +46,7 @@ public class KeywordUserBuilder {
 		}
 		
 		int count = 0;
-		
+
 		for(Iterator<TwitterUser> it = twitterUsers.iterator(); it.hasNext();) {
 			TwitterUser user = it.next();
 			screenNames.add(user.getScreenName());
@@ -63,7 +57,7 @@ public class KeywordUserBuilder {
 
 	/**
 	 * Check for user validity based on the constraints imposed in the properties file.
-	 * 
+	 *
 	 * @param currentUser
 	 * @return true if valid
 	 */

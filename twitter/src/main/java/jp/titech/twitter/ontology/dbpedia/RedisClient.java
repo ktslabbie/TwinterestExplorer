@@ -28,13 +28,13 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisClient {
 
 	private static RedisClient redisClient;
-	private JedisPool pool;
-	private JsonFactory f;
+	private final JedisPool pool;
+	private final JsonFactory f;
 	
 	/**
 	 * Constructor.
 	 */
-	public RedisClient() {
+	private RedisClient() {
 		String[] uriParts = Vars.REDIS_URL.split(":");
 		pool = new JedisPool(new JedisPoolConfig(), uriParts[0], Integer.parseInt(uriParts[1]));
 		f = new JsonFactory();

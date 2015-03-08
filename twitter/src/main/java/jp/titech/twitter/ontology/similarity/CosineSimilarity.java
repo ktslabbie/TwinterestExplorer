@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import jp.titech.twitter.data.TwitterUser;
@@ -22,7 +20,7 @@ public class CosineSimilarity extends SimilarityFunction {
 	 * Normalize the CF-IUF map of each user and compare cosine similarities between each user.
 	 * Complexity: O(3n)
 	 */
-	public SortedSet<UserSimilarity> calculate() {
+	public void calculate() {
 		Log.getLogger().info("Calculating cosine similarity.");
 		
 		userSimilaritySet = new TreeSet<UserSimilarity>();
@@ -48,8 +46,6 @@ public class CosineSimilarity extends SimilarityFunction {
 				}
 			}
 		}
-		
-		return userSimilaritySet;
 	}
 
 	/**
@@ -88,7 +84,7 @@ public class CosineSimilarity extends SimilarityFunction {
 		double euclidLength = Math.sqrt(cfSum);
 		
 		for(Object type : userTypeMap.keySet())
-			normalizedUserTypeMap.put(type, (double) userTypeMap.get(type) / euclidLength);
+			normalizedUserTypeMap.put(type, userTypeMap.get(type) / euclidLength);
 		
 		return normalizedUserTypeMap;
 	}

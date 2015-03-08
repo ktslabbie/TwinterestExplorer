@@ -155,16 +155,7 @@ public class HCS extends ClusteringAlgorithm {
 			int degree = graph.degreeOf(user);
 			if(degree < k) k = degree;
 		}
-		
-		//Log.getLogger().info("It seems k = " + k);
-		
-		if(k > n/4) {
-			//Log.getLogger().info(k + " > n/3 (" + n/4 + "), so return true.");
-			return true;
-		}
-		else {
-			//Log.getLogger().info(k + " <= n/3 (" + n/4 + "), so return false.");
-			return false;
-		}
+
+        return (k > n/4);
 	}	
 }

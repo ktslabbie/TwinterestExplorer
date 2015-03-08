@@ -43,11 +43,11 @@ public class TweetBase {
 
 	private static TweetBase 	tweetBase;	// TweetBase is a singleton class.
 	private PGPoolingDataSource pool;		// Postgres connection pool.
-	private ObjectMapper 		mapper;		// JSON (de)serialization.
+	private final ObjectMapper 		mapper;		// JSON (de)serialization.
 
-	private String				sqlSelectDir = Vars.SQL_SCRIPT_DIRECTORY + "select/";
-	private String				sqlInsertDir = Vars.SQL_SCRIPT_DIRECTORY + "insert/";
-	private String				sqlUpdateDir = Vars.SQL_SCRIPT_DIRECTORY + "update/";
+	private final String				sqlSelectDir = Vars.SQL_SCRIPT_DIRECTORY + "select/";
+	private final String				sqlInsertDir = Vars.SQL_SCRIPT_DIRECTORY + "insert/";
+	private final String				sqlUpdateDir = Vars.SQL_SCRIPT_DIRECTORY + "update/";
 
 	private String 			addTweetSQL, addHashtagSQL, addUserMentionSQL, 
 						addOntologySQL, addUserSQL, updateUserEnglishRateSQL, addUserFollowerSQL;

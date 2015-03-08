@@ -12,7 +12,6 @@ import jp.titech.twitter.data.TwitterUser;
 import jp.titech.twitter.db.TweetBase;
 import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
-import jp.titech.twitter.util.Vars;
 import twitter4j.HashtagEntity;
 import twitter4j.MediaEntity;
 import twitter4j.Paging;
@@ -22,11 +21,12 @@ import twitter4j.UserMentionEntity;
 
 public class UserMiner {
 
-	private TwitterUser twitterUser;
-	private int timelineTweetCount, tweetCount, englishCount;
-	private int miningMode;
-	private boolean finished;
-	private TwitterConnector connector;
+	private final TwitterUser twitterUser;
+	private final int timelineTweetCount;
+    private int tweetCount;
+    private int englishCount;
+	private final int miningMode;
+	private final TwitterConnector connector;
 	
 	public static final int MINE_NONE 	= 0;
 	public static final int MINE_NEW 	= 1;
@@ -37,15 +37,14 @@ public class UserMiner {
 		this.timelineTweetCount = timelineTweetCount;
 		this.tweetCount = 0;
 		this.englishCount = 0;
-		this.finished = false;
 		this.miningMode = miningMode;
 		this.connector = connector;
 	}
 	
-	public TwitterUser mineUser() {
-		if(miningMode == 0 && twitterUser.hasTweets()) return twitterUser;
+	public void mineUser() {
+		if(miningMode == 0 && twitterUser.hasTweets()) return;
 		
-		List<Status> statuses = null;
+		List<Status> statuses;
 	    tweetCount = 0;
 	    englishCount = 0;
 	    
@@ -59,7 +58,7 @@ public class UserMiner {
 			// Obtain statuses from the Twitter API.
 			statuses = connector.getUserTimeline(twitterUser.getUserID(), new Paging(page, 200));
 			
-			if(statuses == null) return twitterUser;
+			if(statuses == null) return;
 			
 			// If this is the last page, but we still need some tweets...
 			if(page == pages && rest > 0 && rest <= statuses.size()) {
@@ -67,7 +66,6 @@ public class UserMiner {
 			}
 			
 			processStatuses(statuses);
-			if(finished) break;
 		}
 		
 		// Calculate and save the rate of English tweets for this user.
@@ -76,8 +74,6 @@ public class UserMiner {
 		
 		// We should save now to make sure we don't re-mine again, regardless of minimum English rate.
 		TweetBase.getInstance().updateUserTweets(twitterUser);
-		
-		return twitterUser;
 	}
 	
 	/**

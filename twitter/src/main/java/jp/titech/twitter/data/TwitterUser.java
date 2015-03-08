@@ -30,7 +30,8 @@ public class TwitterUser implements Comparable<TwitterUser> {
 	 * 
 	 * @param userID
 	 * @param screenName
-	 * @param userProperties
+	 * @param properties
+     * * @param englishRate
 	 */
 	public TwitterUser(long userID, String screenName, Properties properties, float englishRate) {
 		this.userID = userID;
@@ -186,14 +187,9 @@ public class TwitterUser implements Comparable<TwitterUser> {
 			return false;
 		}
 		final TwitterUser other = (TwitterUser) obj;
-		if ((this.userID == 0) || other.userID == 0) {
-			return false;
-		}
-		if (this.userID != other.userID) {
-			return false;
-		}
-		return true;
-	}
+
+        return !(this.userID == 0 || other.userID == 0 || this.userID != other.userID);
+    }
 
 	public static class Properties {
 
