@@ -1,4 +1,5 @@
 /bin
+/config
 /data
 /target
 /server
@@ -6,3 +7,5 @@
 /TwitterMiner.log
 /TwitterMiner.log.1
 /derby.log
+/tools
+/docs
