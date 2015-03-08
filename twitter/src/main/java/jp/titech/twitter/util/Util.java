@@ -30,7 +30,7 @@ import java.util.SortedMap;
 
 public class Util {
 
-	private static Set<String> stopWords = new HashSet<String>();
+	private static Set<String> stopWords = new HashSet<>();
 
 	/** 
 	 * Write a String to a file
@@ -42,22 +42,6 @@ public class Util {
 		try {
 			file.getParentFile().mkdirs();
 			FileWriter fw = new FileWriter(file);
-			fw.write(log);
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Add a String to an existing file
-	 * 
-	 * @param log The String
-	 * @param file The file
-	 */
-	public static void addToFile(String log, File file) {
-		try {
-			FileWriter fw = new FileWriter(file, true);
 			fw.write(log);
 			fw.close();
 		} catch (IOException e) {
@@ -94,7 +78,7 @@ public class Util {
 	/**
 	 * Read a text file from the given path and return the contents as a String.
 	 * 
-	 * @param file The file path
+	 * @param path The file path
 	 * @return The (text) file contents
 	 */
 	public static String readFile(String path) {
@@ -216,7 +200,7 @@ public class Util {
 	/**
 	 * Create new file by deleting the old one first (if it exists) 
 	 * 
-	 * @param string
+	 * @param path
 	 * @return
 	 */
 	public static File newFile(String path) {
@@ -309,7 +293,7 @@ public class Util {
 	 * @return the sorted map
 	 */
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
+		List<Map.Entry<K, V>> list = new LinkedList<>(map.entrySet());
 
 		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
@@ -317,7 +301,7 @@ public class Util {
 			}
 		});
 
-		Map<K, V> result = new LinkedHashMap<K, V>();
+		Map<K, V> result = new LinkedHashMap<>();
 		for (Map.Entry<K, V> entry : list) result.put(entry.getKey(), entry.getValue());
 
 		return result;

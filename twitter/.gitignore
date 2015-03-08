@@ -1,0 +1,9 @@
+.classpath
+.project
+twitter.iml
+TwitterMiner.log
+.settings
+config
+data
+docs
+target

@@ -10,7 +10,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 public class App {
 	public static void main(String[] args) throws Exception {
         // The simple Jetty config here will serve static content from the webapp directory
-        String webappDirLocation = "src/main/webapp/";
+        String webappDirLocation = "twitter-web/src/main/webapp/";
 
         // The port that we should run on can be set into an environment variable
         // Look for that variable and default to 8080 if it isn't there.
