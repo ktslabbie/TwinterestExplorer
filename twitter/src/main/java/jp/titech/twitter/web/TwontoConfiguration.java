@@ -4,7 +4,7 @@ import io.dropwizard.Configuration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
-class TwontoConfiguration extends Configuration {
+public class TwontoConfiguration extends Configuration {
 
     @NotEmpty
     private String defaultName = "BarackObama";

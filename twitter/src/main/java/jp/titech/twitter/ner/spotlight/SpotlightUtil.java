@@ -24,15 +24,12 @@ class SpotlightUtil {
 	public static List<DBpediaResourceOccurrence> jsonToResourceOccurrences(JSONObject json){
 
 		List<DBpediaResourceOccurrence> bestCandidates = new ArrayList<DBpediaResourceOccurrence>();
-		//List<DBpediaResourceOccurrence> resourceOccurrenceMap = new LinkedHashMap<String, List<DBpediaResourceOccurrence>>();
 
 		try {
 			DBpediaResourceOccurrence occurrence;
 			if(json == null) return bestCandidates;
 
 			JSONObject jsonMain = json.getJSONObject("annotation");
-
-			//Text context = new Text(jsonMain.getString("@text"));
 			String context = jsonMain.getString("@text");
 			
 			Object object = jsonMain.opt("surfaceForm");

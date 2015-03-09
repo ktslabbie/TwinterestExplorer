@@ -18,7 +18,7 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
-class TwontoApplication extends Application<TwontoConfiguration> {
+public class TwontoApplication extends Application<TwontoConfiguration> {
 	public static void main(String[] args) throws Exception {
 		new TwontoApplication().run(args);
 	}
