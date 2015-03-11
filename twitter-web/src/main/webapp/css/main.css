@@ -220,6 +220,18 @@ input[type="file"]#gtfile {
 	color: #111111;
 }
 
+.btn-demo-set {
+	font-size: 14px;
+	padding: 9px 9px 10px 9px;
+	background-color: #E9FDE9;
+	border-color: #DDEEDD;
+	color: #111111;
+}
+
+.btn-demo-set:hover {
+	background-color: #B9DDB9;
+}
+
 .header-bias {
 	margin-bottom: 24px;
 }
