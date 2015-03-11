@@ -64,7 +64,7 @@ public class UserResource {
         	
         	// Get or create the user ontology.
 			OntologyController ontologyController = new OntologyController(ontologyKey);
-			ontologyController.getOrCreateUserOntology(targetUser, spotlightUrl);
+			ontologyController.getOrCreateUserOntology(targetUser, spotlightUrl, c, s, concat);
     	}
     	
     	return targetUser;

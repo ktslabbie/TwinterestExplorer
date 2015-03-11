@@ -22,7 +22,7 @@ public class SpotlightTypesTest {
 	public void testTypes() {
 		Log.getLogger().info("Testing DBpedia Spotlight type retrieval...");
 		
-		SpotlightQuery slq = new SpotlightQuery(Vars.SPOTLIGHT_BASE_URL + ":2222");
+		SpotlightQuery slq = new SpotlightQuery(Vars.SPOTLIGHT_BASE_URL + ":2222", 0.0f, 0);
 		List<DBpediaResourceOccurrence> occs = slq.annotate("This is a test to obtain the Apple iPhone types.");
 		
 		for(DBpediaResourceOccurrence occ : occs) {

@@ -31,9 +31,13 @@ import jp.titech.twitter.util.Vars;
 public class SpotlightQuery {
 	
 	private final String spotlightURL;
+	private final float c;
+	private final int s;
 
-	public SpotlightQuery(String pSpotlightURL){
+	public SpotlightQuery(String pSpotlightURL, float c, int s){
 		spotlightURL = pSpotlightURL;
+		this.c = c;
+		this.s = s;
 	}
 
 	/**
@@ -46,7 +50,7 @@ public class SpotlightQuery {
 		//Log.getLogger().info("Running DBpedia Spotlight annotator (retrieving all candidates)...");
 
 		String query = "text=" + text.replace("&", "%26") + 
-				"&confidence=" + Vars.SPOTLIGHT_CONFIDENCE + "&support=" + Vars.SPOTLIGHT_SUPPORT +
+				"&confidence=" + c + "&support=" + s +
 				"&policy=&types=";
 
 		try {

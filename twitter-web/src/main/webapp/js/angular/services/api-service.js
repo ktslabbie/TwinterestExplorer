@@ -1,5 +1,5 @@
 var twitterAPIService = angular.module('twitterWeb.APIService', ['ngResource']);
-var apiHostName = "/api/"
+var apiHostName = "/api/";
 
 twitterAPIService.factory('SimpleUser', ['$resource', function($resource) {
 	return $resource(apiHostName + 'get-simple-user', { }, {

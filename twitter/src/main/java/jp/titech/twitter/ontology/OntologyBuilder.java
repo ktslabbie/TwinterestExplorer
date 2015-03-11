@@ -21,13 +21,19 @@ public class OntologyBuilder {
 	private final UserOntology userOntology;
 	private String spotlightURL;
 	private final int totalTweetCount;
+	private final float confidence;
+	private final int support;
+	private final int concatenation;
 	private long startDate = -1, endDate = -1;
 
-	public OntologyBuilder(TwitterUser user, String spotlightURL) {
+	public OntologyBuilder(TwitterUser user, String spotlightURL, float c, int s, int concat) {
 		this.user = user;
 		this.spotlightURL = spotlightURL;
 		totalTweetCount = (Vars.TIMELINE_TWEET_COUNT <= 3200) ? Vars.TIMELINE_TWEET_COUNT : 3200;
 		userOntology = new UserOntology();
+		this.confidence = c;
+		this.support = s;
+		this.concatenation = concat;
 	}
 
 	public void build() {
@@ -60,10 +66,10 @@ public class OntologyBuilder {
 			concatenatedContent += tweet.getContent() + " ";
 			tweetsConcatenated++;
 
-			if(tweetsConcatenated >= Vars.CONCATENATION_WINDOW || processedTweetCount >= totalTweetCount - 1) {
+			if(tweetsConcatenated >= concatenation || processedTweetCount >= totalTweetCount - 1) {
 				if(concatenatedContent.isEmpty() || concatenatedContent.equals(" ")) continue;
 
-				SpotlightQuery spotlightQuery = new SpotlightQuery(spotlightURL);
+				SpotlightQuery spotlightQuery = new SpotlightQuery(spotlightURL, confidence, support);
 				List<DBpediaResourceOccurrence> bestCandidates = spotlightQuery.annotate(concatenatedContent);
 				
 				RedisQuery redisQuery = new RedisQuery();

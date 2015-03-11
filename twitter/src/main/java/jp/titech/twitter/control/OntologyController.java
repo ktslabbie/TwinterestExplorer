@@ -43,11 +43,11 @@ public class OntologyController {
 	 * @param user The user
 	 * @param spotlightUrl An instance of DBpedia Spotlight to connect to.
 	 */
-	public void getOrCreateUserOntology(TwitterUser user, String spotlightUrl) {
+	public void getOrCreateUserOntology(TwitterUser user, String spotlightUrl, float c, int s, int concat) {
 		userOntology = TweetBase.getInstance().getUserOntology(ontologyKey);
 		
 		if(userOntology.getOntology().isEmpty()) {
-			OntologyBuilder ob = new OntologyBuilder(user, spotlightUrl);
+			OntologyBuilder ob = new OntologyBuilder(user, spotlightUrl, c, s, concat);
 			ob.build();
 			userOntology = ob.getUserOntology();
 			if(!userOntology.getOntology().isEmpty()) {
