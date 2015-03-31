@@ -70,7 +70,7 @@
 	    		<output class="output-bias" for="genbias" id=volume ng-bind="generalityBias"></output>
 	    	</div>
 			
-		    <div class="col-md-1 col-spinner text-right" ng-if="isLoading()"><i class="fa fa-spinner fa-spin"></i></div>
+		    <div class="col-md-1 col-spinner text-right" ng-if="isLoading() && !status.connectionError"><i class="fa fa-spinner fa-spin"></i></div>
 		</div>
 
 		<div class="row" ng-cloak>
@@ -91,10 +91,11 @@
 	    	</div>
 
 		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="status.noUserFound">No user found with that screen name.</h1>
+		    <h1 class="col-md-12 text-center text-muted" style="margin-top: 64px;" ng-if="status.connectionError">Error! Server not running? Status: <span ng-bind="status.connectionError"></span></h1>
 		</div>
 		
 		<div class="row" ng-cloak>
-			<div class="col-md-12 col-loading" ng-if="status.loadingInitialData">
+			<div class="col-md-12 col-loading" ng-if="status.loadingInitialData && !status.connectionError">
 				<div class="row"><h1 class="col-md-12 text-center text-muted">Loading users...</h1></div>
 				<div class="row spinner-large text-center"> <i class="fa fa-spinner fa-spin"></i></div>
 			</div>
