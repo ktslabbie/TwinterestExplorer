@@ -1,5 +1,7 @@
 # Twinterest Explorer
 
+![alt text](https://github.com/ktslabbie/TwinterestExplorer/raw/master/twitter/docs/twinterest-explorer.png "Screenshot of the app in action")
+
 Demo: http://ktslabbie.github.io/te
 
 ## What's this?
