@@ -11,6 +11,7 @@ and still under development. You will likely encounter bugs, or the server may b
 
 ## How do I use it?
 
+It's recommended you run this in *Firefox*; Ubuntu Chrome 41, at least, seems to fail to assign Web Workers to separate threads, causing the UI to block way more than it should. Windows and OSX Chrome seem to be fine though. 
 Input a Twitter user or keyword you'd like to explore. Hit "Go!" and let it run! You can also try a demo set of users with the "Try demo set" button.
 The topic scope of the groups that should appear in the graph can be adjusted with the slider, and you can zoom into them to divide them further into sub-topics.
 
