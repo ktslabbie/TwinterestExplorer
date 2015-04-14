@@ -196,10 +196,11 @@ evalService.factory("EvaluationService", function() {
         	
         	if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
-        	//console.log("Total users: " + count);
-        	//console.log("subPia length: " + subPia.length);
-        	//console.log("pia length: " + pia.length);
-        	//console.log("pib length: " + pib.length);
+        	var subPiaCopy = _.clone(subPia);
+        	console.log("Total users: " + count);
+        	console.log("subPia length: " + subPiaCopy.length);
+        	console.log("pia length: " + pia.length);
+        	console.log("pib length: " + pib.length);
         	
         	//var ka = Object.keys(GT_TOPICS).length;
         	var ka = Object.keys(GT_SUBTOPICS).length;
@@ -207,10 +208,10 @@ evalService.factory("EvaluationService", function() {
         	var n = userCount;
         	var nhl = new Array();
         	
-        	//console.log("NMI: we have " + n + " users, ka: " + ka + ", kb: " + kb);
-        	//console.log("NMI: pia: " + JSON.stringify(pia));
-        	//console.log("NMI: subPia: " + JSON.stringify(subPia));
-        	//console.log("NMI: pib: " + JSON.stringify(pib));
+        	console.log("NMI: we have " + n + " users, ka: " + ka + ", kb: " + kb);
+        	console.log("NMI: pia: " + JSON.stringify(pia));
+        	console.log("NMI: subPia: " + JSON.stringify(subPiaCopy));
+        	console.log("NMI: pib: " + JSON.stringify(pib));
         	
         	for (var i = 0; i < ka; i++)  {
         		nhl[i] = new Array();
@@ -221,17 +222,17 @@ evalService.factory("EvaluationService", function() {
         	var ix = 1;
         	
         	while(n > 0) {
-    			if(subPia[0] == ix && pib[0] == ix) {
+    			if(subPiaCopy[0] == ix && pib[0] == ix) {
     				nhl[ix-1][ix-1]++;
-    				subPia.shift();
+    				subPiaCopy.shift();
     				pib.shift();
     				n--;
-    			} else if(subPia[0] == ix) {
+    			} else if(subPiaCopy[0] == ix) {
     				var ixb = pib[0];
     				if(ixb > kb) break;
-    				while(subPia[0] == ix) {
+    				while(subPiaCopy[0] == ix) {
     					nhl[ix-1][ixb-1]++;
-    					subPia.shift();
+    					subPiaCopy.shift();
     					pib.shift();
     					n--;
     					if(pib.length == 0) break;
@@ -239,22 +240,22 @@ evalService.factory("EvaluationService", function() {
     				}
     				ix++;
     			} else if(pib[0] == ix) {
-    				var ixa = subPia[0];
+    				var ixa = subPiaCopy[0];
     				if(ixa > ka) break;
     				while(pib[0] == ix) {
     					nhl[ixa-1][ix-1]++;
-    					subPia.shift();
+    					subPiaCopy.shift();
     					pib.shift();
     					n--;
-    					if(subPia.length == 0) break;
-    					if(subPia[0] != ixa) ixa++;
+    					if(subPiaCopy.length == 0) break;
+    					if(subPiaCopy[0] != ixa) ixa++;
     				}
     				ix++;
     			} else {
     				ix++;
     			}
     			
-    			//console.log("End loop. i: " + i + ", n")
+    			//console.log("End loop. i: " + i + ", n: " + n);
         	}
         	
         	//console.log("NMI: nhl final: " + JSON.stringify(nhl));

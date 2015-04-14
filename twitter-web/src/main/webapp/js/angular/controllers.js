@@ -442,6 +442,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							}, 1000);
 						}
 						
+						if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
+						
 					} else if($scope.status.zoomed) {
 						$scope.status.clusteringFinished = true;
 						$scope.status.clusteringNetwork = false;
@@ -450,12 +452,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							$scope.status.clusteringNetwork = false;
 						}, 3000);
 					}
+					
 				}
 
 				//console.log(labelString);
 				
 				// Evaluate the accuracy of the clustering result (if ground truth present).
-				//if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
+				
 			});
 		});
 	}
