@@ -34,10 +34,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 .directive('demoButton', function() {
 	return {
 		link: function(scope, element, attr) {
-			
 			element.on('click', function() {
 				scope.init();
-				scope.generalityBias = 0.8;
+				scope.generalityBias = 0.9;
 				scope.users = _.map(DEMO_SET, function(s){ return { screenName: s }; });
 				scope.updateUsers(0);
 			});
@@ -48,7 +47,6 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 .directive('gtInput', ['EvaluationService', function(EvaluationService) {
 	return {
 		link: function(scope, element, attr) {
-
 			// Function to upload a GT file.
 			element.on('change', function() {
 				
@@ -71,6 +69,7 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					    if (file && file.length) {
 					        results = file.split("\n");
 					        var relevanceScores = {};
+					        var screenNames = [];
 					        
 					        _.each(results, function(result) {
 					        	result = result.trim();
@@ -83,7 +82,10 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					        });
 					        
 					        EvaluationService.setRelevanceScores(relevanceScores);
-					        scope.updateUsers(0);
+					        if(scope.evaluationMode)
+					            scope.optimization(0.0);
+					        else
+					            scope.updateUsers(0);
 					    }
 					});
 				} else {

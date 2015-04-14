@@ -20,18 +20,19 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.tweetsPerUser = 150;
 	$scope.userCount = 250;
 	$scope.minimumEnglishRate = 0.7;
+	$scope.evaluationMode = true;
 	
 	// Named Entity Recognition settings.
 	$scope.nerConfidence = 0.00011;
 	$scope.nerSupport = 2;
 	$scope.generalityBias = 0.5;
-	$scope.concatenation = 20;
+	$scope.concatenation = 10;
 	
 	// Minimum similarity threshold.
-	$scope.minimumSimilarity = 0.07;
+	$scope.minimumSimilarity = 0.05;
 	
 	// Minimum CF-IUF threshold.
-	$scope.minimumCFIUF = 0.002;
+	$scope.minimumCFIUF = 0.005;
 	
 	// Twitter user restrictions.
 	$scope.maxSeedUserFollowers = 9990000;
@@ -442,7 +443,10 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							}, 1000);
 						}
 						
-						if(!_.isEmpty(EvaluationService.getRelevanceScores())) EvaluationService.mcc($scope.groups, $scope.visibleUsers.length);
+						if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
+						    EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
+						    $scope.$broadcast('evaluated');
+						}
 						
 					} else if($scope.status.zoomed) {
 						$scope.status.clusteringFinished = true;
@@ -452,7 +456,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							$scope.status.clusteringNetwork = false;
 						}, 3000);
 					}
-					
 				}
 
 				//console.log(labelString);
@@ -467,7 +470,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	 * Function to cancel graphing and start from the similarity graph again. 
 	 */
 	function finalize() {
-		console.log("Finalizing.");
+		//console.log("Finalizing.");
 		
 		// Reset and apply final update.
 		SimilarityService.restart();
@@ -495,7 +498,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		if($scope.status.loadingUsers && !$scope.status.updatingSimilarityGraph) {
 			updateCFIUF($scope.validUsers, false);
 		} else if(!$scope.status.loadingUsers) {
-			console.log("Final 'userUpdated' has been broadcast (we're done collecting). Add a watcher for the final CF-IUF, or just do it if the final update is pending.");
+			//console.log("Final 'userUpdated' has been broadcast (we're done collecting). Add a watcher for the final CF-IUF, or just do it if the final update is pending.");
 			finalize();
 		}
 	});
@@ -622,7 +625,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				// Check if this was the last process...
 				if($scope.activeProcesses === 0) {
 					
-					console.log("Last process detected!");
+					//console.log("Last process detected!");
 					
 					// Yep. This means we're done.
 					$scope.status.loadingUsers = false;
@@ -699,6 +702,25 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			return false;
 		}
 		return true;
+	}
+
+	/**
+     * Start the hyperparameter optimization suite.
+     * Apply k-fold cross validation to find optimal params.
+     */
+	$scope.optimization = function(i) {
+	    if(i > 0.01) return;
+
+        $scope.minimumCFIUF = i;
+        $scope.updateUsers(0);
+
+        var removeOnEvaluated = $scope.$on('evaluated', function () {
+            $scope.init();
+            $scope.users = _.map(Object.keys(EvaluationService.getRelevanceScores()), function(name) { return { screenName: name} });
+
+            $scope.optimization(i+0.001);
+            removeOnEvaluated();
+        });
 	}
 	
 	/**

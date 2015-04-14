@@ -1,15 +1,100 @@
 var evalService = angular.module('twitterWeb.EvaluationServices', []);
 
+/**
+ *  Service for performing experiments and evaluation.
+ */
 evalService.factory("EvaluationService", function() {
 	
 	var relevanceScores = {};
 	var GT_USERS = {};
 	var GT_TOPICS = {};
 	var GT_SUBTOPICS = {};
-	var pia = [];
-	var subPia = [];
-	var groundGroups = [];
-	var groundSubGroups = [];
+	var GT_CLUSTERS = [];
+	var GT_SUBCLUSTERS = [];
+	var GT_GROUPS = [];
+	var GT_SUBGROUPS = [];
+
+    /**
+     * Calculate the Normalized Mutual Information given:
+     * @param groups the groups found
+     * @param gtClusters ground truth clusters
+     * @param clusters discovered clusters
+     * @param ka number of topics in ground truth
+     * @param userCount number of users found
+     */
+    function NMI(groups, gtClusters, clusters, ka, userCount) {
+        var nhl = new Array();
+        var kb = groups.length;
+
+        for (var i = 0; i < ka; i++)  {
+            nhl[i] = new Array();
+            for (var j = 0; j < kb; j++)
+                nhl[i][j] = 0;
+        }
+
+        var ix = 1, n = userCount;
+
+        while(n > 0) {
+            if(gtClusters[0] == ix && clusters[0] == ix) {
+                nhl[ix-1][ix-1]++;
+                gtClusters.shift();
+                clusters.shift();
+                n--;
+            } else if(gtClusters[0] == ix) {
+                var ixb = clusters[0];
+                if(ixb > kb) break;
+                while(gtClusters[0] == ix) {
+                    nhl[ix-1][ixb-1]++;
+                    gtClusters.shift();
+                    clusters.shift();
+                    n--;
+                    if(clusters.length == 0) break;
+                    if(clusters[0] != ixb) ixb++;
+                }
+                ix++;
+            } else if(clusters[0] == ix) {
+                var ixa = gtClusters[0];
+                if(ixa > ka) break;
+                while(clusters[0] == ix) {
+                    nhl[ixa-1][ix-1]++;
+                    gtClusters.shift();
+                    clusters.shift();
+                    n--;
+                    if(gtClusters.length == 0) break;
+                    if(gtClusters[0] != ixa) ixa++;
+                }
+                ix++;
+            } else {
+                ix++;
+            }
+        }
+
+        var nmiNum = 0, nmiDem = 0;
+
+        for (var h = 0; h < ka; h++)  {
+            for (var l = 0; l < kb; l++) {
+                var hi = nhl[h][l]*Math.log( (userCount*nhl[h][l]) / (GT_SUBGROUPS[h]*groups[l].users.length) );
+                if(!isNaN(hi)) nmiNum += hi;
+            }
+        }
+
+        var nmiLeft = 0, nmiRight = 0;
+
+        for (var h = 0; h < ka; h++)  {
+            var hi = GT_SUBGROUPS[h]*(-Math.log( GT_SUBGROUPS[h] / userCount));
+            if(!isNaN(hi)) nmiLeft += hi;
+        }
+
+
+        for (var l = 0; l < kb; l++) {
+            var hi = groups[l].users.length*(-Math.log( groups[l].users.length / userCount) ) ;
+            if(!isNaN(hi)) nmiRight += hi;
+        }
+
+        nmiDem = Math.sqrt(nmiLeft*nmiRight);
+        return nmiNum / nmiDem;
+    }
+
 	
 	return {
 		
@@ -27,7 +112,7 @@ evalService.factory("EvaluationService", function() {
 				});
 			});
 			
-			EvaluationService.mcc(randomGroups, userCount);
+			EvaluationService.clusterEvaluation(randomGroups, userCount);
 		},
 		
 		/* Converts an uploaded ground truth file to a collection of sets for easy lookup. */
@@ -50,26 +135,26 @@ evalService.factory("EvaluationService", function() {
 					else if(result.charAt(0) == ":") {
 						currentTopic = result.substring(1,result.length-1);
 						GT_TOPICS[currentTopic] = {};
-						groundGroups.push(0);
+						GT_GROUPS.push(0);
 						topicIndex++;
 					} else if(result.charAt(0) == "-") {
 						currentSubTopic = result.substring(1,result.length-1);
 						GT_SUBTOPICS[currentSubTopic] = {};
-						groundSubGroups.push(0);
+						GT_SUBGROUPS.push(0);
 						subTopicIndex++;
 					} else {
 						var currentUser = result.split(",")[0];
 						var currentScore = result.split(",")[1];
-						pia.push(topicIndex); cnt++;
-						subPia.push(subTopicIndex);
-						groundGroups[topicIndex-1]++;
-						groundSubGroups[subTopicIndex-1]++;
-						
+						GT_CLUSTERS.push(topicIndex); cnt++;
+						GT_SUBCLUSTERS.push(subTopicIndex);
+						GT_GROUPS[topicIndex-1]++;
+						GT_SUBGROUPS[subTopicIndex-1]++;
 
 						if(GT_USERS[currentUser] == null) {
 							GT_USERS[currentUser] = {};
 							//userCount++;
 						}
+
 						GT_USERS[currentUser][currentTopic] = currentScore;
 						GT_USERS[currentUser][currentSubTopic] = currentScore;
 						GT_TOPICS[currentTopic][currentUser] = currentScore;
@@ -77,9 +162,8 @@ evalService.factory("EvaluationService", function() {
 					}
 				});
 			}
-			console.log("Added " + cnt + " users in total.");
-			//console.log("Topics: " + JSON.stringify(GT_TOPICS));
-			//console.log("Sub-topics: " + JSON.stringify(GT_SUBTOPICS));
+
+			//console.log("Added " + cnt + " users in total.");
 		},
 		
 		getRelevanceScores: function() {
@@ -89,33 +173,30 @@ evalService.factory("EvaluationService", function() {
 		setRelevanceScores: function(pRelevanceScores) {
 			relevanceScores = pRelevanceScores;
 		},
-		
+
+		/**
+         * Function to evaluate nDCG ranking in regard to some seed user.
+         * Input: similarity graph (vertices and edges).
+        **/
         dcg: function(vertices, edges) {
         	
-        	var dcgEdges = [];
-        	
-    		_.each(edges, function(edge) {
-    			if(edge.source.userIndex == 0) dcgEdges.push(edge);
-    		});
+        	var dcgEdges = _.sortBy(_.filter(edges, function(edge) { edge.source.userIndex == 0 }), function(e) { return e.value; });
+    		var rankingStr = "Similarity ranking (" + dcgEdges.length + " entries):\n";
     		
-    		var sortedDCGEdges = _.sortBy(dcgEdges, function(e) { return e.value; })
-    		
-    		var rankingStr = "Similarity ranking (" + sortedDCGEdges.length + " entries):\n";
-    		
-    		for(var i = sortedDCGEdges.length; i--;) {
-    			rankingStr += 	vertices[sortedDCGEdges[i].target.index].name + "\t" + 
-    							relevanceScores[vertices[sortedDCGEdges[i].target.index].name].trim() + "\t" + 
-    							sortedDCGEdges[i].value + "\n";
+    		for(var i = dcgEdges.length; i--;) {
+    			rankingStr += 	vertices[dcgEdges[i].target.index].name + "\t" +
+    							relevanceScores[vertices[dcgEdges[i].target.index].name].trim() + "\t" +
+    							dcgEdges[i].value + "\n";
     		}
     		
     		console.log(rankingStr);
     		
-    		var firstEdge = sortedDCGEdges[sortedDCGEdges.length-1];
+    		var firstEdge = dcgEdges[dcgEdges.length-1];
     		var topK = [3, 5, 10, 25, 50];
     		var evaluationString = "";
     		
     		_.each(topK, function(k) {
-    			if(k <= sortedDCGEdges.length) {
+    			if(k <= dcgEdges.length) {
     			
     				var reli = 0.0;
     				var binreli = 0.0;
@@ -124,8 +205,8 @@ evalService.factory("EvaluationService", function() {
     				var idcg = 2;
     				var index = 1;
     				
-    				for(var i = sortedDCGEdges.length-1; i--;) {
-    					var edge = sortedDCGEdges[i];
+    				for(var i = dcgEdges.length-1; i--;) {
+    					var edge = dcgEdges[i];
     					
     					if(index < k) {
     						reli = parseFloat(relevanceScores[vertices[edge.target.index].name]);
@@ -152,9 +233,8 @@ evalService.factory("EvaluationService", function() {
          * Function to evaluate communities based on accuracy.
          * Input: array of user arrays (clusters with members).
          **/
-        mcc: function(groups, userCount) {
-        	var a = 0, b = 0, c = 0, d = 0;
-        	var done = false;
+        clusterEvaluation: function(groups, userCount) {
+
         	var output = "";
 
         	if(_.isEmpty(GT_USERS) || _.isEmpty(GT_TOPICS)) {
@@ -164,25 +244,25 @@ evalService.factory("EvaluationService", function() {
 
         	var clusterUserCount = 0;
         	var clusterUserSet = {};
-        	var pib = [];
+        	var clusters = [];
         	var count = 0;
 
-        	output += "\nUsers per topic:\n\n";
+        	//output += "\nUsers per topic:\n\n";
         	_.each(groups, function(group, i) {
-        		output += "Topic " + (i+1) + ": ";
+        		//output += "Topic " + (i+1) + ": ";
 
         		_.each(group.users, function(user) {
-        			output += user.screenName + ", ";
+        			//output += user.screenName + ", ";
         			clusterUserCount++;
         			clusterUserSet[user.screenName] = true;
         			count++;
-        			pib.push((i+1));
+        			clusters.push((i+1));
         		});
 
-        		output += "\n";
+        		//output += "\n";
         	});
         	
-        	output += "\n";
+        	//output += "\n";
 
         	var nullCluster = { users: [] };
 
@@ -190,103 +270,33 @@ evalService.factory("EvaluationService", function() {
         		if(!(user in clusterUserSet)) {
         			count++;
         			nullCluster.users.push({ screenName: user });
-        			pib.push((groups.length+1));
+        			clusters.push((groups.length+1));
         		}
         	});
         	
-        	if(nullCluster.users.length > 0) groups.push(nullCluster);
+            if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
-        	var subPiaCopy = _.clone(subPia);
-        	console.log("Total users: " + count);
-        	console.log("subPia length: " + subPiaCopy.length);
-        	console.log("pia length: " + pia.length);
-        	console.log("pib length: " + pib.length);
+        	var gtClusters = _.clone(GT_SUBCLUSTERS);
+        	//console.log("Total users: " + count);
+        	//console.log("GT_CLUSTERS length: " + GT_CLUSTERS.length);
+        	//console.log("GT_SUBCLUSTERS length: " + gtClusters.length);
+        	//console.log("clusters length: " + clusters.length);
         	
         	//var ka = Object.keys(GT_TOPICS).length;
         	var ka = Object.keys(GT_SUBTOPICS).length;
-        	var kb = groups.length;
         	var n = userCount;
-        	var nhl = new Array();
         	
-        	console.log("NMI: we have " + n + " users, ka: " + ka + ", kb: " + kb);
-        	console.log("NMI: pia: " + JSON.stringify(pia));
-        	console.log("NMI: subPia: " + JSON.stringify(subPiaCopy));
-        	console.log("NMI: pib: " + JSON.stringify(pib));
-        	
-        	for (var i = 0; i < ka; i++)  {
-        		nhl[i] = new Array();
-        		for (var j = 0; j < kb; j++)
-        			nhl[i][j] = 0;
-        	}
-        	
-        	var ix = 1;
-        	
-        	while(n > 0) {
-    			if(subPiaCopy[0] == ix && pib[0] == ix) {
-    				nhl[ix-1][ix-1]++;
-    				subPiaCopy.shift();
-    				pib.shift();
-    				n--;
-    			} else if(subPiaCopy[0] == ix) {
-    				var ixb = pib[0];
-    				if(ixb > kb) break;
-    				while(subPiaCopy[0] == ix) {
-    					nhl[ix-1][ixb-1]++;
-    					subPiaCopy.shift();
-    					pib.shift();
-    					n--;
-    					if(pib.length == 0) break;
-    					if(pib[0] != ixb) ixb++;
-    				}
-    				ix++;
-    			} else if(pib[0] == ix) {
-    				var ixa = subPiaCopy[0];
-    				if(ixa > ka) break;
-    				while(pib[0] == ix) {
-    					nhl[ixa-1][ix-1]++;
-    					subPiaCopy.shift();
-    					pib.shift();
-    					n--;
-    					if(subPiaCopy.length == 0) break;
-    					if(subPiaCopy[0] != ixa) ixa++;
-    				}
-    				ix++;
-    			} else {
-    				ix++;
-    			}
-    			
-    			//console.log("End loop. i: " + i + ", n: " + n);
-        	}
-        	
-        	//console.log("NMI: nhl final: " + JSON.stringify(nhl));
-        	
-        	var nmiNum = 0, nmiDem = 0, n = userCount;
-        	
-        	for (var h = 0; h < ka; h++)  {
-        		for (var l = 0; l < kb; l++) {
-        			var hi = nhl[h][l]*Math.log( (n*nhl[h][l]) / (groundSubGroups[h]*groups[l].users.length) );
-        			if(!isNaN(hi)) nmiNum += hi;
-        		}
-        	}
-        	
-        	var nmiLeft = 0, nmiRight = 0;
-        	
-        	for (var h = 0; h < ka; h++)  {
-        		var hi = groundSubGroups[h]*(-Math.log( groundSubGroups[h] / n));
-        		if(!isNaN(hi)) nmiLeft += hi;
-        	}
-        	
-        	for (var l = 0; l < kb; l++) {
-        		var hi = groups[l].users.length*(-Math.log( groups[l].users.length / n) ) ;
-        		if(!isNaN(hi)) nmiRight += hi;
-        	}
-        	
-        	nmiDem = Math.sqrt(nmiLeft*nmiRight);
-        	
-        	var nmi = nmiNum / nmiDem;
-        	
+        	//console.log("NMI: we have " + n + " users, gtGroups: " + ka + ", groups: " + groups.length);
+        	//console.log("NMI: GT_CLUSTERS: " + JSON.stringify(GT_CLUSTERS));
+        	//console.log("NMI: GT_SUBCLUSTERS: " + JSON.stringify(gtClusters));
+        	//console.log("NMI: clusters: " + JSON.stringify(clusters));
+
+        	var nmi = NMI(groups, gtClusters, clusters, ka, n);
         	output += "NMI: NMI final: " + nmi + "\n";
-        	
+
+        	var tp = 0, fp = 0, fn = 0, tn = 0;
+            var done = false;
+
         	_.each(groups, function(group) {
         		for(var i = 0; i < group.users.length-1; i++) {
         			var userA = group.users[i].screenName;
@@ -295,13 +305,13 @@ evalService.factory("EvaluationService", function() {
 
         				for(var topic in GT_SUBTOPICS) {
         					if(GT_SUBTOPICS[topic][userA] && GT_SUBTOPICS[topic][userB]) {
-        						a++;
+        						tp++;
         						done = true;
         						break;
         					}
         				}
 
-        				if(!done) b++;
+        				if(!done) fp++;
         				done = false;
         			}
         		}
@@ -315,29 +325,29 @@ evalService.factory("EvaluationService", function() {
         				_.each(clusterB, function(userB) {
         					for(var topic in GT_SUBTOPICS) {
         						if(GT_SUBTOPICS[topic][userA.screenName] && GT_SUBTOPICS[topic][userB.screenName]) {
-        							c++;
+        							fn++;
         							done = true;
         							break;
         						}
         					}
 
-        					if(!done) d++;
+        					if(!done) tn++;
         					done = false;
         				});
         			});
         		}
         	}
 
-        	//var d = (n*(n-1)/2) - (a+b+c);
-        	output += "a: " + a + ", b: " + b + ", c: " + c + ", d: " + d + "\n";
-        	output += "Accuracy: " + ((a+d)/(a+b+c+d)) + "\n";
+        	// Alternative way to calculate tn: (n*(n-1)/2) - (a+b+c)
+        	//output += "TPs: " + tp + ", FPs: " + fp + ", FNs: " + fn + ", TNs: " + tn + "\n";
+        	output += "Accuracy: " + ((tp+tn)/(tp+tn+fn+tn)) + "\n";
 
-        	var mcc = (a*d - b*c) / Math.sqrt( (a+b)*(a+c)*(d+b)*(d+c) );
-        	var precision = a / (a+b);
-        	var recall = a / (a+c);
+        	var mcc = (tp*tn - fp*fn) / Math.sqrt( (tp+fp)*(tp+fn)*(tn+fp)*(tn+fn) );
+        	var precision = tp / (tp+fp);
+        	var recall = tp / (tp+fn);
         	var fScore = 2*((precision*recall)/(precision+recall));
 
-        	output += "ClusterUsers / AllUsers: " + clusterUserCount + " / " + userCount + "\n";
+        	//output += "ClusterUsers / AllUsers: " + clusterUserCount + " / " + userCount + "\n";
         	var corr = clusterUserCount / userCount;
         	
         	output += "Precision: " + precision + ", corrected for user count: " + precision*corr + "\n";
@@ -346,6 +356,7 @@ evalService.factory("EvaluationService", function() {
 			output += "MCC: " + mcc + ", corrected for user count: " + mcc*corr + "\n";
 
         	console.log(output);
+        	return mcc;
         },
         
         prepareTMTData: function(users) {
