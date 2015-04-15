@@ -82,8 +82,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					        });
 					        
 					        EvaluationService.setRelevanceScores(relevanceScores);
+					        
 					        if(scope.evaluationMode)
-					            scope.optimization(0.0);
+					            scope.optimization(0, 0.01, 2, 0);
 					        else
 					            scope.updateUsers(0);
 					    }

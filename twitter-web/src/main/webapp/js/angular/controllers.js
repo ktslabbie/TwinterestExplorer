@@ -20,11 +20,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.tweetsPerUser = 150;
 	$scope.userCount = 250;
 	$scope.minimumEnglishRate = 0.7;
-	$scope.evaluationMode = true;
+	$scope.evaluationMode = false;
 	
 	// Named Entity Recognition settings.
 	$scope.nerConfidence = 0.00011;
-	$scope.nerSupport = 2;
+	$scope.nerSupport = 1;
 	$scope.generalityBias = 0.5;
 	$scope.concatenation = 10;
 	
@@ -33,6 +33,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	// Minimum CF-IUF threshold.
 	$scope.minimumCFIUF = 0.005;
+	
+	// Alpha for the HCS clustering algorithm.
+	$scope.alpha = 2;
+	
+	$scope.allScores = {};
 	
 	// Twitter user restrictions.
 	$scope.maxSeedUserFollowers = 9990000;
@@ -76,8 +81,11 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		fullLegend = [];
 		
 		$scope.refreshCnt = 0;
-		graph.clearGraph();
-		graph.start(false);
+		
+		if(!$scope.evaluationMode) {
+			graph.clearGraph();
+			graph.start(false);
+		}
 		
 		$scope.processIndex = 0;
 		$scope.completedCFIUFCount = 0;
@@ -332,7 +340,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		$scope.status.clusteringNetwork = true;
 		
 		// Get the nodes and links from the current graph.
-		if(!$scope.status.zoomed) {
+		if(!$scope.status.zoomed && !$scope.evaluationMode) {
 			graph.initializeGraph(userCount, similarityLinks, $scope.visibleUsers);
 			//graph.start();
 		}
@@ -343,7 +351,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Function to catch updates from the HCS cluster algorithm and push them to the cluster graph.
 		var removeOnHCSUpdate = $scope.$on('hcsUpdate', function(event, cluster) {
 			
-			if(!cluster.edges) {
+			if(!cluster.edges && !$scope.evaluationMode) {
 				_.each(cluster.nodes, function(nodeIndex) { graph.setGroup(nodeIndex, 0); });
 				return;
 			}
@@ -363,13 +371,15 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				});
 				
 				// Release the nodes from the rest of the graph (and temporarily from each other).
-				if(!$scope.status.zoomed) graph.removeNodeLinks(nodeIndex);
+				if(!$scope.status.zoomed && !$scope.evaluationMode) graph.removeNodeLinks(nodeIndex);
 			});
 			
 			// Update the groups.
 			$scope.groups.push(group);
-			graph.updateGraph(sortedNodes, cluster.edges, $scope.groups.length, $scope.visibleUsers);
-			graph.start(false);
+			if(!$scope.evaluationMode) {
+				graph.updateGraph(sortedNodes, cluster.edges, $scope.groups.length, $scope.visibleUsers);
+				graph.start(false);
+			}
 			
 			clusters.push(cluster);
 		});
@@ -377,6 +387,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		var e = {};
 		e.nodeCount = userCount;
 		e.links = similarityLinks;
+		e.alpha = $scope.alpha;
 		e.zoomed = $scope.status.zoomed;
 		
 		HCSService.doWork(e).then(function(data) {
@@ -389,9 +400,10 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				//console.log("Final update? Removing 0 nodes!");
 				//graph.removeNodesByGroup(0);
 			//}
-			
-			if($scope.status.zoomed) graph.start(true);
-			else graph.start(false);
+			if(!$scope.evaluationMode) {
+				if($scope.status.zoomed) graph.start(true);
+				else graph.start(false);
+			}
 			
 			// Build the event for CF-IUF.
 			var ev = {};
@@ -435,7 +447,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 						$scope.status.clusteringFinished = true;
 						$scope.status.clusteringNetwork = false;
 						
-						if(similarityLinks.length < 20000) {
+						if(!$scope.evaluationMode && similarityLinks.length < 20000) {
 							$timeout(function() {
 								graph.cloneGraph();
 								fullGroups = _.cloneDeep($scope.groups);
@@ -444,8 +456,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 						}
 						
 						if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
-						    EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
-						    $scope.$broadcast('evaluated');
+							//EvaluationService.dcg(graph.getNodes(), graph.getLinks());
+						    $scope.$broadcast('evaluate');
 						}
 						
 					} else if($scope.status.zoomed) {
@@ -708,17 +720,43 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
      * Start the hyperparameter optimization suite.
      * Apply k-fold cross validation to find optimal params.
      */
-	$scope.optimization = function(i) {
-	    if(i > 0.01) return;
+	$scope.optimization = function(cfiufThres, minSim, alpha, sampleCount) {
+	    $scope.init();
+	    if(sampleCount == 0) $scope.allScores[""+cfiufThres+":"+minSim+":"+alpha] = [];
+	    
+        var gt = EvaluationService.generateEvaluationSample();
+        $scope.users = _.map(Object.keys(gt.USERS), function(name) { return { screenName: name } });
 
-        $scope.minimumCFIUF = i;
+        $scope.minimumCFIUF = cfiufThres;
+        $scope.minimumSimilarity = minSim;
+        $scope.alpha = alpha;
         $scope.updateUsers(0);
 
-        var removeOnEvaluated = $scope.$on('evaluated', function () {
-            $scope.init();
-            $scope.users = _.map(Object.keys(EvaluationService.getRelevanceScores()), function(name) { return { screenName: name} });
-
-            $scope.optimization(i+0.001);
+        var removeOnEvaluated = $scope.$on('evaluate', function () {
+        	console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
+        	var scores = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, gt);
+        	$scope.allScores[""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount] = scores;
+        	
+        	if(sampleCount < 10) {
+        		$scope.optimization(cfiufThres, minSim, alpha, sampleCount+1);
+        	} else {
+        		localStorage.allScores = $scope.allScores;
+        		
+        		if(alpha <= 6) {
+        			if(minSim < 0.1) {
+        				if(cfiufThres <= 0.01) {
+                        	$scope.optimization(cfiufThres+0.001, minSim, alpha, 0);
+                        } else {
+                        	$scope.optimization(0.0, minSim+0.01, alpha, 0);
+                        }
+        			}  else {
+        				$scope.optimization(0.0, 0.01, alpha+1, 0);
+        			}
+        		} else {
+        			
+        		}
+        	}
+            
             removeOnEvaluated();
         });
 	}
