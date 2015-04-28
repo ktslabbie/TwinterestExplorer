@@ -50,11 +50,21 @@ function hcs(nodes, edges, zoomed) {
 		var clusterSize = cluster.length;
 		
 		// Drop clusters too small from the result (set them to the 0 group).
-		if(zoomed && clusterSize <= 1) {
-			self.postMessage( { finished: false, nodes: cluster } );
-			return;
-		} else if(!zoomed && clusterSize <= 2) {
-			self.postMessage( { finished: false, nodes: cluster } );
+		if((zoomed && clusterSize <= 1) || (!zoomed && clusterSize <= 2)) {
+			var clusterEdges = [];
+			// Find the edges within the cluster, as well as the degrees of the edges.
+			_.each(edges, function(edge) {
+				
+				var s = _.indexOf(cluster, edge[0]);
+				var t = _.indexOf(cluster, edge[1]);
+				
+				if(s >= 0 || t >= 0) {
+					clusterEdges.push(edge);
+				}
+			});
+			
+			
+			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges, drop: true, } );
 			return;
 		}
 		
@@ -80,7 +90,7 @@ function hcs(nodes, edges, zoomed) {
 		
 		// Check for highly-connectedness. If so, we're done with this cluster, else call this function again with the subgraph.
 		if( (zoomed && minDegree >= clusterSize/2) || (!zoomed && minDegree > clusterSize/alpha) )
-			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges } );
+			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges, drop: false, } );
 		else
 			hcs(cluster, clusterEdges);
 	});

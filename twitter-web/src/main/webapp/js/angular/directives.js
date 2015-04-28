@@ -96,15 +96,17 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					var gtFile = input.files[0];
 					reader.readAsText(gtFile);
 					scope.groups = [];
-					var topics = 11;
+					var topics = parseInt(input.files[1].name.split("-")[1]);
 					while(topics--) {
 						scope.groups.push({ users: [] });
 					}
+					
+					console.log(scope.groups.length + " groups generated!");
 
 					$(reader).on('load', function(e) {
 						var file = e.target.result;
 
-						console.log("gt file? " + file);
+						//console.log("gt file? " + file);
 
 						EvaluationService.convertGTToJSON(file);
 
@@ -156,9 +158,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 
 									scope.users.push( { screenName: nm[0] } );
 
-									if(parseFloat(res[3]) > 0.0) {
+									//if(parseFloat(res[3]) > 0.0) {
 										scope.groups[parseInt(res[2])].users.push({ screenName: nm[0] });
-									}
+									//}
 
 								});
 

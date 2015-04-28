@@ -13,6 +13,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.visibleUsers = [];
 	var fullGroups = [];
 	$scope.groups = [];
+	$scope.unassignedClusters = [];
 	$scope.screenName = "iOS_blog";
 	$scope.keyword = "machine learning";
 	$scope.pageSize = 0;
@@ -21,21 +22,22 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.userCount = 400;
 	$scope.minimumEnglishRate = 0.7;
 	$scope.evaluationMode = false;
+	$scope.strictClustering = false;
 	
 	// Named Entity Recognition settings.
 	//$scope.nerConfidence = 0.00011;
-	$scope.nerConfidence = 0.60002;
+	$scope.nerConfidence = 0.00011;
 	$scope.nerSupport = 1;
 	$scope.generalityBias = 0;
 	$scope.concatenation = 10;
 	
 	// Minimum similarity threshold.
 	//$scope.minimumSimilarity = 0.07;
-	$scope.minimumSimilarity = 0.09;
+	$scope.minimumSimilarity = 0.05;
 	
 	// Minimum CF-IUF threshold.
 	//$scope.minimumCFIUF = 0.003;
-	$scope.minimumCFIUF = 0.003;
+	$scope.minimumCFIUF = 0.008;
 	
 	// Alpha for the HCS clustering algorithm.
 	$scope.alpha = 3;
@@ -172,6 +174,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					// The new CF-IUF matrix has been calculated and returned. Update the users and CF-IUF maps with the new ontologies.
 					
 					_.each(data.ontologies, function(newOntology, i) {
+						delete $scope.validUsers[i]["group"];
 						$scope.validUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
 						$scope.validUsers[i].userOntology.topTypes = newOntology.topTypes;
 						cfiufMaps.push(newOntology.cfiufMap);
@@ -362,17 +365,24 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Function to catch updates from the HCS cluster algorithm and push them to the cluster graph.
 		var removeOnHCSUpdate = $scope.$on('hcsUpdate', function(event, cluster) {
 			
-			if(!cluster.edges && !$scope.evaluationMode) {
+			if(!$scope.strictClustering && cluster.drop && !$scope.evaluationMode) {
 				_.each(cluster.nodes, function(nodeIndex) { graph.setGroup(nodeIndex, 0); });
+				return;
+			}
+			
+			if($scope.strictClustering && cluster.drop && !$scope.evaluationMode) {
+				$scope.unassignedClusters.push(cluster);
 				return;
 			}
 			
 			// Initialize the new group to assign this cluster to.
 			var group = { users: [], userOntology: { ontology: {} } };
 			var sortedNodes =_.sortBy(cluster.nodes);
+			
 			_.each(sortedNodes, function(nodeIndex) {
 				// Get the user this node represents, and add him to the group.
 				var user = $scope.visibleUsers[nodeIndex];
+				user["group"] = $scope.groups.length+1;
 				group.users.push(user);
 				
 				// Merge YAGO types of this user into the YAGO types of the group.
@@ -381,7 +391,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							group.userOntology.ontology[type]+user.userOntology.ontology[type] : user.userOntology.ontology[type];
 				});
 				
-				// Release the nodes from the rest of the graph (and temporarily from each other).
+				// Release the node links from the rest of the graph (and temporarily from each other).
 				if(!$scope.status.zoomed && !$scope.evaluationMode) graph.removeNodeLinks(nodeIndex);
 			});
 			
@@ -403,6 +413,39 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		
 		HCSService.doWork(e).then(function(data) {
 			removeOnHCSUpdate();
+			
+			while($scope.unassignedClusters.length > 0) {
+				var cluster = $scope.unassignedClusters.pop();
+				var groupNo = null;
+				var edge = null;
+				var i = cluster.edges.length;
+				while(i--) {
+					edge = cluster.edges[i];
+					groupNo = $scope.visibleUsers[edge[0]].group || $scope.visibleUsers[edge[1]].group;
+					
+					if(groupNo != null) {
+						var group = $scope.groups[groupNo-1];
+						_.each(cluster.nodes, function(node) {
+							var user = $scope.visibleUsers[node];
+							group.users.push(user);
+							
+							// Merge YAGO types of this user into the YAGO types of the group.
+							_.each(Object.keys(user.userOntology.ontology), function(type) {
+								group.userOntology.ontology[type] = _.isNumber(group.userOntology.ontology[type]) ? 
+										group.userOntology.ontology[type]+user.userOntology.ontology[type] : user.userOntology.ontology[type];
+							});
+						});
+						
+						break;
+					}
+				}
+				
+				if(!$scope.evaluationMode && groupNo != null) {
+					graph.updateGraph(cluster.nodes, [edge], groupNo, $scope.visibleUsers);
+					graph.start(false);
+				}
+			}
+			
 			
 			// We've finished calculating the cluster graph. Render the final version by removing any leftover nodes.
 			//graph.removeLinksByGroup(0);

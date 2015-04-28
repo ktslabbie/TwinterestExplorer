@@ -25,7 +25,7 @@ evalService.factory("EvaluationService", function() {
      * @param ka number of topics in ground truth
      * @param userCount number of users found
      */
-    function NMI(groups, gtClusters, clusters, ka, userCount, GT) {
+    function NMI(groups, gtClusters, clusters, ka, userCount, EVAL_GROUPS) {
         var nhl = new Array();
         var kb = groups.length;
 
@@ -76,22 +76,22 @@ evalService.factory("EvaluationService", function() {
 
         for (var h = 0; h < ka; h++)  {
             for (var l = 0; l < kb; l++) {
-                var hi = nhl[h][l]*Math.log( (userCount*nhl[h][l]) / (GT.SUBGROUPS[h]*groups[l].users.length) );
-                if(!isNaN(hi)) nmiNum += hi;
+                var hi = nhl[h][l]*Math.log( (userCount*nhl[h][l]) / (EVAL_GROUPS[h]*groups[l].users.length) );
+                if(isFinite(hi)) nmiNum += hi;
             }
         }
 
         var nmiLeft = 0, nmiRight = 0;
 
         for (var h = 0; h < ka; h++)  {
-            var hi = GT.SUBGROUPS[h]*(-Math.log( GT.SUBGROUPS[h] / userCount));
-            if(!isNaN(hi)) nmiLeft += hi;
+            var hi = EVAL_GROUPS[h]*(-Math.log( EVAL_GROUPS[h] / userCount));
+            if(isFinite(hi)) nmiLeft += hi;
         }
 
 
         for (var l = 0; l < kb; l++) {
             var hi = groups[l].users.length*(-Math.log( groups[l].users.length / userCount) ) ;
-            if(!isNaN(hi)) nmiRight += hi;
+            if(isFinite(hi)) nmiRight += hi;
         }
 
         nmiDem = Math.sqrt(nmiLeft*nmiRight);
@@ -292,8 +292,8 @@ evalService.factory("EvaluationService", function() {
         	var GT = gt || GROUND_TRUTH;
         	var scores = {};
 
-        	console.log("gps: " + JSON.stringify(groups));
-        	console.log("gt: " + JSON.stringify(GT));
+        	//console.log("gps: " + JSON.stringify(groups));
+        	//console.log("gt: " + JSON.stringify(GT));
 
         	if(_.isEmpty(GT.USERS) || _.isEmpty(GT.TOPICS)) {
         		console.log("ERROR: cannot evaluate clusters. Upload a ground truth first!");
@@ -332,16 +332,22 @@ evalService.factory("EvaluationService", function() {
         		}
         	});
         	
-            //if(nullCluster.users.length > 0) groups.push(nullCluster);
+            if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
+        	//var gtClusters = _.clone(GT.CLUSTERS);
         	var gtClusters = _.clone(GT.SUBCLUSTERS);
         	//console.log("Total users: " + count);
         	//console.log("GT_CLUSTERS length: " + GT_CLUSTERS.length);
         	//console.log("GT_SUBCLUSTERS length: " + gtClusters.length);
         	//console.log("clusters length: " + clusters.length);
         	
-        	//var ka = Object.keys(GT_TOPICS).length;
-        	var ka = Object.keys(GT.SUBTOPICS).length;
+        	//var EVAL_TOPICS = GT.TOPICS;
+        	var EVAL_TOPICS = GT.SUBTOPICS;
+        	
+        	//var EVAL_GROUPS = GT.GROUPS;
+        	var EVAL_GROUPS = GT.SUBGROUPS;
+        	
+        	var ka = Object.keys(EVAL_TOPICS).length;
         	var n = userCount;
         	
         	//console.log("NMI: we have " + n + " users, gtGroups: " + ka + ", groups: " + groups.length);
@@ -349,7 +355,7 @@ evalService.factory("EvaluationService", function() {
         	//console.log("NMI: GT_SUBCLUSTERS: " + JSON.stringify(gtClusters));
         	//console.log("NMI: clusters: " + JSON.stringify(clusters));
 
-        	scores["nmi"] = NMI(groups, gtClusters, clusters, ka, n, GT);
+        	scores["nmi"] = NMI(groups, gtClusters, clusters, ka, n, EVAL_GROUPS);
         	output += "NMI: NMI final: " + scores.nmi + "\n";
 
         	var tp = 0, fp = 0, fn = 0, tn = 0;
@@ -361,8 +367,8 @@ evalService.factory("EvaluationService", function() {
         			for(var j = i+1; j < group.users.length; j++) {
         				var userB = group.users[j].screenName;
 
-        				for(var topic in GT.SUBTOPICS) {
-        					if(GT.SUBTOPICS[topic][userA] && GT.SUBTOPICS[topic][userB]) {
+        				for(var topic in EVAL_TOPICS) {
+        					if(EVAL_TOPICS[topic][userA] && EVAL_TOPICS[topic][userB]) {
         						tp++;
         						done = true;
         						break;
@@ -381,8 +387,8 @@ evalService.factory("EvaluationService", function() {
         			var clusterB = groups[j].users;
         			_.each(clusterA, function(userA) {
         				_.each(clusterB, function(userB) {
-        					for(var topic in GT.SUBTOPICS) {
-        						if(GT.SUBTOPICS[topic][userA.screenName] && GT.SUBTOPICS[topic][userB.screenName]) {
+        					for(var topic in EVAL_TOPICS) {
+        						if(EVAL_TOPICS[topic][userA.screenName] && EVAL_TOPICS[topic][userB.screenName]) {
         							fn++;
         							done = true;
         							break;
@@ -397,8 +403,8 @@ evalService.factory("EvaluationService", function() {
         	}
 
         	// Alternative way to calculate tn: (n*(n-1)/2) - (a+b+c)
-        	//output += "TPs: " + tp + ", FPs: " + fp + ", FNs: " + fn + ", TNs: " + tn + "\n";
-        	scores["accuracy"] = (tp+tn)/(tp+tn+fn+tn);
+        	output += "TPs: " + tp + ", FPs: " + fp + ", FNs: " + fn + ", TNs: " + tn + "\n";
+        	scores["accuracy"] = (tp+tn)/(tp+fp+fn+tn);
         	
         	output += "Accuracy: " + scores.accuracy + "\n";
 
@@ -416,7 +422,8 @@ evalService.factory("EvaluationService", function() {
 			output += "MCC: " + scores.mcc + ", corrected for user count: " + scores.mcc*corr + "\n";
 
         	console.log(output);
-        	//console.log(scores.mcc);
+        	console.log("Precision,Recall,F-score,Accuracy,NMI,MCC\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
+        			parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4));
         	
         	return scores.mcc;
         },
