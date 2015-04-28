@@ -36,7 +36,7 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 		link: function(scope, element, attr) {
 			element.on('click', function() {
 				scope.init();
-				scope.generalityBias = 0.9;
+				scope.generalityBias = 0.8;
 				scope.users = _.map(DEMO_SET, function(s){ return { screenName: s }; });
 				scope.updateUsers(0);
 			});
@@ -44,51 +44,159 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 	};
 })
 
-.directive('gtInput', ['EvaluationService', function(EvaluationService) {
+.directive('gtInput', ['EvaluationService', '$timeout', function(EvaluationService, $timeout) {
 	return {
 		link: function(scope, element, attr) {
 			// Function to upload a GT file.
 			element.on('change', function() {
 				
 				var input = element.get(0);
-				var reader = new FileReader();
+				
 
-				if (input.files.length) {
+				if (input.files.length == 1) {
+					var reader = new FileReader();
 					var textFile = input.files[0];
 					reader.readAsText(textFile);
 
 					$(reader).on('load', function(e) {
 						var file = e.target.result;
-						
+
 						EvaluationService.convertGTToJSON(file);
 						scope.init();
-					    
-					    var results;
-					    var csvList = "";
-					    
-					    if (file && file.length) {
-					        results = file.split("\n");
-					        var relevanceScores = {};
-					        var screenNames = [];
-					        
-					        _.each(results, function(result) {
-					        	result = result.trim();
-					        	if(result === "") return;
+
+						var results;
+						var csvList = "";
+
+						if (file && file.length) {
+							results = file.split("\n");
+							var relevanceScores = {};
+							var screenNames = [];
+
+							_.each(results, function(result) {
+								result = result.trim();
+								if(result === "") return;
 								if(result.charAt(0) != ":" && result.charAt(0) != "-") {
 									var res = result.split(",");
 									scope.users.push( { screenName: res[0] } );
-						        	relevanceScores[res[0]] = res[1];
+									relevanceScores[res[0]] = res[1];
 								}
-					        });
-					        
-					        EvaluationService.setRelevanceScores(relevanceScores);
-					        
-					        if(scope.evaluationMode)
-					            scope.optimization(0, 0.01, 2, 0);
-					        else
-					            scope.updateUsers(0);
-					    }
+							});
+
+							EvaluationService.setRelevanceScores(relevanceScores);
+
+							if(scope.evaluationMode)
+								scope.optimization(0.000, 0.00, 6, 0);
+							else
+								scope.updateUsers(0);
+						}
 					});
+
+				} else if (input.files.length == 2) {
+					var reader = new FileReader();
+					var gtFile = input.files[0];
+					reader.readAsText(gtFile);
+					scope.groups = [];
+					var topics = 11;
+					while(topics--) {
+						scope.groups.push({ users: [] });
+					}
+
+					$(reader).on('load', function(e) {
+						var file = e.target.result;
+
+						console.log("gt file? " + file);
+
+						EvaluationService.convertGTToJSON(file);
+
+						var results;
+						var csvList = "";
+
+						if (file && file.length) {
+							results = file.split("\n");
+							var relevanceScores = {};
+							var screenNames = [];
+
+							_.each(results, function(result) {
+								result = result.trim();
+								if(result === "") return;
+								if(result.charAt(0) != ":" && result.charAt(0) != "-") {
+									var res = result.split(",");
+									relevanceScores[res[0]] = res[1];
+								}
+							});
+
+							EvaluationService.setRelevanceScores(relevanceScores);
+						}
+					});
+
+					$timeout(function() {
+
+						var ldaReader = new FileReader();
+						var ldaFile = input.files[1];
+						ldaReader.readAsText(ldaFile);
+
+						$(ldaReader).on('load', function(e) {
+							var file = e.target.result;
+
+							var results;
+							var csvList = "";
+
+							if (file && file.length) {
+								results = file.split("\n");
+								results.splice(0,1);
+								var screenNames = [];
+
+								_.each(results, function(result) {
+									result = result.trim();
+									if(result === "") return;
+
+									var res = result.split("\t");
+									var parts = res[1].split("/");
+									var nm = parts[9].split("\.");
+
+									scope.users.push( { screenName: nm[0] } );
+
+									if(parseFloat(res[3]) > 0.0) {
+										scope.groups[parseInt(res[2])].users.push({ screenName: nm[0] });
+									}
+
+								});
+
+
+								EvaluationService.clusterEvaluation(scope.groups, scope.users.length);
+							}
+						});
+					}, 1000);
+
+
+				} else if (input.files.length > 2) {
+					
+					// Document mode with multiple files.
+					for (var i = 0; i < input.files.length; i++) {
+					    (function(file) {
+					        var name = file.name;
+					        var reader = new FileReader();  
+					        
+					        reader.onload = function(e) { 
+					            // get file content  
+					            var text = e.target.result;
+					            
+					            // If the text is too long, we need to split up the document.
+					    		// TODO: for now, just trim docs to a max length of 3000 chars.
+					            var start = text.indexOf("Lines:");
+					            text = text.substring(start + 10, start + 3010);
+					            
+					            //replace(/\\r\\n/g, " ")
+					            scope.updateDocument({ screenName: name  }, text);
+					        }
+					        
+					        reader.readAsText(file, "UTF-8");
+					        
+					    })(input.files[i]);
+					}
+					
+					$timeout(function() {scope.$broadcast('userUpdated');}, 10000);
+					
 				} else {
 					alert("Please upload a file before continuing.");
 				}

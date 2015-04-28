@@ -1,8 +1,8 @@
 var twitterWebController = angular.module('twitterWeb.controller', [])
 
-.controller('TwitterController', ['$scope', '$timeout', 'SimpleUser', 'User', 'FollowersList', 'KeywordUserList', 'SimilarityService',
+.controller('TwitterController', ['$scope', '$timeout', 'SimpleUser', 'User', 'Document', 'FollowersList', 'KeywordUserList', 'SimilarityService',
                                   'CFIUFService', 'CFIUFGroupService', 'HCSService', 'EvaluationService', 'Graph',
-                                  function($scope, $timeout, SimpleUser, User, FollowersList, KeywordUserList, SimilarityService, 
+                                  function($scope, $timeout, SimpleUser, User, Document, FollowersList, KeywordUserList, SimilarityService,
                                 		   CFIUFService, CFIUFGroupService, HCSService, EvaluationService, Graph) {
 	
 	$scope.status = { loadingInitialData: false, noUserFound: false, loadingUsers: false, updatingCFIUF: false, updatingSimilarityGraph: false, 
@@ -18,26 +18,30 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.pageSize = 0;
 	$scope.refreshCnt = 0;
 	$scope.tweetsPerUser = 150;
-	$scope.userCount = 250;
+	$scope.userCount = 400;
 	$scope.minimumEnglishRate = 0.7;
 	$scope.evaluationMode = false;
 	
 	// Named Entity Recognition settings.
-	$scope.nerConfidence = 0.00011;
+	//$scope.nerConfidence = 0.00011;
+	$scope.nerConfidence = 0.60002;
 	$scope.nerSupport = 1;
-	$scope.generalityBias = 0.5;
+	$scope.generalityBias = 0;
 	$scope.concatenation = 10;
 	
 	// Minimum similarity threshold.
-	$scope.minimumSimilarity = 0.05;
+	//$scope.minimumSimilarity = 0.07;
+	$scope.minimumSimilarity = 0.09;
 	
 	// Minimum CF-IUF threshold.
-	$scope.minimumCFIUF = 0.005;
+	//$scope.minimumCFIUF = 0.003;
+	$scope.minimumCFIUF = 0.003;
 	
 	// Alpha for the HCS clustering algorithm.
-	$scope.alpha = 2;
+	$scope.alpha = 3;
 	
-	$scope.allScores = {};
+	$scope.allScores = [];
+	$scope.runningAvg = 0.0;
 	
 	// Twitter user restrictions.
 	$scope.maxSeedUserFollowers = 9990000;
@@ -58,7 +62,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", "#9467bd", "#c5b0d5",
 	                 "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", "#17becf", "#9edae5" ];
 	
-	var graph = new Graph(640, 540, "#graph", $scope.colors);
+	var graph = new Graph(960, 800, "#graph", $scope.colors);
 	
 	$scope.isLoading = function() {
 		return $scope.status.loadingUsers || $scope.status.updatingCFIUF || $scope.status.updatingSimilarityGraph || $scope.status.clusteringNetwork;
@@ -100,7 +104,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		// Let the view know we're zoomed in; add a button to restore the graph to its original form.
 		$scope.status.zoomed = true;
 		$scope.generalityBias = 0.5;
-		
+
 		// Update the collection of actually visible users.
 		$scope.visibleUsers = $scope.groups[data.group-1].users;
 		
@@ -302,6 +306,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			} else {
 				$scope.status.updatingSimilarityGraph = false;
 			}
+
+			if(finalizing) {
+			    if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
+                    //EvaluationService.dcg($scope.visibleUsers, similarityLinks);
+                    //$scope.$broadcast('evaluate');
+                }
+			}
 			
 			//var endTime = new Date().getTime();
 			//console.log("Similarity graph execution time: " + (endTime - startTime));
@@ -457,6 +468,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 						
 						if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
 							//EvaluationService.dcg(graph.getNodes(), graph.getLinks());
+							EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
 						    $scope.$broadcast('evaluate');
 						}
 						
@@ -612,12 +624,15 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		
 		// Start by updating the first user (updateUser is an async function).
 		updateUser($scope.users[i]);
+
 		$scope.processIndex += (i+1);
 		limit--;
 		
 		// Then, fill up the max active processes by fetching users up until that point.
 		while(limit--) {
+
 			updateUser($scope.users[$scope.processIndex]);
+
 			$scope.processIndex++;
 			$scope.activeProcesses++;
 		}
@@ -649,6 +664,44 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 			}
 		});
 	};
+
+	/**
+     * Document mode function.
+     *
+     * Updates the document collection with a new document.
+     */
+    $scope.updateDocument = function(user, text) {
+        // Make known to the view that we're loading "tweets/traits".
+        user.loading = true;
+
+        // Get a full user: get tweets/traits from Twitter/DBepdia if needed.
+        Document.get({ n: user.screenName, c: $scope.nerConfidence, s: $scope.nerSupport,
+            t: text },
+            function(docData) {
+                // Set the basic updated user info. We can't replace the entire user object because reasons.
+                //user.userID = docData.userID;
+                //user.properties = docData.properties;
+                //user.tweetCount = docData.tweetCount;
+                user.loading = false;
+
+                // Set the new English rate calculated from the user's tweets on the server.
+                user.englishRate = 1.0;
+
+                // Check user validity.
+
+                // User is valid and has enough English tweets. Set tweets/traits found.
+                user.tweets = docData.tweets;
+                user.userOntology = docData.userOntology;
+
+                $scope.validUsers.push(user);
+                $scope.visibleUsers.push(user);
+
+                // Broadcast that we have updated a user (whether valid or not).
+                //$scope.$broadcast('userUpdated');
+        }, function(error) {
+            //$scope.status.connectionError = error.statusText;
+        });
+    }
 	
 	/**
 	 * Get a list of users from a seed user's followers (and their followers (and their followers (and etc.))).
@@ -722,7 +775,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
      */
 	$scope.optimization = function(cfiufThres, minSim, alpha, sampleCount) {
 	    $scope.init();
-	    if(sampleCount == 0) $scope.allScores[""+cfiufThres+":"+minSim+":"+alpha] = [];
+	    //if(sampleCount == 0) $scope.allScores[""+cfiufThres+":"+minSim+":"+alpha] = [];
 	    
         var gt = EvaluationService.generateEvaluationSample();
         $scope.users = _.map(Object.keys(gt.USERS), function(name) { return { screenName: name } });
@@ -733,18 +786,28 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
         $scope.updateUsers(0);
 
         var removeOnEvaluated = $scope.$on('evaluate', function () {
-        	console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
-        	var scores = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, gt);
-        	$scope.allScores[""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount] = scores;
-        	
-        	if(sampleCount < 10) {
+        	//console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
+        	var score = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, gt);
+			$scope.runningAvg += score;
+
+        	if(sampleCount < 9) {
         		$scope.optimization(cfiufThres, minSim, alpha, sampleCount+1);
         	} else {
-        		localStorage.allScores = $scope.allScores;
-        		
+        		//localStorage.allScores = $scope.allScores;
+
+				$scope.allScores.push(""+parseFloat(cfiufThres).toFixed(3)+":"+parseFloat(minSim).toFixed(2)+":"+alpha+","+(parseFloat($scope.runningAvg/10).toFixed(4)));
+				$scope.runningAvg = 0;
+        		var scoreStr = "";
+
+        		_.each($scope.allScores, function(score) {
+        			scoreStr += score + "\n";
+        		});
+
+        		console.log(scoreStr);
+
         		if(alpha <= 6) {
-        			if(minSim < 0.1) {
-        				if(cfiufThres <= 0.01) {
+        			if(minSim <= 0.101) {
+        				if(cfiufThres <= 0.009) {
                         	$scope.optimization(cfiufThres+0.001, minSim, alpha, 0);
                         } else {
                         	$scope.optimization(0.0, minSim+0.01, alpha, 0);
