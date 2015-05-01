@@ -4,10 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.codahale.metrics.annotation.Timed;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import jp.titech.twitter.control.OntologyController;
@@ -19,6 +16,7 @@ import jp.titech.twitter.mining.UserMiner;
 import jp.titech.twitter.mining.api.TwitterConnector;
 import jp.titech.twitter.util.Log;
 import jp.titech.twitter.util.Vars;
+import org.json.JSONObject;
 
 @Path("/api/get-document")
 @Produces(MediaType.APPLICATION_JSON)
@@ -30,10 +28,11 @@ public class DocumentResource {
         this.defaultName = defaultName;
     }
 
-    @GET
+    @POST
     @Timed
-    public TwitterUser getDocument(@QueryParam("n") Optional<String> screenName, @QueryParam("t") Optional<String> text,
-                                   @QueryParam("c") Optional<Float> confidence, @QueryParam("s") Optional<Integer> support) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public TwitterUser getDocument(@QueryParam("n") Optional<String> screenName,
+                                   @QueryParam("c") Optional<Float> confidence, @QueryParam("s") Optional<Integer> support, String text) {
 
         String name = screenName.or(defaultName);
         //TwitterConnector connector = new TwitterConnector(-1);
@@ -46,10 +45,25 @@ public class DocumentResource {
         if(targetUser == null) {
             long id = System.currentTimeMillis();
             targetUser = new TwitterUser(id, name, new Properties(name, "", "", 0, 0, 0, id-1, false, ""), 1.0f);
-            Tweet doc = new Tweet(id+1, id, id-1);
-            doc.setContent(text.or(""));
-            Log.getLogger().info("Text set: " + text);
-            targetUser.addTweet(doc);
+
+            int start = 5;
+            text = text.replaceAll("(\\\\r\\\\n|\\\\n\\\\r|\\\\r|\\\\n)", " ");
+
+            text = text.replaceAll("\\\\\"", "");
+            int end = text.length();
+
+            for(int i = start; i < end; i+=1500) {
+                Tweet doc = new Tweet(id+i, id, id-i);
+                if(i+1500 < end) {
+                    doc.setContent(text.substring(i, i+1500));
+                } else {
+                    doc.setContent(text.substring(i, end));
+                }
+
+                Log.getLogger().info("Text set: " + text);
+                targetUser.addTweet(doc);
+            }
+
             //TweetBase.getInstance().addUser(targetUser);
         }
 

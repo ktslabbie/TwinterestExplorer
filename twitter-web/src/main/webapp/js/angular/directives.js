@@ -108,7 +108,8 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 
 						//console.log("gt file? " + file);
 
-						EvaluationService.convertGTToJSON(file);
+
+						EvaluationService.convertDocumentsToGT(file.split("\n"));
 
 						var results;
 						var csvList = "";
@@ -154,12 +155,13 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 
 									var res = result.split("\t");
 									var parts = res[1].split("/");
-									var nm = parts[9].split("\.");
+									//var nm = parts[9].split("\.");
+									var nm = parts[9];
 
-									scope.users.push( { screenName: nm[0] } );
+									scope.users.push( { screenName: nm } );
 
 									//if(parseFloat(res[3]) > 0.0) {
-										scope.groups[parseInt(res[2])].users.push({ screenName: nm[0] });
+										scope.groups[parseInt(res[2])].users.push({ screenName: nm });
 									//}
 
 								});
@@ -170,8 +172,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 						});
 					}, 1000);
 
-
 				} else if (input.files.length > 2) {
+
+					EvaluationService.convertDocumentsToGT(input.files);
 					
 					// Document mode with multiple files.
 					for (var i = 0; i < input.files.length; i++) {
@@ -182,11 +185,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					        reader.onload = function(e) { 
 					            // get file content  
 					            var text = e.target.result;
-					            
-					            // If the text is too long, we need to split up the document.
-					    		// TODO: for now, just trim docs to a max length of 3000 chars.
+
 					            var start = text.indexOf("Lines:");
-					            text = text.substring(start + 10, start + 3010);
+					            text = text.substring(start + 10);
 					            
 					            //replace(/\\r\\n/g, " ")
 					            scope.updateDocument({ screenName: name  }, text);
@@ -197,7 +198,7 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					    })(input.files[i]);
 					}
 					
-					$timeout(function() {scope.$broadcast('userUpdated');}, 10000);
+					$timeout(function() {scope.$broadcast('userUpdated');}, 180000);
 					
 				} else {
 					alert("Please upload a file before continuing.");

@@ -14,7 +14,7 @@ twitterAPIService.factory('User', ['$resource', function($resource) {
 
 twitterAPIService.factory('Document', ['$resource', function($resource) {
 	return $resource(SETTINGS.apiHostName + 'get-document', { }, {
-						get: { isArray: false, method: 'get'}
+						post: { isArray: false, method: 'post'}
 	});
 }]);
 

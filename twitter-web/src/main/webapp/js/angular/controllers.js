@@ -21,26 +21,26 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.tweetsPerUser = 150;
 	$scope.userCount = 400;
 	$scope.minimumEnglishRate = 0.7;
-	$scope.evaluationMode = false;
-	$scope.strictClustering = false;
+	$scope.evaluationMode = true;
+	$scope.strictClustering = true;
 	
 	// Named Entity Recognition settings.
 	//$scope.nerConfidence = 0.00011;
-	$scope.nerConfidence = 0.00011;
+	$scope.nerConfidence = 0.000005;
 	$scope.nerSupport = 1;
 	$scope.generalityBias = 0;
 	$scope.concatenation = 10;
 	
 	// Minimum similarity threshold.
 	//$scope.minimumSimilarity = 0.07;
-	$scope.minimumSimilarity = 0.05;
+	$scope.minimumSimilarity = 0.07;
 	
 	// Minimum CF-IUF threshold.
 	//$scope.minimumCFIUF = 0.003;
-	$scope.minimumCFIUF = 0.008;
+	$scope.minimumCFIUF = 0.003;
 	
 	// Alpha for the HCS clustering algorithm.
-	$scope.alpha = 3;
+	$scope.alpha = 4;
 	
 	$scope.allScores = [];
 	$scope.runningAvg = 0.0;
@@ -370,7 +370,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 				return;
 			}
 			
-			if($scope.strictClustering && cluster.drop && !$scope.evaluationMode) {
+			if($scope.strictClustering && cluster.drop) {
 				$scope.unassignedClusters.push(cluster);
 				return;
 			}
@@ -718,8 +718,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
         user.loading = true;
 
         // Get a full user: get tweets/traits from Twitter/DBepdia if needed.
-        Document.get({ n: user.screenName, c: $scope.nerConfidence, s: $scope.nerSupport,
-            t: text },
+        Document.post({ n: user.screenName, c: $scope.nerConfidence, s: $scope.nerSupport,
+             }, { t: text },
             function(docData) {
                 // Set the basic updated user info. We can't replace the entire user object because reasons.
                 //user.userID = docData.userID;

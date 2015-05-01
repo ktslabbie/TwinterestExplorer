@@ -54,20 +54,20 @@ function hcs(nodes, edges, zoomed) {
 			var clusterEdges = [];
 			// Find the edges within the cluster, as well as the degrees of the edges.
 			_.each(edges, function(edge) {
-				
+
 				var s = _.indexOf(cluster, edge[0]);
 				var t = _.indexOf(cluster, edge[1]);
-				
+
 				if(s >= 0 || t >= 0) {
 					clusterEdges.push(edge);
 				}
 			});
-			
+
 			
 			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges, drop: true, } );
 			return;
 		}
-		
+
 		var clusterEdges = [];
 		var degrees = _.map(cluster, function() { return 0; });
 		
@@ -86,13 +86,13 @@ function hcs(nodes, edges, zoomed) {
 		
 		// Calculate the minimum degree.
 		var minDegree = _.min(degrees);
-		//console.log("# of edges: " + clusterEdges.length + ", # of nodes: " + clusterSize + ", min. degree: " + minDegree);
+		console.log("# of edges: " + clusterEdges.length + ", # of nodes: " + clusterSize + ", min. degree: " + minDegree);
 		
 		// Check for highly-connectedness. If so, we're done with this cluster, else call this function again with the subgraph.
 		if( (zoomed && minDegree >= clusterSize/2) || (!zoomed && minDegree > clusterSize/alpha) )
 			self.postMessage( { finished: false, nodes: cluster, edges: clusterEdges, drop: false, } );
 		else
-			hcs(cluster, clusterEdges);
+			hcs(cluster, clusterEdges, zoomed);
 	});
 }
 

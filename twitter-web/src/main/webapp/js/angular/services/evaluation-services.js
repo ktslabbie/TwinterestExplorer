@@ -17,6 +17,10 @@ evalService.factory("EvaluationService", function() {
 		SUBGROUPS: [],
 	}
 
+	function sortNumber(a, b) {
+        return a - b;
+    }
+
     /**
      * Calculate the Normalized Mutual Information given:
      * @param groups the groups found
@@ -216,6 +220,58 @@ evalService.factory("EvaluationService", function() {
 			}
 
 		},
+
+		/* Converts uploaded document files to a GT. a.g. rec.sports.baseball.txt > topic = rec, subtopic = rec.sports.baseball  */
+		convertDocumentsToGT: function(files) {
+			var topicIndex = 0, subTopicIndex = 0;
+
+			_.each(files, function(file) {
+				var documentName = file.name;
+				//var documentName = file;
+
+				if(documentName == "") return;
+
+				parts = documentName.split("\.");
+				topic = parts[0];
+				subTopic = parts[1];
+
+				for(var i = 2; i < parts.length-2; i++) {
+					subTopic += "." + parts[i];
+				}
+
+				if(!GROUND_TRUTH.TOPICS[topic]) {
+					GROUND_TRUTH.TOPICS[topic] = { index: topicIndex };
+					topicIndex++;
+
+					GROUND_TRUTH.GROUPS.push(1);
+				} else {
+					GROUND_TRUTH.GROUPS[GROUND_TRUTH.TOPICS[topic].index]++;
+				}
+
+				if(!GROUND_TRUTH.SUBTOPICS[subTopic]) {
+					GROUND_TRUTH.SUBTOPICS[subTopic] = { index: subTopicIndex };
+					subTopicIndex++;
+
+					GROUND_TRUTH.SUBGROUPS.push(1);
+				} else {
+					GROUND_TRUTH.SUBGROUPS[GROUND_TRUTH.SUBTOPICS[subTopic].index]++;
+				}
+
+				GROUND_TRUTH.CLUSTERS.push(GROUND_TRUTH.TOPICS[topic].index+1);
+				GROUND_TRUTH.SUBCLUSTERS.push(GROUND_TRUTH.SUBTOPICS[subTopic].index+1);
+
+				GROUND_TRUTH.USERS[documentName] = {};
+				GROUND_TRUTH.USERS[documentName][topic] = 2;
+				GROUND_TRUTH.USERS[documentName][subTopic] = 2;
+				GROUND_TRUTH.TOPICS[topic][documentName] = 2;
+				GROUND_TRUTH.SUBTOPICS[subTopic][documentName] = 2;
+				relevanceScores[documentName] = 2;
+			});
+
+			GROUND_TRUTH.CLUSTERS.sort(sortNumber);
+			GROUND_TRUTH.SUBCLUSTERS.sort(sortNumber);
+
+		},
 		
 		getRelevanceScores: function() {
 			return relevanceScores;
@@ -364,6 +420,7 @@ evalService.factory("EvaluationService", function() {
         	_.each(groups, function(group) {
         		for(var i = 0; i < group.users.length-1; i++) {
         			var userA = group.users[i].screenName;
+
         			for(var j = i+1; j < group.users.length; j++) {
         				var userB = group.users[j].screenName;
 
