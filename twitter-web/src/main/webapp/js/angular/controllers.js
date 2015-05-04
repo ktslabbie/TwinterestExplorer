@@ -240,11 +240,20 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 					// The new CF-IUF matrix has been calculated and returned. Update the users and CF-IUF maps with the new ontologies.
 					
 					$scope.completedCFIUFCount = data.ontologies.length;
+
 					
 					_.each(data.ontologies, function(newOntology, i) {
 						$scope.validUsers[i].userOntology.cfiufMap = newOntology.cfiufMap;
 						$scope.validUsers[i].userOntology.topTypes = newOntology.topTypes;
 						cfiufMaps.push(newOntology.cfiufMap);
+
+						/*if(i == 1) {
+							var longtail = "";
+							for(key in newOntology.cfiufMap) {
+								longtail += key + "," + newOntology.cfiufMap[key] + "\n";
+							}
+							console.log(longtail);
+						}*/
 					});
 					
 					if(finalizing) $scope.status.updatingSimilarityGraph = false;

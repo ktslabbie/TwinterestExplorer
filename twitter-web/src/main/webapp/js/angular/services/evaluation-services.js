@@ -479,8 +479,8 @@ evalService.factory("EvaluationService", function() {
 			output += "MCC: " + scores.mcc + ", corrected for user count: " + scores.mcc*corr + "\n";
 
         	console.log(output);
-        	console.log("Precision,Recall,F-score,Accuracy,NMI,MCC\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
-        			parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4));
+        	console.log("Precision,Recall,F-score,Accuracy,NMI,MCC,NumberOfTopics\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
+        			parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4)+"\t"+(groups.length));
         	
         	return scores.mcc;
         },

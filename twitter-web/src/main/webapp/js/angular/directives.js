@@ -84,9 +84,9 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 
 							EvaluationService.setRelevanceScores(relevanceScores);
 
-							if(scope.evaluationMode)
-								scope.optimization(0.000, 0.00, 6, 0);
-							else
+							//if(scope.evaluationMode)
+							//	scope.optimization(0.000, 0.00, 6, 0);
+							//else
 								scope.updateUsers(0);
 						}
 					});
@@ -166,7 +166,6 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 
 								});
 
-
 								EvaluationService.clusterEvaluation(scope.groups, scope.users.length);
 							}
 						});
@@ -198,7 +197,7 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 					    })(input.files[i]);
 					}
 					
-					$timeout(function() {scope.$broadcast('userUpdated');}, 180000);
+					$timeout(function() {scope.$broadcast('userUpdated');}, 15000);
 					
 				} else {
 					alert("Please upload a file before continuing.");
