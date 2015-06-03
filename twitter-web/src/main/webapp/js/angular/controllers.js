@@ -21,12 +21,12 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.tweetsPerUser = 150;
 	$scope.userCount = 400;
 	$scope.minimumEnglishRate = 0.7;
-	$scope.evaluationMode = true;
-	$scope.strictClustering = true;
+	$scope.evaluationMode = false;
+	$scope.strictClustering = false;
 	
 	// Named Entity Recognition settings.
-	//$scope.nerConfidence = 0.00011;
-	$scope.nerConfidence = 0.000005;
+	$scope.nerConfidence = 0.00011;
+	//$scope.nerConfidence = 0.000005;
 	$scope.nerSupport = 1;
 	$scope.generalityBias = 0;
 	$scope.concatenation = 10;
@@ -41,6 +41,10 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	// Alpha for the HCS clustering algorithm.
 	$scope.alpha = 4;
+	
+	// Settings for k-means clustering
+	$scope.kmeansK = 11;
+	$scope.kmeansIterations = 10;
 	
 	$scope.allScores = [];
 	$scope.runningAvg = 0.0;
@@ -64,7 +68,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", "#9467bd", "#c5b0d5",
 	                 "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", "#17becf", "#9edae5" ];
 	
-	var graph = new Graph(960, 800, "#graph", $scope.colors);
+	var graph = new Graph(960, 600, "#graph", $scope.colors);
 	
 	$scope.isLoading = function() {
 		return $scope.status.loadingUsers || $scope.status.updatingCFIUF || $scope.status.updatingSimilarityGraph || $scope.status.clusteringNetwork;
@@ -136,7 +140,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		if(!$scope.status.clusteringFinished) return;
 		$scope.visibleUsers = $scope.validUsers;
 		$scope.status.zoomed = false;
-		
 		
 		if(fullGroups.length === 0) {
 			graph.clearGraph();
@@ -359,13 +362,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.clusterNetwork = function(userCount, similarityLinks, finalizing) {
 		
 		// If we're already updating, return (this shouldn't happen).
-		if($scope.status.clusteringNetwork) return;
+		if($scope.status.clusteringNetwork || userCount < 2) return;
 		$scope.status.clusteringNetwork = true;
 		
 		// Get the nodes and links from the current graph.
 		if(!$scope.status.zoomed && !$scope.evaluationMode) {
 			graph.initializeGraph(userCount, similarityLinks, $scope.visibleUsers);
-			//graph.start();
+			graph.start();
 		}
 		
 		$scope.groups = [];
@@ -419,6 +422,13 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		e.links = similarityLinks;
 		e.alpha = $scope.alpha;
 		e.zoomed = $scope.status.zoomed;
+		
+		// KMEANS
+		//e.ontologies = _.map($scope.visibleUsers, function(user) { return user.userOntology.cfiufMap; });
+		//e.k = $scope.kmeansK;
+		//e.i = $scope.kmeansIterations;
+		
+		//console.log(JSON.stringify($scope.visibleUsers));
 		
 		HCSService.doWork(e).then(function(data) {
 			removeOnHCSUpdate();
@@ -519,7 +529,6 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 						}
 						
 						if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
-							//EvaluationService.dcg(graph.getNodes(), graph.getLinks());
 							EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
 						    $scope.$broadcast('evaluate');
 						}
@@ -870,6 +879,36 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
         		} else {
         			
         		}
+        	}
+            
+            removeOnEvaluated();
+        });
+	}
+	
+	/**
+     * Start the hyperparameter optimization suite.
+     * Apply k-fold cross validation to find optimal params.
+     */
+	$scope.kmeansSuite = function(k) {
+	    $scope.init();
+	    $scope.kmeansK = k;
+	    //if(sampleCount == 0) $scope.allScores[""+cfiufThres+":"+minSim+":"+alpha] = [];
+	    
+        var rel = EvaluationService.getRelevanceScores();
+        $scope.users = _.map(Object.keys(rel), function(name) { return { screenName: name } });
+
+        $scope.updateUsers(0);
+
+        var removeOnEvaluated = $scope.$on('evaluate', function () {
+        	//console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
+        	//var scores = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
+        	//console.log("Precision,Recall,F-score,Accuracy,NMI,MCC,NumberOfTopics\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
+        	//		parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4)+"\t"+($scope.groups.length));
+        	
+			//$scope.runningAvg += score;
+
+        	if(k < 25) {
+        		$scope.kmeansSuite(k+1);
         	}
             
             removeOnEvaluated();

@@ -232,7 +232,18 @@ evalService.factory("EvaluationService", function() {
 				if(documentName == "") return;
 
 				parts = documentName.split("\.");
+				
 				topic = parts[0];
+				if(topic == "talk") {
+					if(parts[1] == "politics") {
+						topic = "talk.politics";
+					} else {
+						topic = "talk.religion";
+					}
+				} else if(topic == "alt" || topic == "soc") {
+					topic = "talk.religion";
+				}
+
 				subTopic = parts[1];
 
 				for(var i = 2; i < parts.length-2; i++) {
@@ -301,7 +312,7 @@ evalService.factory("EvaluationService", function() {
     		console.log(rankingStr);
     		
     		var firstEdge = dcgEdges[dcgEdges.length-1];
-    		var topK = [3, 5, 10, 25, 50];
+    		var topK = [3, 5, 10, 15, 20, 25, 50];
     		var evaluationString = "";
     		
     		_.each(topK, function(k) {
@@ -390,18 +401,18 @@ evalService.factory("EvaluationService", function() {
         	
             if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
-        	//var gtClusters = _.clone(GT.CLUSTERS);
-        	var gtClusters = _.clone(GT.SUBCLUSTERS);
+        	var gtClusters = _.clone(GT.CLUSTERS);
+        	//var gtClusters = _.clone(GT.SUBCLUSTERS);
         	//console.log("Total users: " + count);
         	//console.log("GT_CLUSTERS length: " + GT_CLUSTERS.length);
         	//console.log("GT_SUBCLUSTERS length: " + gtClusters.length);
         	//console.log("clusters length: " + clusters.length);
         	
-        	//var EVAL_TOPICS = GT.TOPICS;
-        	var EVAL_TOPICS = GT.SUBTOPICS;
+        	var EVAL_TOPICS = GT.TOPICS;
+        	//var EVAL_TOPICS = GT.SUBTOPICS;
         	
-        	//var EVAL_GROUPS = GT.GROUPS;
-        	var EVAL_GROUPS = GT.SUBGROUPS;
+        	var EVAL_GROUPS = GT.GROUPS;
+        	//var EVAL_GROUPS = GT.SUBGROUPS;
         	
         	var ka = Object.keys(EVAL_TOPICS).length;
         	var n = userCount;
@@ -482,7 +493,7 @@ evalService.factory("EvaluationService", function() {
         	console.log("Precision,Recall,F-score,Accuracy,NMI,MCC,NumberOfTopics\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
         			parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4)+"\t"+(groups.length));
         	
-        	return scores.mcc;
+        	return scores;
         },
         
         prepareTMTData: function(users) {

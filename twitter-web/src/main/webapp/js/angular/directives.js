@@ -62,7 +62,7 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 						var file = e.target.result;
 
 						EvaluationService.convertGTToJSON(file);
-						scope.init();
+						//scope.init();
 
 						var results;
 						var csvList = "";
@@ -85,9 +85,11 @@ var twitterDirectives = angular.module('twitterWeb.directives', [])
 							EvaluationService.setRelevanceScores(relevanceScores);
 
 							//if(scope.evaluationMode)
-							//	scope.optimization(0.000, 0.00, 6, 0);
+								//scope.optimization(0.000, 0.00, 6, 0);
 							//else
-								scope.updateUsers(0);
+							
+							scope.updateUsers(0);
+							//scope.kmeansSuite(2);
 						}
 					});
 
