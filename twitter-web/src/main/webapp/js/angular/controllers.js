@@ -21,7 +21,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	$scope.tweetsPerUser = 150;
 	$scope.userCount = 400;
 	$scope.minimumEnglishRate = 0.7;
-	$scope.evaluationMode = false;
+	$scope.evaluationMode = true;
 	$scope.strictClustering = false;
 	
 	// Named Entity Recognition settings.
@@ -44,7 +44,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	
 	// Settings for k-means clustering
 	$scope.kmeansK = 11;
-	$scope.kmeansIterations = 10;
+	$scope.kmeansIterations = 1;
 	
 	$scope.allScores = [];
 	$scope.runningAvg = 0.0;
@@ -82,9 +82,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 							clusteringNetwork: false, clusteringFinished: false, finalUpdate: false, awaitingFinalClustering: false, zoomed: false, connectionError: false };
 		
 		CFIUFService.clear();
-		while($scope.users.length > 0) $scope.users.pop();
-		while($scope.validUsers.length > 0) $scope.validUsers.pop();
-		while($scope.visibleUsers.length > 0) $scope.visibleUsers.pop();
+		//while($scope.users.length > 0) $scope.users.pop();
+		//while($scope.validUsers.length > 0) $scope.validUsers.pop();
+		//while($scope.visibleUsers.length > 0) $scope.visibleUsers.pop();
 		while($scope.groups.length > 0) $scope.groups.pop();
 		fullGroups = [];
 		$scope.legend = [];
@@ -424,9 +424,9 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 		e.zoomed = $scope.status.zoomed;
 		
 		// KMEANS
-		//e.ontologies = _.map($scope.visibleUsers, function(user) { return user.userOntology.cfiufMap; });
-		//e.k = $scope.kmeansK;
-		//e.i = $scope.kmeansIterations;
+		e.ontologies = _.map($scope.visibleUsers, function(user) { return user.userOntology.cfiufMap; });
+		e.k = $scope.kmeansK;
+		e.i = $scope.kmeansIterations;
 		
 		//console.log(JSON.stringify($scope.visibleUsers));
 		
@@ -529,7 +529,8 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 						}
 						
 						if(!_.isEmpty(EvaluationService.getRelevanceScores())) {
-							EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
+							EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, "main");
+							EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, "sub");
 						    $scope.$broadcast('evaluate');
 						}
 						
@@ -848,7 +849,7 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 
         var removeOnEvaluated = $scope.$on('evaluate', function () {
         	//console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
-        	var score = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, gt);
+        	var score = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, "main", gt);
 			$scope.runningAvg += score;
 
         	if(sampleCount < 9) {
@@ -894,20 +895,21 @@ var twitterWebController = angular.module('twitterWeb.controller', [])
 	    $scope.kmeansK = k;
 	    //if(sampleCount == 0) $scope.allScores[""+cfiufThres+":"+minSim+":"+alpha] = [];
 	    
-        var rel = EvaluationService.getRelevanceScores();
-        $scope.users = _.map(Object.keys(rel), function(name) { return { screenName: name } });
+        //var rel = EvaluationService.getRelevanceScores();
+        //$scope.users = _.map(Object.keys(rel), function(name) { return { screenName: name } });
 
-        $scope.updateUsers(0);
+        //$scope.updateUsers(0);
+        $scope.$broadcast('userUpdated');
 
         var removeOnEvaluated = $scope.$on('evaluate', function () {
         	//console.log(""+cfiufThres+":"+minSim+":"+alpha+":"+sampleCount);
-        	//var scores = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length);
+        	//var scores = EvaluationService.clusterEvaluation($scope.groups, $scope.visibleUsers.length, "main");
         	//console.log("Precision,Recall,F-score,Accuracy,NMI,MCC,NumberOfTopics\n"+parseFloat(scores.precision).toFixed(4)+"\t"+parseFloat(scores.recall).toFixed(4)+"\t"+
         	//		parseFloat(scores.fscore).toFixed(4)+"\t"+parseFloat(scores.accuracy).toFixed(4)+"\t"+parseFloat(scores.nmi).toFixed(4)+"\t"+parseFloat(scores.mcc).toFixed(4)+"\t"+($scope.groups.length));
         	
 			//$scope.runningAvg += score;
 
-        	if(k < 25) {
+        	if(k < 30) {
         		$scope.kmeansSuite(k+1);
         	}
             

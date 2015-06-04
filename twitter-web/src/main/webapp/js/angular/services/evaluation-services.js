@@ -281,7 +281,6 @@ evalService.factory("EvaluationService", function() {
 
 			GROUND_TRUTH.CLUSTERS.sort(sortNumber);
 			GROUND_TRUTH.SUBCLUSTERS.sort(sortNumber);
-
 		},
 		
 		getRelevanceScores: function() {
@@ -353,7 +352,7 @@ evalService.factory("EvaluationService", function() {
          * Function to evaluate communities based on accuracy.
          * Input: array of user arrays (clusters with members).
          **/
-        clusterEvaluation: function(groups, userCount, gt) {
+        clusterEvaluation: function(groups, userCount, gtScope, gt) {
 
         	var output = "";
         	var GT = gt || GROUND_TRUTH;
@@ -401,17 +400,19 @@ evalService.factory("EvaluationService", function() {
         	
             if(nullCluster.users.length > 0) groups.push(nullCluster);
         	
-        	var gtClusters = _.clone(GT.CLUSTERS);
+        	var gtClusters = (gtScope === "main") ? _.clone(GT.CLUSTERS) : _.clone(GT.SUBCLUSTERS);
         	//var gtClusters = _.clone(GT.SUBCLUSTERS);
         	//console.log("Total users: " + count);
         	//console.log("GT_CLUSTERS length: " + GT_CLUSTERS.length);
         	//console.log("GT_SUBCLUSTERS length: " + gtClusters.length);
         	//console.log("clusters length: " + clusters.length);
-        	
-        	var EVAL_TOPICS = GT.TOPICS;
+
+        	var EVAL_TOPICS = (gtScope === "main") ? GT.TOPICS : GT.SUBTOPICS;
+        	//var EVAL_TOPICS = GT.TOPICS;
         	//var EVAL_TOPICS = GT.SUBTOPICS;
-        	
-        	var EVAL_GROUPS = GT.GROUPS;
+
+        	var EVAL_GROUPS = (gtScope === "main") ? GT.GROUPS : GT.SUBGROUPS;
+        	//var EVAL_GROUPS = GT.GROUPS;
         	//var EVAL_GROUPS = GT.SUBGROUPS;
         	
         	var ka = Object.keys(EVAL_TOPICS).length;

@@ -20,9 +20,11 @@ self.addEventListener('message', function(e) {
 	    maxiter = 100;
 	
 	var k = _.min([e.data.k, nodeCount]);
+
+	console.log("Running k-means with " + k + " topics...");
 	
 	for(var iteration = 0; iteration < e.data.i; iteration++) {
-		console.log("k-means iteration: " + (iteration+1));
+		//console.log("k-means iteration: " + (iteration+1));
 		
 		clusters = {};
 		step = {};
@@ -99,7 +101,7 @@ self.addEventListener('message', function(e) {
 			
 			//check break conditions
 			newcent = newcent.substring(0, newcent.length-1);
-			console.log("newcent:" + newcent);
+			//console.log("newcent:" + newcent);
 			
 			if(oldcent === newcent) go = false;
 			if(++iter >= maxiter) go = false;
@@ -108,8 +110,8 @@ self.addEventListener('message', function(e) {
 			newcent = "";
 		}
 		
-		if(iter < maxiter) console.log("Converged in " + iter + " steps.");
-		else console.log("Stopped after " + maxiter + " iterations.");
+		//if(iter < maxiter) console.log("Converged in " + iter + " steps.");
+		//else console.log("Stopped after " + maxiter + " iterations.");
 
 		//calculate similarity sum and map it to the clustering
 		var sumsim = 0.0;

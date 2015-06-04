@@ -123,7 +123,7 @@ var workerService = angular.module('twitterWeb.WorkerServices', [])
 	var defer;
 	
 	function createWorker() {
-		worker = new Worker("js/workers/hcs_kruskal_worker.js");
+		worker = new Worker("js/workers/kmeans_worker.js");
 		defer = $q.defer();
 		
 		worker.addEventListener('message', function(e) {
